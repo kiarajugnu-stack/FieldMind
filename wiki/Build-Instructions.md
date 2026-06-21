@@ -112,7 +112,7 @@ Check `app/build.gradle.kts`:
 
 ```kotlin
 android {
-    namespace = "chromahub.rhythm.app"
+    namespace = "fieldmind.research.app"
     compileSdk = 36
     
     defaultConfig {

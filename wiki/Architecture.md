@@ -201,7 +201,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 ```kotlin
 // build.gradle.kts
 android {
-    namespace = "chromahub.rhythm.app"
+    namespace = "fieldmind.research.app"
     compileSdk = <latest>
     
     defaultConfig {

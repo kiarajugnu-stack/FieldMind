@@ -1,5 +1,13 @@
 # Wiki Documentation — AGENTS.md
 
+## DOX Framework
+
+This file is a child of the DOX hierarchy defined in `master.md`. It follows the root `AGENTS.md` as its parent DOX rail.
+
+**DOX chain:** `master.md` ← `AGENTS.md` (root) ← `wiki/AGENTS.md` (this file)
+
+Read `master.md` and root `AGENTS.md` first, then this file for wiki-specific contracts.
+
 ## Purpose
 
 Project wiki pages providing user-facing and contributor-facing documentation for FieldMind. These markdown files cover architecture, features, installation, API, and troubleshooting.

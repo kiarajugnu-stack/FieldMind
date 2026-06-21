@@ -1,5 +1,13 @@
 # GitHub Configuration — AGENTS.md
 
+## DOX Framework
+
+This file is a child of the DOX hierarchy defined in `master.md`. It follows the root `AGENTS.md` as its parent DOX rail.
+
+**DOX chain:** `master.md` ← `AGENTS.md` (root) ← `.github/AGENTS.md` (this file)
+
+Read `master.md` and root `AGENTS.md` first, then this file for GitHub-specific contracts.
+
 ## Purpose
 
 CI/CD automation, issue tracking templates, and funding configuration for the FieldMind repository on GitHub.

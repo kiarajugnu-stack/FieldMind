@@ -36,6 +36,7 @@ kotlinxCoroutines = "1.11.0"
 workRuntimeKtx = "2.11.2"
 leakcanary = "2.14"
 uiUnit = "1.11.2"
+osmdroid = "6.1.18"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -94,7 +95,7 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "uiUnit" }
-maplibre-gl-android-sdk = { group = "org.maplibre.gl", name = "android-sdk", version = "13.3.0" }
+osmdroid-android = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -1,5 +1,13 @@
 # Web Landing Page — AGENTS.md
 
+## DOX Framework
+
+This file is a child of the DOX hierarchy defined in `master.md`. It follows the root `AGENTS.md` as its parent DOX rail.
+
+**DOX chain:** `master.md` ← `AGENTS.md` (root) ← `web/AGENTS.md` (this file)
+
+Read `master.md` and root `AGENTS.md` first, then this file for web-specific contracts.
+
 ## Purpose
 
 Marketing and landing website for FieldMinds, built with Next.js and deployed on Vercel. Provides product information, feature highlights, and download/support links.
@@ -7,7 +15,9 @@ Marketing and landing website for FieldMinds, built with Next.js and deployed on
 ## Ownership
 
 - `web/app/` — Next.js App Router pages (`page.tsx`, `layout.tsx`, `globals.css`)
-- `web/assets/` — Static images (screenshots, hero, icons, update screens)
+- `web/assets/` — Static images (hero, banner, feature screenshots, icons, update screens, help page graphics)
+  - Key files: `hero.png`, `Banner.png`, `Features.png`, `icon.png`, `icon_full.png`, `light.jpg`, `dark.jpg`, `update.jpg`, `updates.png`, `updates2.png`, `help.png`
+  - Subdirectories: `ScreenShots/`, `Posts/`
 - Root-level static pages: `index.html`, `help.html`, `privacy.html`, `updates.html`, `style.css`, `script.js`
 - `web/package.json` — Dependencies and build scripts
 - `web/tsconfig.json` — TypeScript configuration

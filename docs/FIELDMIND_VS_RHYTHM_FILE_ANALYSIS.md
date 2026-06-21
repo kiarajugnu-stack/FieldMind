@@ -1,6 +1,6 @@
 # FieldMind vs Rhythm: Complete File Ownership Analysis
 
-> **Generated:** June 18, 2026  ·  **Last Updated:** June 20, 2026
+> **Generated:** June 18, 2026  ·  **Last Updated:** June 21, 2026
 > **Purpose:** Identify every file in the project, trace dependencies, classify as FieldMind / Rhythm / Shared, and recommend cleanup actions.
 
 ---
@@ -9,11 +9,14 @@
 
 | Category | File Count | Lines of Code (approx) | Status |
 |----------|-----------|----------------------|--------|
-| **FieldMind Core** | ~110 files | ~60,000 | ✅ Kept |
+| **FieldMind Core** | 120 files | ~60,000 | ✅ Kept |
 | **Rhythm Music Player (unused)** | 0 files | — | ✅ Deleted |
-| **Shared (used by both)** | ~15 files | ~8,000 | ✅ Cleaned |
+| **Shared (used by both)** | 14 files | ~8,000 | ✅ Cleaned |
+| **Infrastructure** | 5 files | ~2,000 | ✅ Cleaned |
+| **Activities** | 2 files | ~500 | ✅ Cleaned |
+| **Utility** | 2 files | ~500 | ✅ Cleaned |
 | **Rhythm Resource Files (layouts/drawables)** | 0 files | — | ✅ Deleted |
-| **Rhythm String Resources** | 1 file (main strings.xml) | ~320,000 chars | ⚠️ Partial — 95% Rhythm content remains |
+| **Rhythm String Resources** | 1 file (main strings.xml) | ~1,941 strings | ⚠️ Partial — ~30 Rhythm string keys remain |
 
 ---
 
@@ -36,7 +39,7 @@ All Rhythm music player files have been removed:
 | `shared/data/model/UserAudioDevice.kt` | ✅ Deleted |
 | `shared/data/model/AutoEQProfile.kt` | ✅ Deleted |
 
-**Result:** `infrastructure/network/` directory is now empty. Only `AppSettings.kt` remains in `shared/data/model/`.
+**Result:** `infrastructure/network/` directory is removed. Only `AppSettings.kt` remains in `shared/data/model/`.
 
 ### 2.3 Shared Files 🔄 (Used by BOTH — Currently Cleaned)
 
@@ -105,52 +108,61 @@ All Rhythm music player files have been removed:
 
 ## 4. Strings.xml Remaining Analysis
 
-**Current:** 3,802 strings, 319,802 bytes, ~95% Rhythm content.
+**Current:** 1,941 strings total. Music-player-specific prefixes (`player_`, `library_`, `playlist_`, `queue_`, `equalizer_`, `lyrics_`, `streaming_`, `cache_`, `search_`, `sleep_timer_`, `broadcast_`, etc.) have all been removed during cleanup.
 
-### Strings Actually Used by FieldMind Code (14 strings):
+### ⚠️ Remaining Rhythm References (~30 string keys)
 
-```
-crashactivity_dont_fret_our_app
-crashactivity_secret_crash_scrolls
-crashactivity_share
-crashactivity_uh_oh_looks_like
-crash_bug_report
-crash_restart_app
-festivesplashgreeting_happy_halloween
-festivesplashgreeting_happy_new_year
-festivesplashgreeting_happy_valentines
-festivesplashgreeting_love_is_in_the
-festivesplashgreeting_merry_christmas
-festivesplashgreeting_seasons_greetings
-festivesplashgreeting_spooky_season
-updates_rhythm_logo_cd
-```
+The following ~30 string keys still contain "Rhythm" in their key names or values. Most are actually used by FieldMind code but have inherited the old naming:
 
-Plus potentially: `app_name`, widget strings (used by Glance), onboarding strings, and settings strings (used by FieldMind screens via string references).
+| String Key | Current Value | Recommendation |
+|-----------|---------------|----------------|
+| `settings_select_option` | "Rhythm Settings" | Rename key to `settings_title` or update value to "FieldMind Settings" |
+| `settings_rhythm_stats` | "Rhythm Stats" | Rename key to `settings_fieldmind_stats` |
+| `settings_rhythm_stats_desc` | "Listening time, top records and trends" | Rename key |
+| `settings_rhythm_aura` | "FieldMind Focus" | Already uses correct display name; rename key |
+| `updates_source_desc` | "Choose which release family Rhythm should use..." | Update text to "FieldMind" |
+| `updates_rhythm_logo_cd` | "FieldMind Logo" | Rename key |
+| `service_app_updates` | "Rhythm Updater" | Update to "FieldMind Updater" |
+| `service_update_status` | "Rhythm Updater Status" | Update to "FieldMind Updater Status" |
+| `service_rhythm_pulse` | "FieldMind Tips" | Rename key |
+| `service_rhythm_guard_alerts` | "FieldMind Focus Alerts" | Rename key |
+| `service_rhythm_guard_timers` | "FieldMind Focus Timers" | Rename key |
+| `service_rhythm_music` | "FieldMind Research" | Rename key |
+| `service_starting` | "Rhythm is starting." | Update to "FieldMind is starting." |
+| `service_loading_settings` | "Rhythm is loading your settings." | Update |
+| `service_setup_components` | "Rhythm is preparing core components." | Update |
+| `service_initializing_player` | "Rhythm is preparing playback." | Update |
+| `service_creating_controls` | "Rhythm is creating playback controls." | Update |
+| `service_setup_media_session` | "Rhythm is preparing the media session." | Update |
+| `service_initializing_controller` | "Rhythm is connecting the media controller." | Update |
+| `service_ready` | "Rhythm is ready." | Update |
+| `service_init_failed` | "Rhythm could not start. Please reopen the app." | Update |
+| `onboarding_custom_notifications_desc` | "Use Rhythm's enhanced notification design..." | Update |
 
-### Rhythm-Only String Prefixes to Remove (~2,000+ strings):
+### Strings Used by FieldMind Code (Count by Category)
 
-| Prefix | Count (approx) | Category |
-|--------|----------------|----------|
-| `player_*` | ~50 | Player screen text |
-| `library_*` | ~117 | Music library |
-| `playlist_*` | ~74 | Playlist management |
-| `queue_*` | ~30 | Playback queue |
-| `equalizer_*`, `bass_boost_*`, `virtualizer_*` | ~40 | Audio equalizer |
-| `lyrics_*` | ~30 | Synchronized lyrics |
-| `sleep_timer_*` | ~20 | Sleep timer |
-| `search_*` | ~40 | Music search |
-| `streaming_*` | ~105 | Streaming service |
-| `home_quote_*`, `home_mood_*`, `home_stat_*` | ~30 | Home screen music content |
-| `rhythm_guard_*` | ~20 | Hearing safety |
-| `cache_*` | ~20 | Cache management |
-| `broadcast_status_*`, `bluetooth_lyrics_*`, `scrobbling_*`, `discord_*` | ~40 | External integrations |
-| `canvas_*`, `beta_*`, `badge_*`, `song_info_*`, `miniplayer_*` | ~40 | Music player features |
-| `notification_*` (media scan, updater, streaming) | ~80 | Music notifications |
-| `theme_*`, `settings_*` music-specific | ~200 | Theme/settings (partial overlap) |
-| `festive_greeting_*` | 7 | **KEPT** — used by FestiveOverlay |
+| Category | Count | Status |
+|----------|-------|--------|
+| `settings_*` | 683 | ✅ Used by settings screens |
+| `stats_*` | 27 | ✅ Used by insights/stats screens |
+| `widget_*` | 24 | ✅ Used by Glance widgets |
+| `onboarding_*` | 23 | ✅ Used by OnboardingScreen |
+| `backup_*` | 23 | ✅ Used by Backup/Export screens |
+| `festive*` | 21 | ✅ Used by FestiveOverlay |
+| `license_*` | 17 | ✅ Used by LicensesBottomSheet |
+| `about_*` | 15 | ✅ Used by About page |
+| `crash*` | 8 | ✅ Used by CrashActivity |
+| `device_*` | 36 | ✅ Audio device names |
+| `metadata_*` | 34 | ✅ Metadata editing strings |
+| `service_*` | ~30 | ⚠️ ~20 contain "Rhythm" — needs rename |
 
-**Note:** `settings_*` and `theme_*` prefixes overlap with FieldMind settings. These need case-by-case review.
+**Note:** `settings_*` and `stats_*` strings are actively used by FieldMind UI. They are not Rhythm leftovers.
+
+### Summary: What Remains to Clean in strings.xml
+
+- **String keys with "rhythm" in the name:** ~30 service/settings keys need renaming (the values are already mostly correct)
+- **String values that still say "Rhythm":** ~15-20 display strings in service startup messages
+- **Cleanup status:** 95%+ of the original Rhythm-only strings have been removed ✅
 
 ---
 
@@ -179,11 +191,20 @@ Plus potentially: `app_name`, widget strings (used by Glance), onboarding string
 | Remove dead code from Theme.kt (getAlbumArtColorScheme) | ✅ Done |
 | Delete ExtendedTheme.kt + replace RhythmColors references | ✅ Done |
 
-### Phase 3: Major Refactoring — ⚠️ REMAINING
+### Phase 3: Package Rename — ✅ COMPLETE
+
+| Task | Status |
+|------|--------|
+| Move source files `chromahub/rhythm/` → `fieldmind/research/` | ✅ Done (144 files) |
+| Update 4 remaining old package declarations in .kt files | ✅ Done |
+| Update AGENTS.md, README.md, wiki docs | ✅ Done |
+| Update backup_rules.xml | ✅ Done |
+
+### Phase 4: Minor Cleanup — ⚠️ REMAINING
 
 | Task | Priority | Status |
 |------|----------|--------|
-| Strip Rhythm strings from strings.xml | 🔵 P2 | ⏳ Pending — 3,802 strings, ~95% Rhythm |
+| Clean ~30 string keys with "rhythm" in name + ~15 values that still say "Rhythm" | 🔵 P2 | ⏳ Pending — values mostly say "FieldMind" already |
 | Replace RhythmTheme with FieldMindBaseTheme | 🔵 P2 | ⏳ Pending — needs careful M3 refactor |
 | Remove music color presets from Theme.kt Color.kt | 🔵 P2 | ⏳ Pending — low risk, low impact |
 
@@ -191,14 +212,16 @@ Plus potentially: `app_name`, widget strings (used by Glance), onboarding string
 
 ## 6. Current Quick Stats
 
-- **Total Kotlin source files:** 135
-- **FieldMind Core:** 110 (81%)
-- **Shared (cleaned):** 15 (11%)
-- **Infrastructure:** 5 (4%)
-- **Activities:** 2 (2%)
-- **Remaining unused mipmap fallbacks:** ~10 files
-- **String resources remaining:** 3,802 strings, 319K chars (~95% Rhythm)
+- **Total Kotlin source files:** 147 (144 in app module + 3 test files)
+- **FieldMind Core (`features/field/`):** 120 (83%)
+- **Shared (`shared/`):** 14 (10%)
+- **Infrastructure (`infrastructure/`):** 5 (3%)
+- **Activities (`activities/`):** 2 (1%)
+- **Utility (`util/`):** 2 (1%)
+- **Resources:** 6 drawable, 2 layout, 7 XML config, 12 mipmap, 2 anim, 2 font files
+- **String resources:** 1,941 strings — ~30 keys still contain "Rhythm" in their key name
 - **Rhythm music code:** 0 files ✅
+- **Package:** `fieldmind.research.app` (fully renamed from `chromahub.rhythm.app`) ✅
 
 ---
 
@@ -208,6 +231,9 @@ Plus potentially: `app_name`, widget strings (used by Glance), onboarding string
 |------|--------|--------|
 | `RhythmColors` used by 3 FieldMind files | Compilation error if removed | ✅ Resolved — ExtendedTheme deleted, replaced with MaterialTheme.colorScheme |
 | `rhythm_splash_logo` appears in CrashActivity | Crash screen shows old logo | ✅ Resolved — Changed to new FieldMind logo via ic_launcher_foreground |
+| Package name mismatch | Build failure | ✅ Resolved — `chromahub.rhythm.app` renamed to `fieldmind.research.app` across all files |
+| Directory structure mismatch | IDE confusion, import errors | ✅ Resolved — Files moved from `chromahub/rhythm/` to `fieldmind/research/` |
 | `RhythmTheme` used by MainActivity + CrashActivity | App won't compile without it | ⚠️ Still present — needs FieldMindBaseTheme refactor (P2) |
 | Theme presets (Warm, Cool, etc.) unused | Dead code but harmless | ⚠️ Still present — harmless (P2) |
-| strings.xml 95% Rhythm content | Bloated APK, unused resources | ⚠️ Needs targeted cleanup (P2) |
+| ~30 string keys with "rhythm" in name | Inconsistent naming | ⚠️ Low priority — values already mostly say "FieldMind" |
+| ~15 service strings display "Rhythm" in UI | User-facing old app name | ⚠️ Minor polish needed — service startup messages
