@@ -50,16 +50,10 @@ import fieldmind.research.app.features.field.presentation.components.LocalPrivac
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
 import androidx.compose.runtime.CompositionLocalProvider
 import android.os.Build
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.platform.LocalDensity
-import io.github.kashif_mehmood_km.backdrop.drawBackdrop
-import io.github.kashif_mehmood_km.backdrop.effects.blur
-import io.github.kashif_mehmood_km.backdrop.effects.vibrancy
-import io.github.kashif_mehmood_km.backdrop.rememberLayerBackdrop
-import io.github.kashif_mehmood_km.backdrop.layerBackdrop
+
 
 private fun formatElapsed(startedAt: Long): String {
     val ms = System.currentTimeMillis() - startedAt
@@ -347,27 +341,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
             // solid rectangular bottom-bar background behind the pill.
             // The content fills the full screen edge-to-edge; the pill is
             // overlaid at the bottom with glassmorphism effects.
-            // KMPLiquidGlass backdrop for the glass refraction effect.
-            val supportsGlass = remember { Build.VERSION.SDK_INT >= 31 }
-            // rememberLayerBackdrop is a composable function that captures background content
-            // It MUST be called directly in composable context, not inside remember {}
-            val rawBackdrop = rememberLayerBackdrop()
-            val backdrop = remember(supportsGlass) {
-                if (supportsGlass) rawBackdrop else null
-            }
-
             Box(Modifier.fillMaxSize()) {
-                // Content — fills full screen, captured as backdrop source for glass
-                val hostModifier = if (supportsGlass && backdrop != null) {
-                    Modifier.fillMaxSize().layerBackdrop(backdrop!!)
-                } else {
-                    Modifier.fillMaxSize()
-                }
+                // Content — fills full screen edge-to-edge
                 FieldMindNavHost(
                     navController = navController,
                     viewModel = viewModel,
                     onResetOnboarding = onResetOnboarding,
-                    modifier = hostModifier
+                    modifier = Modifier.fillMaxSize()
                 )
 
                 // Floating pill — glassmorphic with liquid blob indicator
@@ -379,52 +359,42 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
-                        val pillShape = RoundedCornerShape(34.dp)
-                        val pillModifier = if (supportsGlass && backdrop != null) {
-                            Modifier
+                        // Glassmorphic nav pill with blur effect
+                        val isBlurSupported = remember { Build.VERSION.SDK_INT >= 31 }
+                        Surface(
+                            shape = RoundedCornerShape(34.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                alpha = if (isSystemInDarkTheme()) 0.82f else 0.88f
+                            ),
+                            tonalElevation = 4.dp,
+                            shadowElevation = 12.dp,
+                            border = androidx.compose.foundation.BorderStroke(
+                                width = 0.8.dp,
+                                color = if (isSystemInDarkTheme())
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
+                                else
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.30f)
+                            ),
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .height(66.dp)
-                                .drawBackdrop(
-                                    backdrop = backdrop!!,
-                                    shape = { pillShape },
-                                    effects = {
-                                        blur(24.dp.toPx())
-                                        vibrancy()
-                                    }
+                                .then(
+                                    if (isBlurSupported) Modifier.graphicsLayer {
+                                        // Use RenderEffect for frosted glass look on API 31+
+                                        renderEffect = android.graphics.RenderEffect
+                                            .createBlurEffect(24f, 24f, android.graphics.Shader.TileMode.CLAMP)
+                                            
+                                    } else Modifier
                                 )
-                        } else {
-                            Modifier.fillMaxWidth().height(66.dp)
-                        }
-
-                        Box(
-                            modifier = pillModifier
                         ) {
-                            // Glass surface background (always drawn)
-                            Surface(
-                                shape = RoundedCornerShape(34.dp),
-                                color = if (supportsGlass) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer.copy(
-                                    alpha = if (isSystemInDarkTheme()) 0.82f else 0.88f
-                                ),
-                                tonalElevation = if (supportsGlass) 0.dp else 4.dp,
-                                shadowElevation = if (supportsGlass) 0.dp else 12.dp,
-                                border = if (supportsGlass) null else androidx.compose.foundation.BorderStroke(
-                                    width = 0.8.dp,
-                                    color = if (isSystemInDarkTheme())
-                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
-                                    else
-                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.30f)
-                                ),
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                LiquidNavRow(
-                                    visibleTabs = visibleTabs,
-                                    isSelected = { screen -> isSelected(screen) },
-                                    onTabClick = { screen ->
-                                        haptics.light()
-                                        navigateToTab(screen.route)
-                                    }
-                                )
-                            }
+                            LiquidNavRow(
+                                visibleTabs = visibleTabs,
+                                isSelected = { screen -> isSelected(screen) },
+                                onTabClick = { screen ->
+                                    haptics.light()
+                                    navigateToTab(screen.route)
+                                }
+                            )
                         }
                     }
                 }

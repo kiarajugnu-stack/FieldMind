@@ -2646,8 +2646,6 @@ private fun ResearchSessionDetailContent(
             }
         }
     }
-}        }
-    }
 }
 
 @Composable
