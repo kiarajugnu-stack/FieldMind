@@ -45,7 +45,9 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.BorderStroke
 import androidx.activity.result.contract.ActivityResultContracts
 import android.widget.Toast
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // ══════════════════════════════════════════════════════════════════════
 //  Data Classes
@@ -1511,7 +1513,7 @@ fun DataIntegritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit)
 
         // 5. Check for duplicate observations (same subject + date)
         val dupes = observations.groupBy { it.subject.lowercase() to it.date }
-            .filter { (_, group) -> group.size > 1 && it.key.first.isNotBlank() }
+            .filter { (key, group) -> group.size > 1 && key.first.isNotBlank() }
         val dupeCount = dupes.values.sumOf { it.size - 1 }
         if (dupeCount > 0) {
             issues.add("$dupeCount potential duplicate observation(s) found (same subject + date)")
@@ -1589,7 +1591,7 @@ fun DataIntegritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit)
                     onClick = {
                         isRunning = true
                         scope.launch {
-                            resultReport = withContext(kotlinx.coroutines.Dispatchers.IO) { runIntegrityCheck() }
+                            resultReport = withContext(Dispatchers.IO) { runIntegrityCheck() }
                             isRunning = false
                             showResultDialog = true
                         }
@@ -1815,7 +1817,7 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                                             scope.launch {
                                                 android.widget.Toast.makeText(context, "Building JSON dump…", android.widget.Toast.LENGTH_SHORT).show()
                                                 try {
-                                                    val json = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                    val json = withContext(Dispatchers.IO) {
                                                         fieldmind.research.app.features.field.data.export.FieldMindExport.archiveJson(
                                                             observations = viewModel.observations.value,
                                                             notes = viewModel.notes.value,
@@ -1867,7 +1869,14 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                                                         context, android.Manifest.permission.POST_NOTIFICATIONS
                                                 ) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                                                     notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                                                    return@onClick
+                                                } else {
+                                                    nm.notify(1001, android.app.Notification.Builder(context, "fieldmind_test")
+                                                        .setContentTitle("FieldMind Test")
+                                                        .setContentText("This is a test notification from Developer settings")
+                                                        .setSmallIcon(android.R.drawable.ic_dialog_info)
+                                                        .setAutoCancel(true)
+                                                        .build())
+                                                    android.widget.Toast.makeText(context, "Test notification sent", android.widget.Toast.LENGTH_SHORT).show()
                                                 }
                                             }
                                             nm.notify(1001, android.app.Notification.Builder(context, "fieldmind_test")

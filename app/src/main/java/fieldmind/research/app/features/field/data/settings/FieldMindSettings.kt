@@ -496,6 +496,99 @@ class FieldMindSettings private constructor(context: Context) {
 
     fun setOnboardingExtendedTourCompleted(value: Boolean) = edit(KEY_EXTENDED_TOUR_DONE, value) { _onboardingExtendedTourCompleted.value = value }
 
+    /**
+     * Clear ALL preferences and reset to defaults.
+     * Called from developer settings. Resets every StateFlow to default values.
+     */
+    fun clearAllPreferences() {
+        prefs.edit().clear().apply()
+        // Reset all StateFlow backing fields to defaults
+        _dailyObservationGoal.value = 1
+        _defaultCategory.value = "Bird"
+        _defaultConfidence.value = "Sure"
+        _locationMode.value = "Manual only"
+        _mediaAttachmentsEnabled.value = true
+        _audioRecordingEnabled.value = true
+        _attachmentExportMode.value = "Reference URIs"
+        _geminiEnabled.value = false
+        _aiProvider.value = "Gemini"
+        _geminiApiKey.value = ""
+        _geminiModel.value = "gemini-1.5-flash"
+        _openAiApiKey.value = ""
+        _openAiModel.value = "gpt-4.1-mini"
+        _aiRequireConfirmBeforeSave.value = true
+        _aiSendAttachments.value = false
+        _remindersEnabled.value = false
+        _streaksEnabled.value = true
+        _defaultExportFormat.value = "Markdown"
+        _privacyLockEnabled.value = false
+        _privacyTypingEnabled.value = false
+        _dynamicColorEnabled.value = false
+        _themeMode.value = "Dark"
+        _profileName.value = ""
+        _profileRole.value = "Field learner"
+        _profileFocus.value = "Wildlife & ecology"
+        _localModelEnabled.value = false
+        _localModelOption.value = "FieldLite 500 MB"
+        _localModelDownloaded.value = false
+        _localModelUseForStudy.value = true
+        _autoBackupEnabled.value = false
+        _autoBackupInterval.value = "Weekly"
+        _backupFolderUri.value = ""
+        _autoWeatherEnabled.value = false
+        _autoFlashcardsEnabled.value = false
+        _autoPatternDetectionEnabled.value = true
+        _autoQuestionsEnabled.value = false
+        _tempUnit.value = "Celsius"
+        _weatherRefreshInterval.value = "30 min"
+        _weatherShowTemperature.value = true
+        _weatherShowCondition.value = true
+        _weatherShowHumidity.value = true
+        _weatherShowWind.value = true
+        _weatherShowCloudCover.value = true
+        _weatherShowPressure.value = false
+        _weatherShowCloudAnimation.value = true
+        _weatherProvider.value = "met-norway"
+        _weatherProviders.value = "met-norway"
+        _weatherApiKey.value = ""
+        _openWeatherMapApiKey.value = ""
+        _weatherApiDotComApiKey.value = ""
+        _imdApiKey.value = ""
+        _openMeteoApiConfig.value = ""
+        _gpsMode.value = "On capture only"
+        _distanceUnit.value = "km"
+        _windSpeedUnit.value = "km/h"
+        _timeFormat.value = "24h"
+        _dateFormat.value = "ISO"
+        _mapType.value = "Standard"
+        _mapShowLocation.value = true
+        _fieldModeDefaultSession.value = "Quick capture"
+        _fieldModeAutoStartTimer.value = false
+        _fieldModeObservationSpacing.value = "None"
+        _developerMode.value = false
+        _debugLogging.value = false
+        _dataIntegrityCheckOnLaunch.value = false
+        _lockTimeout.value = "Immediate"
+        _autoLockOnBackground.value = true
+        _screenCaptureProtectionEnabled.value = false
+        _alwaysOnScreenEnabled.value = false
+        _alwaysOnScreenDuration.value = "15 min"
+        _clipboardAutoCleanupEnabled.value = true
+        _clipboardCleanupDelay.value = "30 sec"
+        _clearClipboardAfterExport.value = true
+        _exportGpsPrivacy.value = "Exact"
+        _exportExcludeMedia.value = false
+        _speciesIdApiKey.value = ""
+        _speciesIdOfflineFirst.value = true
+        _speciesModelBaseUrl.value = ""
+        _perenualApiKey.value = ""
+        _appPinEnabled.value = false
+        _appPinHash.value = ""
+        _userInterests.value = UserInterests()
+        _screenVisibility.value = ScreenVisibility()
+        _onboardingExtendedTourCompleted.value = false
+    }
+
     // ── Species identification setters ──
     fun setSpeciesIdApiKey(value: String) = edit(KEY_SPECIES_ID_API_KEY, value.trim()) { _speciesIdApiKey.value = value.trim() }
     fun setSpeciesIdOfflineFirst(value: Boolean) = edit(KEY_SPECIES_ID_OFFLINE_FIRST, value) { _speciesIdOfflineFirst.value = value }
