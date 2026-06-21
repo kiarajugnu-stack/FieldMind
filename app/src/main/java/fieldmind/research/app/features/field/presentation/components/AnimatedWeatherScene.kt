@@ -662,10 +662,10 @@ private fun sunVerticalY(timeOfDay: TimeOfDay, height: Float): Float {
 private fun moonVerticalY(timeOfDay: TimeOfDay, height: Float): Float {
     return height * when (timeOfDay) {
         TimeOfDay.Dawn -> 0.78f
-        TimeOfDay.Sunrise -> 1.20f
-        TimeOfDay.Morning -> 1.20f
-        TimeOfDay.Midday -> 1.20f
-        TimeOfDay.Afternoon -> 1.20f
+        TimeOfDay.Sunrise -> 0.65f  // Fixed: was 1.20f (off-screen), now visible in upper-right
+        TimeOfDay.Morning -> 0.60f  // Fixed: was 1.20f (off-screen), now visible in upper-right
+        TimeOfDay.Midday -> 0.55f   // Fixed: was 1.20f (off-screen), moon visible but faint during day
+        TimeOfDay.Afternoon -> 0.50f // Fixed: was 1.20f (off-screen), now visible in upper-right
         TimeOfDay.Sunset -> 0.72f
         TimeOfDay.Twilight -> 0.42f
         TimeOfDay.Night -> 0.15f
