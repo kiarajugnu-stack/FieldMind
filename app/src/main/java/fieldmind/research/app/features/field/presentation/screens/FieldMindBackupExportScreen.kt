@@ -91,7 +91,7 @@ private val exportFormats = listOf(
     FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF558B2F), "document"),
     FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFFE65100), "document"),
     FormatOption("PDF", "Portable document format", FieldMindIcons.Report, androidx.compose.ui.graphics.Color(0xFF6A1B9A), "document"),
-    FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, androidx.compose.ui.graphics.colors.positive, "image"),
+    FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF4CAF50), "image"),
     FormatOption("SVG", "Scalable vector graphic", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF00838F), "image"),
     FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1B5E20), "package")
 )
@@ -204,7 +204,32 @@ fun BackupAndRestoreScreen(
 
     // Export history state
     val exportHistoryStore = remember { ExportHistoryStore(context) }
-    var exportHistory by remember { mutableStateOf(emptyList<ExportRecord>()) }
+    var exportHistory by remember { mutableStateOf(emptyList<ExportRecord>()) 
+// Record export history — track actual file after encryption
+                                        val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
+                                            File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
+                                        } else exportFile
+                                        exportHistoryStore.add(ExportRecord(
+                                            format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
+                                            fileName = _exportFile.name,
+                                            fileSizeBytes = _exportFile.length(),
+                                            exportedAt = System.currentTimeMillis(),
+                                            destination = if (action == "share") "Shared via intent" else "Saved to folder",
+                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                        ))
+// Record backup history (inside IO block so vars are in scope)
+                                        val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
+                                            File(backupDir, baseName + ".encrypted")
+                                        else
+                                            fieldmindFile
+                                        exportHistoryStore.add(ExportRecord(
+                                            format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
+                                            fileName = _backupFile.name,
+                                            fileSizeBytes = _backupFile.length(),
+                                            exportedAt = System.currentTimeMillis(),
+                                            destination = "Backup saved",
+                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                        ))}
     LaunchedEffect(lastBackupRefresh) {
         withContext(Dispatchers.IO) {
             exportHistory = exportHistoryStore.load()
@@ -314,7 +339,8 @@ fun BackupAndRestoreScreen(
                         "questions" to questions.size,
                         "projects" to projects.size,
                         "sources" to sources.size
-                    )
+                    ),
+                    onAutoBackupToggle = { settings.setAutoBackupEnabled(it) }
                 )
             }
 
@@ -508,18 +534,7 @@ fun BackupAndRestoreScreen(
                                                 }
                                             }
                                         }
-                                        // Record export history — track actual file after encryption
-                                        val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
-                                            File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
-                                        } else exportFile
-                                        exportHistoryStore.add(ExportRecord(
-                                            format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
-                                            fileName = _exportFile.name,
-                                            fileSizeBytes = _exportFile.length(),
-                                            exportedAt = System.currentTimeMillis(),
-                                            destination = if (action == "share") "Shared via intent" else "Saved to folder",
-                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
-                                        ))
+                                        
                                     exportHistory = exportHistoryStore.load()
                                     showFastSnackbar(snackbar, scope, "Export complete")
                                 } catch (e: Exception) {
@@ -745,19 +760,7 @@ fun BackupAndRestoreScreen(
                                                 } catch (_: Exception) { }
                                             }
                                         }
-                                        // Record backup history (inside IO block so vars are in scope)
-                                        val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
-                                            File(backupDir, baseName + ".encrypted")
-                                        else
-                                            fieldmindFile
-                                        exportHistoryStore.add(ExportRecord(
-                                            format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
-                                            fileName = _backupFile.name,
-                                            fileSizeBytes = _backupFile.length(),
-                                            exportedAt = System.currentTimeMillis(),
-                                            destination = "Backup saved",
-                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
-                                        ))
+                                        
                                     exportHistory = exportHistoryStore.load()
                                     lastBackupRefresh++
                                     showFastSnackbar(snackbar, scope, "Backup saved")
@@ -1140,7 +1143,8 @@ private fun HeroStatusCard(
     lastBackupLabel: String,
     autoBackupEnabled: Boolean,
     autoBackupInterval: String,
-    entityCounts: Map<String, Int>
+    entityCounts: Map<String, Int>,
+    onAutoBackupToggle: (Boolean) -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
     val totalRecords = entityCounts.values.sum()
@@ -1232,7 +1236,7 @@ private fun HeroStatusCard(
                     )
                     Switch(
                         checked = autoBackupEnabled,
-                        onCheckedChange = { settings.setAutoBackupEnabled(it) },
+                        onCheckedChange = { onAutoBackupToggle(it) },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = colors.positive,
                             checkedTrackColor = colors.positive.copy(alpha = 0.3f)
@@ -1937,8 +1941,8 @@ private fun ImportTabContent(
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text(fileName, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 if (fileName.endsWith(".encrypted")) {
-                                    Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.warning.copy(alpha = 0.15f)) {
-                                        Text("[Encrypted]", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.warning)
+                                    Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.error.copy(alpha = 0.15f)) {
+                                        Text("[Encrypted]", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
                                     }
                                 } else {
                                     val badge = when {
@@ -2227,6 +2231,14 @@ private fun BackupTabContent(
                         ) {
                             LinearProgressIndicator(
                                 progress = { strength.score / 5f },
+                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
+                                color = Color(strength.color),
+                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                            Text(strength.label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(strength.color))
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = passwordConfirm,
                         onValueChange = onPasswordConfirmChange,
@@ -2243,14 +2255,6 @@ private fun BackupTabContent(
                         },
                         isError = passwordConfirm.isNotEmpty() && !passwordsMatch
                     )
-                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
-                                color = Color(strength.color),
-                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                            )
-                            Text(strength.label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(strength.color))
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
                     if (passwordConfirm.isNotBlank() || passwordsMatch) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
