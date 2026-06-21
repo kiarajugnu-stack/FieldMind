@@ -371,13 +371,17 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
             // solid rectangular bottom-bar background behind the pill.
             // The content fills the full screen edge-to-edge; the pill is
             // overlaid at the bottom with real backdrop blur via Haze.
-            Box(Modifier.fillMaxSize().haze(state = hazeState)) {
-                // Content — fills full screen edge-to-edge
+            //
+            // IMPORTANT: .haze() is ONLY on the NavHost content, NOT the outer
+            // Box — this ensures the pill and its shadow/glow layers are never
+            // captured into the blur source, preventing visible layer artifacts.
+            Box(Modifier.fillMaxSize()) {
+                // Content — fills full screen edge-to-edge (blur source ONLY)
                 FieldMindNavHost(
                     navController = navController,
                     viewModel = viewModel,
                     onResetOnboarding = onResetOnboarding,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize().haze(state = hazeState)
                 )
 
                 // Floating pill — glassmorphic with liquid blob indicator
@@ -389,48 +393,21 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
-                        // ── Subtle glow/shadow beneath the pill for depth ──
-                        val glowColor = MaterialTheme.colorScheme.primary
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(66.dp)
-                                .drawBehind {
-                                    // Multi-layer soft glow: outer → inner, decreasing size, fading alpha
-                                    val layers = listOf(
-                                        1.3f to 0.03f,
-                                        1.2f to 0.05f,
-                                        1.1f to 0.08f,
-                                        1.0f to 0.06f,
-                                    )
-                                    val cr = 34.dp.toPx()
-                                    for ((scale, alpha) in layers) {
-                                        val w = size.width * scale
-                                        val h = size.height * scale
-                                        drawRoundRect(
-                                            color = glowColor.copy(alpha = alpha),
-                                            topLeft = Offset(-(w - size.width) / 2f, -(h - size.height) / 2f),
-                                            size = Size(w, h),
-                                            cornerRadius = CornerRadius(cr, cr)
-                                        )
-                                    }
-                                }
-                        )
-
                         // Glassmorphic nav pill — real backdrop blur via Haze with
                         // semi-transparent surface. The animated blob indicator
                         // (drawn by LiquidNavRow) provides the liquid micro-interaction.
+                        // shadowElevation provides clean shadow depth without drawBehind glows.
                         Surface(
                             shape = RoundedCornerShape(34.dp),
                             color = Color.Transparent,
                             tonalElevation = 0.dp,
-                            shadowElevation = 12.dp,
+                            shadowElevation = 16.dp,
                             border = androidx.compose.foundation.BorderStroke(
-                                width = 0.8.dp,
+                                width = 0.6.dp,
                                 color = if (isSystemInDarkTheme())
-                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
                                 else
-                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.30f)
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -443,13 +420,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                                         tints = listOf(
                                             HazeTint(
                                                 color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                                    alpha = if (isSystemInDarkTheme()) 0.78f else 0.85f
-                                                )
-                                            ),
-                                            HazeTint(
-                                                brush = Brush.verticalGradient(
-                                                    0.0f to Color.White.copy(alpha = 0.05f),
-                                                    0.15f to Color.Transparent
+                                                    alpha = if (isSystemInDarkTheme()) 0.88f else 0.93f
                                                 )
                                             )
                                         )
