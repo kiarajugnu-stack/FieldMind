@@ -174,6 +174,8 @@ fun BackupAndRestoreScreen(
     var importedPackage by remember { mutableStateOf<FieldMindExportMediaPacker.ExtractedPackage?>(null) }
     var showImportResultDialog by remember { mutableStateOf(false) }
     var importResult by remember { mutableStateOf<FieldMindExport.ArchivePreview?>(null) }
+    var showConflictDialog by remember { mutableStateOf(false) }
+    var conflictResolutionMode by remember { mutableStateOf("skip") } // skip, merge, replace
     var importStepText by remember { mutableStateOf("") }
     var importProgress by remember { mutableFloatStateOf(0f) }
     var isEncryptedFile by remember { mutableStateOf(false) }
@@ -197,7 +199,9 @@ fun BackupAndRestoreScreen(
 
     // Format state for export
     var showShareDialog by remember { mutableStateOf(false) }
+    var showSharePreview by remember { mutableStateOf(false) }
     var shareDialogFormat by remember { mutableStateOf(".fieldmind") }
+    var sharePreviewFileSize by remember { mutableStateOf("0 KB") }
     var includeMedia by remember { mutableStateOf(false) }
 
     // Export history state
@@ -975,6 +979,65 @@ fun BackupAndRestoreScreen(
         )
     }
 
+    // ── Conflict Resolution Dialog ──
+    if (showConflictDialog) {
+        AlertDialog(
+            onDismissRequest = { showConflictDialog = false },
+            icon = { Icon(icon = MaterialSymbolIcon("priority_high"), contentDescription = null, size = 32.dp, tint = MaterialTheme.colorScheme.warning) },
+            title = { Text("Duplicate records detected") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Text(
+                        "Some records in the backup file match existing data. How would you like to handle them?",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.warningContainer.copy(alpha = 0.3f),
+                        tonalElevation = 0.dp
+                    ) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    RadioButton(selected = conflictResolutionMode == "skip", onClick = { conflictResolutionMode = "skip" }, modifier = Modifier.size(20.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text("Skip duplicates", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("Keep existing data, ignore duplicates", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    RadioButton(selected = conflictResolutionMode == "merge", onClick = { conflictResolutionMode = "merge" }, modifier = Modifier.size(20.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text("Merge & update", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("Keep both, update conflicting records", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    RadioButton(selected = conflictResolutionMode == "replace", onClick = { conflictResolutionMode = "replace" }, modifier = Modifier.size(20.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text("Replace all", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                        Text("Restore with backup data (deletes existing)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showConflictDialog = false }, shape = RoundedCornerShape(12.dp)) {
+                    Text("Continue import")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConflictDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(28.dp)
+        )
+    }
+
     // ── Import result dialog ──
     if (showImportResultDialog && importResult != null) {
         val result = importResult!!
@@ -1035,6 +1098,76 @@ fun BackupAndRestoreScreen(
                     lastBackupRefresh++
                 }) { Text("Done") }
             }
+        )
+    }
+
+    // ── Share Preview Dialog ──
+    if (showSharePreview) {
+        AlertDialog(
+            onDismissRequest = { showSharePreview = false },
+            icon = { Icon(icon = exportFormats.find { it.name == selectedExportFormat }?.icon ?: FieldMindIcons.Export, contentDescription = null, size = 32.dp, tint = exportFormats.find { it.name == selectedExportFormat }?.color ?: MaterialTheme.colorScheme.primary) },
+            title = { Text("Share Data Export") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        tonalElevation = 0.dp
+                    ) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text("Format:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = exportFormats.find { it.name == selectedExportFormat }?.color?.copy(alpha = 0.12f) ?: MaterialTheme.colorScheme.primaryContainer,
+                                    tonalElevation = 0.dp
+                                ) {
+                                    Text(selectedExportFormat, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = exportFormats.find { it.name == selectedExportFormat }?.color ?: MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                            Divider()
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Icon(FieldMindIcons.Data, null, size = 20.dp, tint = MaterialTheme.colorScheme.primary)
+                                Column {
+                                    Text("Total Records", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text("$totalEntities items", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Icon(MaterialSymbolIcon("storage"), null, size = 20.dp, tint = FieldMindTheme.colors.observation)
+                                Column {
+                                    Text("Estimated Size", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(sharePreviewFileSize, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            if (includeMedia) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Surface(shape = CircleShape, color = FieldMindTheme.colors.positive.copy(alpha = 0.2f), tonalElevation = 0.dp) {
+                                        Icon(MaterialSymbolIcon("check"), null, size = 16.dp, tint = FieldMindTheme.colors.positive, modifier = Modifier.padding(4.dp))
+                                    }
+                                    Text("Media included", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                        }
+                    }
+                    Text(
+                        "This will create a ${selectedExportFormat.lowercase()} file with all your research data ready to share or backup.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showSharePreview = false; showShareDialog = true }, shape = RoundedCornerShape(12.dp)) {
+                    Text("Continue to share")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSharePreview = false }) {
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(28.dp)
         )
     }
 
@@ -1653,7 +1786,11 @@ private fun ExportTabContent(
         // ── Action buttons ──
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
-                onClick = { onExport(selectedExportFormat, "share", exportScope) },
+                onClick = { 
+                    val estimate = estimateExportSize(selectedExportFormat, observations.size, notes.size, projects.size, sources.size)
+                    sharePreviewFileSize = estimate
+                    showSharePreview = true
+                },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0
             ) { Icon(FieldMindIcons.Export, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Share") }
@@ -2098,9 +2235,11 @@ private fun ImportTabContent(
                     }
 
                     if (importMode == "Merge") {
-                        Surface(
+                        Card(
                             shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                            modifier = Modifier.clickable { showConflictDialog = true }
                         ) {
                             Row(
                                 Modifier.padding(12.dp).fillMaxWidth(),
@@ -2108,11 +2247,19 @@ private fun ImportTabContent(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.tertiary, size = 18.dp)
-                                Text(
-                                    "Duplicates (by subject + date) will be skipped",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                                )
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        "Duplicates (by subject + date) will be skipped",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                                    )
+                                    Text(
+                                        "Tap to configure conflict handling",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                                    )
+                                }
+                                Icon(FieldMindIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.tertiary, size = 18.dp)
                             }
                         }
                     }
@@ -2578,6 +2725,28 @@ private fun decodeBase64FromDataUri(dataUri: String): ByteArray? {
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
+// ── Helper function to estimate export file size ──
+private fun estimateExportSize(format: String, obsCount: Int, noteCount: Int, projCount: Int, srcCount: Int): String {
+    val baseSize = 50.0 // Base JSON structure in KB
+    val obsSize = obsCount * 2.5 // ~2.5 KB per observation (with metadata)
+    val noteSize = noteCount * 1.8 // ~1.8 KB per note
+    val projSize = projCount * 3.0 // ~3 KB per project
+    val srcSize = srcCount * 4.5 // ~4.5 KB per source
+    val totalKB = when (format.lowercase()) {
+        "json" -> baseSize + obsSize + noteSize + projSize + srcSize
+        "csv" -> (baseSize + obsSize + noteSize) * 0.6 // CSV is more compact
+        "markdown" -> obsSize * 1.2 + noteSize
+        "html" -> baseSize + obsSize + noteSize + (projSize * 0.8)
+        "pdf" -> (baseSize + obsSize) * 1.5 // PDFs are heavier
+        ".fieldmind" -> (baseSize + obsSize + noteSize + projSize + srcSize) * 1.3 // Includes compression overhead
+        else -> baseSize + obsSize
+    }
+    return when {
+        totalKB < 1024 -> String.format("%.1f KB", totalKB)
+        else -> String.format("%.1f MB", totalKB / 1024)
+    }
+}
+
 private fun ShareDialogContent(
     format: String,
     onFormatChange: (String) -> Unit,
