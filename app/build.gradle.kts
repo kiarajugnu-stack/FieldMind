@@ -255,6 +255,9 @@ dependencies {
     // osmdroid for offline maps (OpenStreetMap tiles, no API key required)
     implementation(libs.osmdroid.android)
 
+    // KMPLiquidGlass - Glassmorphism effects for bottom navigation
+    implementation(libs.backdrop)
+
     // Biometric authentication for privacy lock
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
 

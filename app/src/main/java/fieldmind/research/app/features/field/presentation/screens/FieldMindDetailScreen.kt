@@ -78,6 +78,8 @@ fun DetailScreen(
     val data by viewModel.dataRecords.collectAsState()
     val reports by viewModel.reports.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
+    val researchSessions by viewModel.researchSessions.collectAsState()
+    val sessionObservationCrossRefs by viewModel.sessionObservationCrossRefs.collectAsState()
     val title = kind.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     var showEdit by remember(kind, id) { mutableStateOf(false) }
     var showDelete by remember(kind, id) { mutableStateOf(false) }
@@ -203,13 +205,30 @@ fun DetailScreen(
                             projects.firstOrNull { it.id == f.projectId }?.let { add(Triple("project", it.title, it.id)) }
                         }, onOpenDetail) }
                     }
-                }
-            }
+"research_session" -> {
+                        val session = researchSessions.firstOrNull { it.id == id }
+                        if (session != null) {
+                            val linkedObsIds = sessionObservationCrossRefs.filter { it.sessionId == session.id }.map { it.observationId }.toSet()
+                            val linkedObservations = observations.filter { it.id in linkedObsIds }
+                            item { ResearchSessionDetailContent(session, linkedObservations, onOpenDetail, onUnlink = { obsId -> viewModel.unlinkObservationFromSession(session.id, obsId) }) }
+                            item { BacklinksPanel(buildList {
+                                projects.firstOrNull { it.id == session.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                            }, onOpenDetail) }
+                        } else {
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                    }
         }
+    }
     if (showEdit) EditEntityDialog(kind, id, viewModel) { showEdit = false }
     if (showDelete) ConfirmDeleteDialog(kind, onDismiss = { showDelete = false }) {
         deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
     }
+}
 }
 }
 
@@ -1786,6 +1805,20 @@ private fun ProjectDetailContent(
             }
         }
     }
+    
+    // Quick-add dialog invocations
+    ProjectQuickAddDialogs(
+        projectId = p.id,
+        showQuestion = showNewQuestion,
+        showObservation = showNewObservation,
+        showSource = showNewSource,
+        showReport = showNewReport,
+        onDismissQuestion = { showNewQuestion = false },
+        onDismissObservation = { showNewObservation = false },
+        onDismissSource = { showNewSource = false },
+        onDismissReport = { showNewReport = false },
+        viewModel = viewModel
+    )
 }
 
 // ── Quick-add dialogs for project tabs ──
@@ -1960,8 +1993,9 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
 
         if (showForm) {
             Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                Column(modifier = Modifier.padding(14.dp).heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(modifier = Modifier.padding(14.dp).heightIn(max = 600.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Add Species to Registry", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.observation)
+                    Text("Fill in common name and taxonomy (scroll for more fields).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     FieldTextField(commonName, { commonName = it }, "Common Name *", supportingText = "e.g. House Crow")
                     FieldTextField(scientificName, { scientificName = it }, "Scientific Name", supportingText = "e.g. Corvus splendens")
                     Text("Taxonomy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -2520,6 +2554,94 @@ private fun FlashcardDetailContent(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("Back", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = colors.info)
                     Text(f.back.ifBlank { "—" }, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun ResearchSessionDetailContent(
+    session: ResearchSessionEntity,
+    observations: List<ObservationEntity>,
+    onOpenDetail: (String, Long) -> Unit,
+    onUnlink: ((Long) -> Unit)? = null
+) {
+    val observationCount = observations.size
+    val colors = MaterialTheme.colorScheme
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        // Session header card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant.copy(alpha = 0.5f)),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(session.name.ifBlank { "Research Session" }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                DetailRow("Project ID", session.projectId?.toString() ?: "—")
+                DetailRow("Duration", formatDuration(session.totalDurationMs))
+                DetailRow("Notes", session.notes)
+                DetailRow("Created", formatTimestamp(session.createdAt))
+            }
+        }
+
+        // Observation count header
+        Text(
+            "Observations ($observationCount)",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        // Observation list
+        if (observations.isEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant.copy(alpha = 0.3f)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    "No linked observations found.",
+                    modifier = Modifier.padding(20.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant
+                )
+            }
+        } else {
+            observations.forEach { obs ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenDetail("observations", obs.id) },
+                    colors = CardDefaults.cardColors(containerColor = colors.surface),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Row(Modifier.fillMaxWidth()) {
+                        Column(
+                            Modifier.weight(1f).padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(obs.subject.ifBlank { "Observation #${obs.id}" }, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                                                    }
+                        // Unlink button
+                        if (onUnlink != null) {
+                            IconButton(
+                                onClick = { onUnlink(obs.id) },
+                                modifier = Modifier.size(40.dp).padding(end = 4.dp).align(Alignment.CenterVertically)
+                            ) {
+                                Icon(
+                                    FieldMindIcons.Close,
+                                    "Unlink observation",
+                                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                                    size = 18.dp
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

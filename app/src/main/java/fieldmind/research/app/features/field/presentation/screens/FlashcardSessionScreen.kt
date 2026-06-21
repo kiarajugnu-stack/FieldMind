@@ -109,7 +109,7 @@ fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     // Session progress
     val progress = if (queue.isEmpty()) 0f else index.toFloat() / queue.size
 
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // Progress bar
         AnimatedVisibility(visible = !finished, enter = fadeIn(), exit = fadeOut()) {
             LinearProgressIndicator(

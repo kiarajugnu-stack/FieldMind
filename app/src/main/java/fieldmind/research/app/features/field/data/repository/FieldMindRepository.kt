@@ -111,6 +111,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun endResearchSession(id: Long, observationCount: Int, durationMs: Long) = dao.endResearchSession(id, System.currentTimeMillis(), durationMs, observationCount)
     suspend fun deleteResearchSession(id: Long) = dao.softDeleteResearchSession(id, System.currentTimeMillis())
     suspend fun linkSessionObservation(sessionId: Long, observationId: Long) = dao.linkSessionObservation(SessionObservationCrossRef(sessionId, observationId))
+    suspend fun unlinkSessionObservation(sessionId: Long, observationId: Long) = dao.deleteSessionObservationCrossRef(sessionId, observationId)
     fun observeObservationsForSession(sessionId: Long) = dao.observeObservationsForSession(sessionId)
     val sessionObservationCrossRefs: Flow<List<SessionObservationCrossRef>> = dao.observeAllSessionObservationCrossRefs()
     val hypothesisEvidenceCrossRefs: Flow<List<HypothesisEvidenceCrossRef>> = dao.observeAllHypothesisEvidence()
@@ -130,6 +131,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun deleteTask(id: Long) = dao.softDeleteTask(id, System.currentTimeMillis())
 
     // ── Weather Catalog ──
+    val weatherCatalog: Flow<List<WeatherCatalogEntity>> = dao.observeWeatherCatalogAll()
     fun observeWeatherCatalog(lat: Double, lon: Double) = dao.observeWeatherCatalog(lat, lon)
     fun observeWeatherCatalogAll() = dao.observeWeatherCatalogAll()
     suspend fun addWeatherCatalog(entity: WeatherCatalogEntity): Long = dao.insertWeatherCatalog(entity)

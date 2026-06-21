@@ -192,6 +192,63 @@ fun FieldLogScreen(
             // ── Quick stats ──
             item { ObservationStatsDashboard(observations) }
 
+            // ── Past research sessions ──
+            val completedSessions = researchSessions.filter { it.status == "Completed" }.sortedByDescending { it.endedAt }
+            if (completedSessions.isNotEmpty()) {
+                item {
+                    SectionHeader("Past research sessions", "${completedSessions.size} completed")
+                }
+                items(completedSessions.take(5), key = { it.id }) { session ->
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        modifier = Modifier.fillMaxWidth().clickable { onOpenDetail("research_session", session.id) }
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
+                                    .background(FieldMindTheme.colors.positive.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(FieldMindIcons.Bolt, null, tint = FieldMindTheme.colors.positive, size = 22.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    session.name.ifBlank { "Research Session" },
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                val elapsedStr = if (session.totalDurationMs > 0) {
+                                    val totalSec = session.totalDurationMs / 1000
+                                    val hours = totalSec / 3600
+                                    val minutes = (totalSec % 3600) / 60
+                                    val seconds = totalSec % 60
+                                    if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+                                    else "%d:%02d".format(minutes, seconds)
+                                } else ""
+                                val obsStr = "${session.observationCount} obs"
+                                val dateStr = java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault()).format(java.util.Date(session.startedAt))
+                                Text(
+                                    listOfNotNull(elapsedStr.takeIf { it.isNotBlank() }, obsStr, dateStr).joinToString(" • "),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Icon(
+                                FieldMindIcons.Forward, null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 20.dp
+                            )
+                        }
+                    }
+                }
+            }
+
             // ── Search bar ──
             item {
                 AnimatedVisibility(visible = showSearch) {

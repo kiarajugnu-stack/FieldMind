@@ -3,6 +3,9 @@ package fieldmind.research.app.features.field.presentation.navigation
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -19,13 +22,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,10 +44,15 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.compose.foundation.Canvas
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+
 
 private fun formatElapsed(startedAt: Long): String {
     val ms = System.currentTimeMillis() - startedAt
@@ -203,8 +211,10 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
             showNavigateConfirm = true
             return
         }
+        // Pop everything up to the start destination then navigate to the target tab
+        // Using startDestinationRoute for reliable route-based popUpTo
         navController.navigate(route) {
-            popUpTo(navController.graph.findStartDestination().id) {
+            popUpTo(navController.graph.startDestinationRoute ?: FieldMindScreen.Home.route) {
                 inclusive = false
                 saveState = true
             }
@@ -244,7 +254,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                         viewModel.setCaptureSessionActive(false)
                         showNavigateConfirm = false
                         pendingNavRoute?.let { navController.navigate(it) {
-                            popUpTo(navController.graph.findStartDestination().id) {
+                            popUpTo(navController.graph.startDestinationRoute ?: FieldMindScreen.Home.route) {
                                 inclusive = false
                                 saveState = true
                             }
@@ -286,13 +296,25 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 840.dp
         if (expanded) {
-            Row(Modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
                 if (!hideChrome) {
                     Surface(
-                        shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.88f),
-                        tonalElevation = 2.dp,
-                        modifier = Modifier.padding(6.dp)
+                        shape = RoundedCornerShape(size = 24.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                            alpha = if (isSystemInDarkTheme()) 0.72f else 0.78f
+                        ),
+                        tonalElevation = 0.dp,
+                        shadowElevation = 8.dp,
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 0.6.dp,
+                            color = if (isSystemInDarkTheme())
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.15f)
+                            else
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+                        ),
+                        modifier = Modifier
+                            .padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
+                            .width(IntrinsicSize.Min)
                     ) {
                         NavigationRail(
                             header = {
@@ -313,16 +335,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                 FieldMindNavHost(navController, viewModel, onResetOnboarding, Modifier.weight(1f))
             }
         } else {
-            // ── True floating overlay nav bar ──
+            // ── True floating overlay nav bar with liquid glass effect ──
             // We use a raw Box instead of Scaffold so Android never draws a
             // solid rectangular bottom-bar background behind the pill.
             // The content fills the full screen edge-to-edge; the pill is
-            // overlaid at the bottom and the NavHost gets matching bottom
-            // padding so content isn't obscured.
+            // overlaid at the bottom with glassmorphism effects.
             Box(Modifier.fillMaxSize()) {
-                // Content — fills full screen edge-to-edge; no bottom padding so
-                // the glassmorphic pill overlays content naturally.
-                // Each tab screen handles its own bottom clear space via contentPadding.
+                // Content — fills full screen edge-to-edge
                 FieldMindNavHost(
                     navController = navController,
                     viewModel = viewModel,
@@ -330,7 +349,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                     modifier = Modifier.fillMaxSize()
                 )
 
-                // Floating pill — layered above content, no system background
+                // Floating pill — glassmorphic with liquid blob indicator
                 if (!hideChrome) {
                     Box(
                         modifier = Modifier
@@ -338,7 +357,9 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             .fillMaxWidth()
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp)
-                    ) {
+                    ) {                        // Glassmorphic nav pill — semi-transparent surface with border
+                        // for the frosted glass aesthetic. The animated blob indicator
+                        // (drawn by LiquidNavRow) provides the liquid micro-interaction.
                         Surface(
                             shape = RoundedCornerShape(34.dp),
                             color = MaterialTheme.colorScheme.surfaceContainer.copy(
@@ -357,22 +378,14 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                                 .fillMaxWidth()
                                 .height(66.dp)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 4.dp, vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                visibleTabs.forEach { screen ->
-                                    val selected = isSelected(screen)
-                                    FloatingNavTabItem(
-                                        screen = screen,
-                                        selected = selected,
-                                        onClick = { haptics.light(); navigateToTab(screen.route) }
-                                    )
+                            LiquidNavRow(
+                                visibleTabs = visibleTabs,
+                                isSelected = { screen -> isSelected(screen) },
+                                onTabClick = { screen ->
+                                    haptics.light()
+                                    navigateToTab(screen.route)
                                 }
-                            }
+                            )
                         }
                     }
                 }
@@ -384,98 +397,141 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
 
 
 /**
- * Glassmorphic pill-shaped floating nav tab item.
- * Active tab shows a prominent pill background with filled icon + bold text.
- * Inactive tabs show subtle icons with alpha. Interactive press animations.
+ * Liquid glassmorphism nav row with animated blob indicator.
+ * Draws a fluid rounded pill that slides between active tab positions
+ * with spring physics, creating the "liquid/blob" micro-interaction.
  */
 @Composable
-private fun FloatingNavTabItem(
-    screen: FieldMindScreen,
-    selected: Boolean,
-    onClick: () -> Unit
+private fun LiquidNavRow(
+    visibleTabs: List<FieldMindScreen>,
+    isSelected: (FieldMindScreen) -> Boolean,
+    onTabClick: (FieldMindScreen) -> Unit
 ) {
-    var isPressed by remember { mutableStateOf(false) }
-    
-    val pillAlpha by animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
-        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
-        label = "navPillAlpha"
-    )
-    val iconSize by animateFloatAsState(
-        targetValue = if (selected) 28f else 22f,
-        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
-        label = "navIconSize"
-    )
-    val textAlpha by animateFloatAsState(
-        targetValue = if (selected) 1f else 0.7f,
-        animationSpec = tween(durationMillis = FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing),
-        label = "navTextAlpha"
-    )
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed && !selected) 0.92f else 1f,
-        animationSpec = if (isPressed) 
-            tween(durationMillis = FieldMindMotion.durationMicro, easing = FastOutSlowInEasing) 
-        else 
-            FieldMindMotion.expressiveSpring,
-        label = "navPressScale"
-    )
+    // Calculate selected index directly (no remember wrapper — isSelected lambda
+    // captures currentDestination and changes every frame)
+    val selectedIndex = visibleTabs.indexOfFirst { isSelected(it) }.coerceAtLeast(0)
 
-    Column(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = { onClick() }
-            )
-            .defaultMinSize(minWidth = 60.dp, minHeight = 56.dp)
-            .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        // Active pill background
-        Box(
-            modifier = Modifier
-                .size(width = 48.dp, height = 36.dp)
-                .background(
-                    color = if (selected) 
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.18f * pillAlpha) 
-                    else 
-                        Color.Transparent,
-                    shape = RoundedCornerShape(18.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon = if (selected) screen.icon.copy(filled = true) else screen.icon,
-                contentDescription = screen.label,
-                tint = if (selected) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
-                size = iconSize.dp,
-                weight = if (selected) 500 else 400
-            )
-        }
-        Text(
-            screen.label,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) 
-                MaterialTheme.colorScheme.primary 
-            else 
-                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = textAlpha * 0.78f),
-            maxLines = 1,
-            modifier = Modifier.graphicsLayer { alpha = textAlpha.coerceIn(0.5f, 1f) }
-        )
+    // ── Animate the indicator position with spring physics for liquid feel ──
+    val animatedPosition = remember { Animatable(0f) }
+    val animSpec = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessLow
+    )
+    LaunchedEffect(selectedIndex) {
+        animatedPosition.animateTo(selectedIndex.toFloat(), animSpec)
     }
-    
-    // Track press state for press animation
-    LaunchedEffect(selected) {
-        if (selected) isPressed = false
+
+    // ── Item widths tracked via onGloballyPositioned ──
+    val itemWidths = remember { mutableStateListOf<Float>() }
+
+    // Capture color scheme in composable scope (Canvas DrawScope is not composable)
+    val blobColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 4.dp, vertical = 4.dp)
+    ) {
+        // ── Liquid blob indicator drawn behind the tabs ──
+        // (Canvas is drawn first, so it appears behind the Row)
+        if (itemWidths.isNotEmpty() && selectedIndex < itemWidths.size) {
+            Canvas(modifier = Modifier.matchParentSize()) {
+                val totalWidth = size.width
+                val tabCount = visibleTabs.size.coerceAtLeast(1)
+                val segmentWidth = totalWidth / tabCount
+                val centerX = segmentWidth * (animatedPosition.value + 0.5f)
+                val indicatorWidth = itemWidths.getOrElse(selectedIndex) { 60f }
+                val indicatorHeight = size.height * 0.82f
+                val indicatorY = (size.height - indicatorHeight) / 2f
+
+                drawRoundRect(
+                    color = blobColor,
+                    topLeft = Offset(centerX - indicatorWidth / 2f, indicatorY),
+                    size = Size(indicatorWidth, indicatorHeight),
+                    cornerRadius = CornerRadius(indicatorHeight / 2f, indicatorHeight / 2f)
+                )
+            }
+        }
+
+        // ── Tab items drawn on top of the indicator ──
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            visibleTabs.forEachIndexed { index, screen ->
+                val selected = isSelected(screen)
+                val tabWidth = remember { mutableFloatStateOf(0f) }
+                var isPressed by remember { mutableStateOf(false) }
+
+                            val pressScale by animateFloatAsState(
+                                targetValue = if (isPressed && !selected) 0.92f else 1f,
+                                animationSpec = if (isPressed)
+                                    tween(durationMillis = FieldMindMotion.durationMicro, easing = FastOutSlowInEasing)
+                                else
+                                    FieldMindMotion.expressiveSpring,
+                                label = "tabScale_$index"
+                            )
+
+                Column(
+                    modifier = Modifier
+                        .onGloballyPositioned { coordinates ->
+                            tabWidth.floatValue = coordinates.size.width.toFloat()
+                            if (itemWidths.size <= index) {
+                                while (itemWidths.size <= index) itemWidths.add(0f)
+                            }
+                            itemWidths[index] = tabWidth.floatValue
+                        }
+                        .clip(RoundedCornerShape(20.dp))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                isPressed = true
+                                onTabClick(screen)
+                            }
+                        )
+                        .graphicsLayer {
+                            scaleX = pressScale
+                            scaleY = pressScale
+                        }
+                        .defaultMinSize(minWidth = 60.dp, minHeight = 56.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        modifier = Modifier.size(width = 48.dp, height = 36.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            icon = if (selected) screen.icon.copy(filled = true) else screen.icon,
+                            contentDescription = screen.label,
+                            tint = if (selected)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
+                            size = if (selected) 28.dp else 22.dp,
+                            weight = if (selected) 500 else 400
+                        )
+                    }
+                    Text(
+                        screen.label,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (selected)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
+                        maxLines = 1
+                    )
+                }
+
+                // Reset press state when selection changes
+                LaunchedEffect(selected) {
+                    if (selected) isPressed = false
+                }
+            }
+        }
     }
 }
 

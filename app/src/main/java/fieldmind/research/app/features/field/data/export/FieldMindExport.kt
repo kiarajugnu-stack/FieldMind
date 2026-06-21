@@ -20,9 +20,13 @@ object FieldMindExport {
         val sources: Int = 0,
         val dataRecords: Int = 0,
         val reports: Int = 0,
-        val flashcards: Int = 0
+        val flashcards: Int = 0,
+        val species: Int = 0,
+        val weatherCatalog: Int = 0,
+        val researchSessions: Int = 0,
+        val tasks: Int = 0
     ) {
-        val total: Int get() = observations + notes + questions + hypotheses + projects + sources + dataRecords + reports + flashcards
+        val total: Int get() = observations + notes + questions + hypotheses + projects + sources + dataRecords + reports + flashcards + species + weatherCatalog + researchSessions + tasks
         fun summary(): String = listOf(
             "$observations observations",
             "$notes notes",
@@ -32,7 +36,11 @@ object FieldMindExport {
             "$sources sources",
             "$dataRecords data records",
             "$reports reports",
-            "$flashcards flashcards"
+            "$flashcards flashcards",
+            "$species species",
+            "$weatherCatalog weather records",
+            "$researchSessions research sessions",
+            "$tasks tasks"
         ).joinToString(" • ")
     }
 
@@ -46,7 +54,11 @@ object FieldMindExport {
         val sources: List<SourceEntity>,
         val dataRecords: List<DataRecordEntity>,
         val reports: List<ReportEntity>,
-        val flashcards: List<FlashcardEntity>
+        val flashcards: List<FlashcardEntity>,
+        val species: List<SpeciesEntity> = emptyList(),
+        val weatherCatalog: List<WeatherCatalogEntity> = emptyList(),
+        val researchSessions: List<ResearchSessionEntity> = emptyList(),
+        val tasks: List<TaskEntity> = emptyList()
     )
 
     /**
@@ -277,9 +289,78 @@ object FieldMindExport {
                 type = o.optString("type", "imported")
             )
         }
-        val preview = ArchivePreview(observations.size, notes.size, questions.size, hypotheses.size, projects.size, sources.size, dataRecords.size, reports.size, flashcards.size)
+        // Parse new entity types
+        val species = root.optJSONArray("species").toObjects { o ->
+            SpeciesEntity(
+                commonName = o.optString("commonName", "Imported species"),
+                scientificName = o.optString("scientificName"),
+                kingdom = o.optString("kingdom"),
+                phylum = o.optString("phylum"),
+                classs = o.optString("classs"),
+                order = o.optString("order"),
+                family = o.optString("family"),
+                genus = o.optString("genus"),
+                species = o.optString("species"),
+                conservationStatus = o.optString("conservationStatus", "Not Evaluated"),
+                targetCount = o.optInt("targetCount"),
+                observationCount = o.optInt("observationCount"),
+                projectId = o.optNullableLong("projectId"),
+                notes = o.optString("notes")
+            )
+        }
+        val weatherCatalog = root.optJSONArray("weatherCatalog").toObjects { o ->
+            val lat = o.optDouble("latitude", 0.0)
+            val lon = o.optDouble("longitude", 0.0)
+            WeatherCatalogEntity(
+                latitude = lat,
+                longitude = lon,
+                temperature = o.optDoubleOpt("temperature"),
+                weatherCode = o.optInt("weatherCode"),
+                weatherDescription = o.optString("weatherDescription"),
+                humidity = o.optNullableInt("humidity"),
+                windSpeed = o.optDoubleOpt("windSpeed"),
+                windDirection = o.optNullableInt("windDirection"),
+                cloudCover = o.optNullableInt("cloudCover"),
+                pressure = o.optDoubleOpt("pressure"),
+                sunrise = o.optString("sunrise").ifBlank { null },
+                sunset = o.optString("sunset").ifBlank { null },
+                placeName = o.optString("placeName"),
+                fetchedAt = o.optLong("fetchedAt", System.currentTimeMillis())
+            )
+        }
+        val researchSessions = root.optJSONArray("researchSessions").toObjects { o ->
+            ResearchSessionEntity(
+                name = o.optString("name"),
+                projectId = o.optNullableLong("projectId"),
+                startedAt = o.optLong("startedAt", System.currentTimeMillis()),
+                endedAt = o.optNullableLong("endedAt"),
+                totalDurationMs = o.optLong("totalDurationMs"),
+                observationCount = o.optInt("observationCount"),
+                location = o.optString("location"),
+                status = o.optString("status", "Active"),
+                notes = o.optString("notes")
+            )
+        }
+        val tasks = root.optJSONArray("tasks").toObjects { o ->
+            TaskEntity(
+                title = o.optString("title", "Imported task"),
+                description = o.optString("description"),
+                taskType = o.optString("taskType", "Field Survey"),
+                priority = o.optString("priority", "Medium"),
+                dueDate = o.optString("dueDate"),
+                assignedTo = o.optString("assignedTo"),
+                status = o.optString("status", "Pending"),
+                linkedQuestionId = o.optNullableLong("linkedQuestionId"),
+                linkedObservationId = o.optNullableLong("linkedObservationId"),
+                linkedSpeciesId = o.optNullableLong("linkedSpeciesId"),
+                projectId = o.optNullableLong("projectId"),
+                parentTaskId = o.optNullableLong("parentTaskId"),
+                sortOrder = o.optInt("sortOrder")
+            )
+        }
+        val preview = ArchivePreview(observations.size, notes.size, questions.size, hypotheses.size, projects.size, sources.size, dataRecords.size, reports.size, flashcards.size, species.size, weatherCatalog.size, researchSessions.size, tasks.size)
         require(preview.total > 0) { "The archive did not contain importable FieldMind records." }
-        return ArchiveImportBundle(preview, observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
+        return ArchiveImportBundle(preview, observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards, species, weatherCatalog, researchSessions, tasks)
     }
 
 
@@ -748,6 +829,10 @@ ${report.nextSteps}
         dataRecords: List<DataRecordEntity>,
         reports: List<ReportEntity>,
         flashcards: List<FlashcardEntity>,
+        species: List<SpeciesEntity> = emptyList(),
+        weatherCatalog: List<WeatherCatalogEntity> = emptyList(),
+        researchSessions: List<ResearchSessionEntity> = emptyList(),
+        tasks: List<TaskEntity> = emptyList(),
         mediaManifest: String? = null  // Optional: JSON array of media entries for .fieldmind package
     ): String = buildString {
         appendLine("{")
@@ -755,7 +840,7 @@ ${report.nextSteps}
         appendLine("  \"exportedAt\": ${System.currentTimeMillis()},")
         appendLine("  \"appName\": \"FieldMind\",")
         appendLine("  \"appVersion\": \"4.3.0\",")
-        appendLine("  \"counts\": {\"observations\": ${observations.size}, \"notes\": ${notes.size}, \"questions\": ${questions.size}, \"hypotheses\": ${hypotheses.size}, \"projects\": ${projects.size}, \"sources\": ${sources.size}, \"dataRecords\": ${dataRecords.size}, \"reports\": ${reports.size}, \"flashcards\": ${flashcards.size}},")
+        appendLine("  \"counts\": {\"observations\": ${observations.size}, \"notes\": ${notes.size}, \"questions\": ${questions.size}, \"hypotheses\": ${hypotheses.size}, \"projects\": ${projects.size}, \"sources\": ${sources.size}, \"dataRecords\": ${dataRecords.size}, \"reports\": ${reports.size}, \"flashcards\": ${flashcards.size}, \"species\": ${species.size}, \"weatherCatalog\": ${weatherCatalog.size}, \"researchSessions\": ${researchSessions.size}, \"tasks\": ${tasks.size}},")
         appendJsonArray("observations", observations) { o -> "{\"id\":${o.id},\"date\":\"${json(o.date)}\",\"time\":\"${json(o.time)}\",\"subject\":\"${json(o.subject)}\",\"category\":\"${json(o.category)}\",\"factsOnlyNotes\":\"${json(o.factsOnlyNotes)}\",\"evidenceSummary\":\"${json(o.evidenceSummary)}\",\"tags\":\"${json(o.tags)}\",\"projectId\":${o.projectId ?: "null"}}" }
         appendLine(",")
         appendJsonArray("notes", notes) { n -> "{\"id\":${n.id},\"title\":\"${json(n.title)}\",\"body\":\"${json(n.body)}\",\"category\":\"${json(n.category)}\",\"tags\":\"${json(n.tags)}\",\"projectId\":${n.projectId ?: "null"},\"sourceId\":${n.sourceId ?: "null"},\"attachmentUris\":\"${json(n.attachmentUris)}\"}" }
@@ -773,6 +858,14 @@ ${report.nextSteps}
         appendJsonArray("reports", reports) { r -> "{\"id\":${r.id},\"type\":\"${json(r.type)}\",\"title\":\"${json(r.title)}\",\"status\":\"${json(r.status)}\",\"markdownDraft\":\"${json(FieldMindExport.buildMarkdownReport(r))}\"}" }
         appendLine(",")
         appendJsonArray("flashcards", flashcards) { f -> "{\"id\":${f.id},\"front\":\"${json(f.front)}\",\"back\":\"${json(f.back)}\",\"type\":\"${json(f.type)}\"}" }
+        appendLine(",")
+        appendJsonArray("species", species) { s -> "{\"id\":${s.id},\"commonName\":\"${json(s.commonName)}\",\"scientificName\":\"${json(s.scientificName)}\",\"kingdom\":\"${json(s.kingdom)}\",\"phylum\":\"${json(s.phylum)}\",\"classs\":\"${json(s.classs)}\",\"order\":\"${json(s.order)}\",\"family\":\"${json(s.family)}\",\"genus\":\"${json(s.genus)}\",\"species\":\"${json(s.species)}\",\"conservationStatus\":\"${json(s.conservationStatus)}\",\"targetCount\":${s.targetCount},\"observationCount\":${s.observationCount},\"projectId\":${s.projectId ?: "null"},\"notes\":\"${json(s.notes)}\"}" }
+        appendLine(",")
+        appendJsonArray("weatherCatalog", weatherCatalog) { w -> "{\"id\":${w.id},\"latitude\":${w.latitude},\"longitude\":${w.longitude},\"temperature\":${w.temperature ?: "null"},\"weatherCode\":${w.weatherCode},\"weatherDescription\":\"${json(w.weatherDescription)}\",\"humidity\":${w.humidity ?: "null"},\"windSpeed\":${w.windSpeed ?: "null"},\"windDirection\":${w.windDirection ?: "null"},\"cloudCover\":${w.cloudCover ?: "null"},\"pressure\":${w.pressure ?: "null"},\"sunrise\":\"${json(w.sunrise ?: "")}\",\"sunset\":\"${json(w.sunset ?: "")}\",\"placeName\":\"${json(w.placeName)}\",\"fetchedAt\":${w.fetchedAt}}" }
+        appendLine(",")
+        appendJsonArray("researchSessions", researchSessions) { s -> "{\"id\":${s.id},\"name\":\"${json(s.name)}\",\"projectId\":${s.projectId ?: "null"},\"startedAt\":${s.startedAt},\"endedAt\":${s.endedAt ?: "null"},\"totalDurationMs\":${s.totalDurationMs},\"observationCount\":${s.observationCount},\"location\":\"${json(s.location)}\",\"status\":\"${json(s.status)}\",\"notes\":\"${json(s.notes)}\"}" }
+        appendLine(",")
+        appendJsonArray("tasks", tasks) { t -> "{\"id\":${t.id},\"title\":\"${json(t.title)}\",\"description\":\"${json(t.description)}\",\"taskType\":\"${json(t.taskType)}\",\"priority\":\"${json(t.priority)}\",\"dueDate\":\"${json(t.dueDate)}\",\"assignedTo\":\"${json(t.assignedTo)}\",\"status\":\"${json(t.status)}\",\"linkedQuestionId\":${t.linkedQuestionId ?: "null"},\"linkedObservationId\":${t.linkedObservationId ?: "null"},\"linkedSpeciesId\":${t.linkedSpeciesId ?: "null"},\"projectId\":${t.projectId ?: "null"},\"parentTaskId\":${t.parentTaskId ?: "null"},\"sortOrder\":${t.sortOrder}}" }
         if (mediaManifest != null) {
             appendLine(",")
             appendLine("  \"mediaManifest\": $mediaManifest")
@@ -799,6 +892,8 @@ ${report.nextSteps}
     }
 
     private fun JSONObject.optNullableLong(name: String): Long? = if (isNull(name) || !has(name)) null else optLong(name).takeIf { it > 0L }
+    private fun JSONObject.optDoubleOpt(name: String): Double? = if (isNull(name) || !has(name)) null else optDouble(name)
+    private fun JSONObject.optNullableInt(name: String): Int? = if (isNull(name) || !has(name)) null else optInt(name)
 
     // ══════════════════════════════════════════════════════════════════════
     //  Export privacy utilities

@@ -456,31 +456,102 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             bundle.reports.forEach { repository.addReport(it) }
             bundle.flashcards.forEach { repository.addFlashcard(it) }
 
+            // ── Import new entity types (species, weather, sessions, tasks) ──
+            bundle.species.forEach { repository.addSpecies(it) }
+            bundle.weatherCatalog.forEach { repository.addWeatherCatalog(it) }
+            bundle.researchSessions.forEach { repository.addResearchSession(it) }
+            bundle.tasks.forEach { repository.addTask(it) }
+
             // Phase 2: Relink extracted media files to the newly imported entities.
             // Copy temp files to a permanent app-local directory so they survive
             // cleanupExtractedPackage() which runs in the caller's finally block.
             if (mediaFiles.isNotEmpty()) {
                 val appContext = getApplication<android.app.Application>()
+
+                // ── Group media entries by entity type and old ID ──
+                val obsMedia = mutableMapOf<Long, MutableList<FieldMindExportMediaPacker.MediaEntry>>()
+                val noteMedia = mutableMapOf<Long, MutableList<FieldMindExportMediaPacker.MediaEntry>>()
+                val projectMedia = mutableMapOf<Long, MutableList<FieldMindExportMediaPacker.MediaEntry>>()
+                val sourceMedia = mutableMapOf<Long, MutableList<FieldMindExportMediaPacker.MediaEntry>>()
+
                 mediaFiles.forEach { media ->
                     when (media.entityType) {
-                        "observation" -> {
-                            val newObsId = oldToNewObsId[media.entityId]
-                            if (newObsId != null) {
-                                val permUri = copyMediaToPermanentLocation(appContext, media, newObsId)
-                                repository.addAttachment(
-                                    EvidenceAttachmentEntity(
-                                        observationId = newObsId,
-                                        type = media.mimeType,
-                                        uri = permUri,
-                                        caption = media.caption
-                                    )
+                        "observation" -> obsMedia.getOrPut(media.entityId) { mutableListOf() }.add(media)
+                        "note" -> noteMedia.getOrPut(media.entityId) { mutableListOf() }.add(media)
+                        "project" -> projectMedia.getOrPut(media.entityId) { mutableListOf() }.add(media)
+                        "source" -> sourceMedia.getOrPut(media.entityId) { mutableListOf() }.add(media)
+                    }
+                }
+
+                // ── Observations: create EvidenceAttachmentEntity for each media file ──
+                obsMedia.forEach { (oldId, entries) ->
+                    val newId = oldToNewObsId[oldId] ?: return@forEach
+                    entries.forEach { media ->
+                        val (permUri, permPath) = copyMediaToPermanentLocation(appContext, media, newId)
+                        repository.addAttachment(
+                            EvidenceAttachmentEntity(
+                                observationId = newId,
+                                type = media.mimeType,
+                                uri = permUri,
+                                localPath = permPath,
+                                caption = media.caption
+                            )
+                        )
+                    }
+                }
+
+                // ── Notes: reconstruct attachmentUris (type|caption|uri)\n... ──
+                noteMedia.forEach { (oldId, entries) ->
+                    val newId = oldToNewNoteId[oldId] ?: return@forEach
+                    val newLines = entries.map { media ->
+                        val (permUri, _) = copyMediaToPermanentLocation(appContext, media, newId)
+                        val type = inferAttachmentType(media)
+                        "$type|${media.caption}|$permUri"
+                    }
+                    if (newLines.isNotEmpty()) {
+                        // Fetch the imported note and update its attachmentUris
+                        val noteEntity = bundle.notes.firstOrNull { it.id == oldId }
+                        if (noteEntity != null) {
+                            repository.updateNote(
+                                noteEntity.copy(
+                                    attachmentUris = newLines.joinToString("\\n"),
+                                    id = newId
                                 )
-                            }
+                            )
                         }
-                        // Note/Project/Source: attachment URIs are embedded in text fields
-                        // (attachmentUris / fileUri). These are imported with stale device URIs
-                        // from the JSON. Relinking them requires reconstructing the field content
-                        // which is a follow-up enhancement.
+                    }
+                }
+
+                // ── Projects: reconstruct attachmentUris (comma-separated URIs) ──
+                projectMedia.forEach { (oldId, entries) ->
+                    val newId = oldToNewProjId[oldId] ?: return@forEach
+                    val newUris = entries.map { media ->
+                        val (permUri, _) = copyMediaToPermanentLocation(appContext, media, newId)
+                        permUri
+                    }
+                    if (newUris.isNotEmpty()) {
+                        val projectEntity = bundle.projects.firstOrNull { it.id == oldId }
+                        if (projectEntity != null) {
+                            repository.updateProject(
+                                projectEntity.copy(
+                                    attachmentUris = newUris.joinToString(","),
+                                    id = newId
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // ── Sources: update fileUri (single URI per source) ──
+                sourceMedia.forEach { (oldId, entries) ->
+                    val newId = oldToNewSrcId[oldId] ?: return@forEach
+                    entries.forEach { media ->
+                        val (permUri, _) = copyMediaToPermanentLocation(appContext, media, newId)
+                        val sourceEntity = bundle.sources.firstOrNull { it.id == oldId }
+                        if (sourceEntity != null) {
+                            // updateSourceFile internally copies the entity with the new fileUri
+                            repository.updateSourceFile(sourceEntity, fileUri = permUri)
+                        }
                     }
                 }
             }
@@ -492,13 +563,14 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     /**
      * Copy an extracted media file from its temp location to a permanent app-local
      * directory so it survives [FieldMindExportMediaPacker.cleanupExtractedPackage].
-     * Returns the permanent [android.net.Uri] string.
+     * Returns (permanentUriString, localFilePath) pair. Sets both [uri] and [localPath]
+     * on the restored [EvidenceAttachmentEntity] so the media is accessible via either path.
      */
     private suspend fun copyMediaToPermanentLocation(
         appContext: android.app.Application,
         media: FieldMindExportMediaPacker.MediaEntry,
         newEntityId: Long
-    ): String {
+    ): Pair<String, String> {
         val permDir = java.io.File(appContext.filesDir, "imported_attachments/${media.entityType}s/$newEntityId")
         permDir.mkdirs()
         val permFile = java.io.File(permDir, media.fileName)
@@ -507,11 +579,11 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             val srcFile = java.io.File(tempUri.path!!)
             if (srcFile.exists()) {
                 srcFile.copyTo(permFile, overwrite = true)
-                return android.net.Uri.fromFile(permFile).toString()
+                return Pair(android.net.Uri.fromFile(permFile).toString(), permFile.absolutePath)
             }
         } catch (_: Exception) { }
         // Fallback: use original URI (may become stale after cleanup, but better than nothing)
-        return media.uri
+        return Pair(media.uri, android.net.Uri.parse(media.uri).path ?: "")
     }
 
     fun addHypothesis(questionId: Long?, prediction: String, evidenceNeeded: String, confidence: Int, reasoning: String = "", supportCriteria: String = "", weakeningCriteria: String = "", testMethod: String = "", resultStatus: String = "Unknown") = viewModelScope.launch {
@@ -547,6 +619,9 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     }
     fun linkObservationToSession(sessionId: Long, observationId: Long) = viewModelScope.launch {
         repository.linkSessionObservation(sessionId, observationId)
+    }
+    fun unlinkObservationFromSession(sessionId: Long, observationId: Long) = viewModelScope.launch {
+        repository.unlinkSessionObservation(sessionId, observationId)
     }
     val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val sessionObservationCrossRefs: StateFlow<List<SessionObservationCrossRef>> = repository.sessionObservationCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -731,6 +806,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun deleteTask(id: Long) = viewModelScope.launch { repository.deleteTask(id) }
     val tasks: StateFlow<List<TaskEntity>> = repository.tasks.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     fun observeTasksForProject(projectId: Long) = repository.observeTasksForProject(projectId)
+    val weatherCatalog: StateFlow<List<WeatherCatalogEntity>> = repository.weatherCatalog.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic", dedupKey: String = "") = viewModelScope.launch {
         val key = dedupKey.ifBlank { "${front.lowercase().trim()}:${back.lowercase().trim()}".hashCode().toLong().let { if (it == Long.MIN_VALUE) Long.MAX_VALUE else kotlin.math.abs(it) }.toString(36) }
@@ -863,6 +939,37 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                         android.util.Log.d("FieldMindVM", "Daily auto-generation cap ($AUTO_GEN_DAILY_CAP) reached — pausing until tomorrow")
                     }
                 }
+        }
+    }
+
+    /**
+     * Infer an attachment type label from a MediaEntry for note attachmentUris reconstruction.
+     * Falls back to [mimeType] or infers from the file extension.
+     */
+    private fun inferAttachmentType(media: FieldMindExportMediaPacker.MediaEntry): String {
+        if (media.mimeType.isNotBlank() && media.mimeType != "application/octet-stream") {
+            return when {
+                media.mimeType.startsWith("image/") -> "Photo"
+                media.mimeType.startsWith("video/") -> "Video"
+                media.mimeType.startsWith("audio/") -> "Audio"
+                else -> media.mimeType
+            }
+        }
+        // Infer from file extension
+        val name = media.fileName.lowercase()
+        return when {
+            name.endsWith(".jpg") || name.endsWith(".jpeg") ||
+            name.endsWith(".png") || name.endsWith(".webp") ||
+            name.endsWith(".gif") || name.endsWith(".heic") ||
+            name.endsWith(".bmp") -> "Photo"
+            name.endsWith(".mp4") || name.endsWith(".mov") ||
+            name.endsWith(".avi") || name.endsWith(".mkv") ||
+            name.endsWith(".webm") || name.endsWith(".3gp") -> "Video"
+            name.endsWith(".m4a") || name.endsWith(".mp3") ||
+            name.endsWith(".wav") || name.endsWith(".ogg") ||
+            name.endsWith(".flac") || name.endsWith(".aac") -> "Audio"
+            name.endsWith(".pdf") -> "File"
+            else -> "File"
         }
     }
 
