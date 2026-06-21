@@ -205,22 +205,13 @@ fun DetailScreen(
                             projects.firstOrNull { it.id == f.projectId }?.let { add(Triple("project", it.title, it.id)) }
                         }, onOpenDetail) }
                     }
-"research_session" -> {
-                        val session = researchSessions.firstOrNull { it.id == id }
-                        if (session != null) {
-                            val linkedObsIds = sessionObservationCrossRefs.filter { it.sessionId == session.id }.map { it.observationId }.toSet()
-                            val linkedObservations = observations.filter { it.id in linkedObsIds }
-                            item { ResearchSessionDetailContent(session, linkedObservations, onOpenDetail, onUnlink = { obsId -> viewModel.unlinkObservationFromSession(session.id, obsId) }) }
-                            item { BacklinksPanel(buildList {
-                                projects.firstOrNull { it.id == session.projectId }?.let { add(Triple("project", it.title, it.id)) }
-                            }, onOpenDetail) }
-                        } else {
-                            item {
-                                Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-                                    CircularProgressIndicator()
-                                }
-                            }
-                        }
+"research_session" -> researchSessions.firstOrNull { it.id == id }?.let { session ->
+                        val linkedObsIds = sessionObservationCrossRefs.filter { it.sessionId == session.id }.map { it.observationId }.toSet()
+                        val linkedObservations = observations.filter { it.id in linkedObsIds }
+                        item { ResearchSessionDetailContent(session, linkedObservations, onOpenDetail, onUnlink = { obsId -> viewModel.unlinkObservationFromSession(session.id, obsId) }) }
+                        item { BacklinksPanel(buildList {
+                            projects.firstOrNull { it.id == session.projectId }?.let { add(Triple("project", it.title, it.id)) }
+                        }, onOpenDetail) }
                     }
         }
     }
