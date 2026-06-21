@@ -438,12 +438,12 @@ fun HomeScreen(
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             dataToolsCards.take(2).forEach { (info, screen) ->
-                                DataToolMiniCard(info.first, info.second, info.third, FieldMindTheme.colors.data) { onNavigate(screen) }
+                                DataToolMiniCard(info.first, info.second, info.third, FieldMindTheme.colors.data, Modifier.weight(1f)) { onNavigate(screen) }
                             }
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             dataToolsCards.drop(2).forEach { (info, screen) ->
-                                DataToolMiniCard(info.first, info.second, info.third, FieldMindTheme.colors.data) { onNavigate(screen) }
+                                DataToolMiniCard(info.first, info.second, info.third, FieldMindTheme.colors.data, Modifier.weight(1f)) { onNavigate(screen) }
                             }
                         }
                     }
@@ -2623,11 +2623,12 @@ private fun DataToolMiniCard(
     description: String,
     icon: MaterialSymbolIcon,
     color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.weight(1f),
+        modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
