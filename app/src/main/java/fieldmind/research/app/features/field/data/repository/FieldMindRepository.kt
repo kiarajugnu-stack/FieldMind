@@ -116,6 +116,29 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     val sessionObservationCrossRefs: Flow<List<SessionObservationCrossRef>> = dao.observeAllSessionObservationCrossRefs()
     val hypothesisEvidenceCrossRefs: Flow<List<HypothesisEvidenceCrossRef>> = dao.observeAllHypothesisEvidence()
 
+    // ── Cross-reference queries for export ──
+    suspend fun getAllObservationTagCrossRefs(): List<ObservationTagCrossRef> = dao.getAllObservationTagCrossRefs()
+    suspend fun getAllQuestionObservationCrossRefs(): List<QuestionObservationCrossRef> = dao.getAllQuestionObservationCrossRefs()
+    suspend fun getAllQuestionSourceCrossRefs(): List<QuestionSourceCrossRef> = dao.getAllQuestionSourceCrossRefs()
+    suspend fun getAllProjectObservationCrossRefs(): List<ProjectObservationCrossRef> = dao.getAllProjectObservationCrossRefs()
+    suspend fun getAllProjectSourceCrossRefs(): List<ProjectSourceCrossRef> = dao.getAllProjectSourceCrossRefs()
+    suspend fun getAllReportSourceCrossRefs(): List<ReportSourceCrossRef> = dao.getAllReportSourceCrossRefs()
+    suspend fun getAllProjectDataRecordCrossRefs(): List<ProjectDataRecordCrossRef> = dao.getAllProjectDataRecordCrossRefs()
+    suspend fun getAllTaskObservationCrossRefs(): List<TaskObservationCrossRef> = dao.getAllTaskObservationCrossRefs()
+    suspend fun getAllTaskEvidenceCrossRefs(): List<TaskEvidenceCrossRef> = dao.getAllTaskEvidenceCrossRefs()
+    suspend fun getAllSpeciesObservationCrossRefs(): List<SpeciesObservationCrossRef> = dao.getAllSpeciesObservationCrossRefs()
+    suspend fun getAllSpeciesQuestionCrossRefs(): List<SpeciesQuestionCrossRef> = dao.getAllSpeciesQuestionCrossRefs()
+    suspend fun getAllEvidenceReportCrossRefs(): List<EvidenceReportCrossRef> = dao.getAllEvidenceReportCrossRefs()
+
+    // ── Cross-reference link methods (missing ones) ──
+    suspend fun linkObservationTag(observationId: Long, tagId: Long) = dao.linkObservationTag(ObservationTagCrossRef(observationId, tagId))
+    suspend fun linkTaskObservation(taskId: Long, observationId: Long) = dao.linkTaskObservation(TaskObservationCrossRef(taskId, observationId))
+
+    suspend fun linkTaskEvidence(taskId: Long, evidenceId: Long) = dao.linkTaskEvidence(TaskEvidenceCrossRef(taskId, evidenceId))
+    suspend fun linkSpeciesObservation(speciesId: Long, observationId: Long) = dao.linkSpeciesObservation(SpeciesObservationCrossRef(speciesId, observationId))
+    suspend fun linkSpeciesQuestion(speciesId: Long, questionId: Long) = dao.linkSpeciesQuestion(SpeciesQuestionCrossRef(speciesId, questionId))
+    suspend fun linkEvidenceReport(evidenceId: Long, reportId: Long) = dao.linkEvidenceReport(EvidenceReportCrossRef(evidenceId, reportId))
+
     // ── Species Registry ──
     val species: Flow<List<SpeciesEntity>> = dao.observeSpecies()
     fun observeSpeciesForProject(projectId: Long) = dao.observeSpeciesForProject(projectId)

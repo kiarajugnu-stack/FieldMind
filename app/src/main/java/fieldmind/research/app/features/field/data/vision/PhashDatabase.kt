@@ -174,6 +174,29 @@ class PhashDatabase(private val context: Context) {
         prefs.edit().putString(STORAGE_KEY, json).apply()
     }
 
+    // ── Backup/Restore for export pipeline ──
+
+    /**
+     * Export all entries as a JSON string for inclusion in the backup archive.
+     */
+    fun exportEntriesJson(): String {
+        val entries = getAllEntries()
+        return gson.toJson(entries)
+    }
+
+    /**
+     * Restore entries from a previously exported JSON string.
+     * Clears existing entries first, then imports the backup.
+     */
+    fun restoreFromJson(json: String) {
+        if (json.isBlank()) return
+        try {
+            val type = object : TypeToken<List<PhashEntry>>() {}.type
+            val entries: List<PhashEntry> = gson.fromJson(json, type) ?: return
+            saveEntries(entries)
+        } catch (_: Exception) { }
+    }
+
     /**
      * Compute 64-bit pHash from an image URI using SpeciesImageAnalyzer.
      * This is used when the caller hasn't already computed the hash.

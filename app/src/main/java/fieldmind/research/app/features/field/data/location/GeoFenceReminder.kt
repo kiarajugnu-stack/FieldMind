@@ -279,6 +279,65 @@ class GeoFenceReminder(private val context: Context) {
         return _triggeredToday.filter { it.value >= todayStart }.keys.toList()
     }
 
+    // ── Backup/Restore for export pipeline ──
+
+    /**
+     * Export all geofence regions as a JSON string for inclusion in the backup archive.
+     */
+    fun exportRegionsJson(): String {
+        val regions = _activeRegions.value
+        val json = org.json.JSONArray()
+        regions.forEach { r ->
+            json.put(org.json.JSONObject().apply {
+                put("id", r.id)
+                put("label", r.label)
+                put("latitude", r.latitude)
+                put("longitude", r.longitude)
+                put("radiusMeters", r.radiusMeters)
+                put("triggerOnEntry", r.triggerOnEntry)
+                put("triggerOnExit", r.triggerOnExit)
+                put("note", r.note)
+                put("color", r.color)
+                put("createdAt", r.createdAt)
+                put("isActive", r.isActive)
+            })
+        }
+        return json.toString(2)
+    }
+
+    /**
+     * Restore geofence regions from a previously exported JSON string.
+     * Clears existing regions first, then imports the backup.
+     */
+    fun restoreRegionsFromJson(json: String) {
+        if (json.isBlank()) return
+        try {
+            clearAllRegions()
+            val arr = org.json.JSONArray(json)
+            val restored = mutableListOf<GeofenceRegion>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                restored.add(GeofenceRegion(
+                    id = obj.optString("id", java.util.UUID.randomUUID().toString()),
+                    label = obj.optString("label", "Restored site"),
+                    latitude = obj.optDouble("latitude", 0.0),
+                    longitude = obj.optDouble("longitude", 0.0),
+                    radiusMeters = obj.optDouble("radiusMeters", 50.0).toFloat(),
+                    triggerOnEntry = obj.optBoolean("triggerOnEntry", true),
+                    triggerOnExit = obj.optBoolean("triggerOnExit", false),
+                    note = obj.optString("note", ""),
+                    color = obj.optLong("color", 0xFF4CAF50),
+                    createdAt = obj.optLong("createdAt", System.currentTimeMillis()),
+                    isActive = obj.optBoolean("isActive", true)
+                ))
+            }
+            // Save to storage and re-register active geofences
+            _activeRegions.value = restored
+            saveRegions()
+            restored.filter { it.isActive }.forEach { addRegion(it) }
+        } catch (_: Exception) { }
+    }
+
     // ── Private helpers ──
 
     private val _triggeredToday = mutableMapOf<String, Long>()

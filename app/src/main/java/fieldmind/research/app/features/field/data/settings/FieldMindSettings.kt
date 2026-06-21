@@ -596,6 +596,288 @@ class FieldMindSettings private constructor(context: Context) {
     // ── Perenual API ──
     fun setPerenualApiKey(value: String) = edit(KEY_PERENUAL_API_KEY, value.trim()) { _perenualApiKey.value = value.trim() }
 
+    // ── Settings export/import for backup ──
+    /**
+     * Export all settings as a JSON string for inclusion in the archive.
+     */
+    fun toExportJson(): String = org.json.JSONObject().apply {
+        put(KEY_DAILY_GOAL, _dailyObservationGoal.value)
+        put(KEY_DEFAULT_CATEGORY, _defaultCategory.value)
+        put(KEY_DEFAULT_CONFIDENCE, _defaultConfidence.value)
+        put(KEY_LOCATION_MODE, _locationMode.value)
+        put(KEY_MEDIA_ATTACHMENTS, _mediaAttachmentsEnabled.value)
+        put(KEY_AUDIO_RECORDING, _audioRecordingEnabled.value)
+        put(KEY_ATTACHMENT_EXPORT_MODE, _attachmentExportMode.value)
+        put(KEY_GEMINI_ENABLED, _geminiEnabled.value)
+        put(KEY_AI_PROVIDER, _aiProvider.value)
+        put(KEY_GEMINI_API_KEY, _geminiApiKey.value)
+        put(KEY_GEMINI_MODEL, _geminiModel.value)
+        put(KEY_OPENAI_API_KEY, _openAiApiKey.value)
+        put(KEY_OPENAI_MODEL, _openAiModel.value)
+        put(KEY_AI_CONFIRM, _aiRequireConfirmBeforeSave.value)
+        put(KEY_AI_SEND_ATTACHMENTS, _aiSendAttachments.value)
+        put(KEY_REMINDERS, _remindersEnabled.value)
+        put(KEY_STREAKS, _streaksEnabled.value)
+        put(KEY_EXPORT_FORMAT, _defaultExportFormat.value)
+        put(KEY_PRIVACY_LOCK, _privacyLockEnabled.value)
+        put(KEY_PRIVACY_TYPING, _privacyTypingEnabled.value)
+        put(KEY_DYNAMIC_COLOR, _dynamicColorEnabled.value)
+        put(KEY_THEME_MODE, _themeMode.value)
+        put(KEY_PROFILE_NAME, _profileName.value)
+        put(KEY_PROFILE_ROLE, _profileRole.value)
+        put(KEY_PROFILE_FOCUS, _profileFocus.value)
+        put(KEY_LOCAL_MODEL_ENABLED, _localModelEnabled.value)
+        put(KEY_LOCAL_MODEL_OPTION, _localModelOption.value)
+        put(KEY_LOCAL_MODEL_DOWNLOADED, _localModelDownloaded.value)
+        put(KEY_LOCAL_MODEL_USE_STUDY, _localModelUseForStudy.value)
+        put(KEY_AUTO_BACKUP_ENABLED, _autoBackupEnabled.value)
+        put(KEY_AUTO_BACKUP_INTERVAL, _autoBackupInterval.value)
+        put(KEY_BACKUP_FOLDER_URI, _backupFolderUri.value)
+        put(KEY_AUTO_WEATHER, _autoWeatherEnabled.value)
+        put(KEY_AUTO_FLASHCARDS, _autoFlashcardsEnabled.value)
+        put(KEY_AUTO_PATTERNS, _autoPatternDetectionEnabled.value)
+        put(KEY_AUTO_QUESTIONS, _autoQuestionsEnabled.value)
+        put(KEY_TEMP_UNIT, _tempUnit.value)
+        put(KEY_WEATHER_REFRESH, _weatherRefreshInterval.value)
+        put(KEY_WEATHER_SHOW_TEMP, _weatherShowTemperature.value)
+        put(KEY_WEATHER_SHOW_CONDITION, _weatherShowCondition.value)
+        put(KEY_WEATHER_SHOW_HUMIDITY, _weatherShowHumidity.value)
+        put(KEY_WEATHER_SHOW_WIND, _weatherShowWind.value)
+        put(KEY_WEATHER_SHOW_CLOUD, _weatherShowCloudCover.value)
+        put(KEY_WEATHER_SHOW_PRESSURE, _weatherShowPressure.value)
+        put(KEY_WEATHER_SHOW_CLOUD_ANIMATION, _weatherShowCloudAnimation.value)
+        put(KEY_WEATHER_PROVIDER, _weatherProvider.value)
+        put(KEY_WEATHER_PROVIDERS, _weatherProviders.value)
+        put(KEY_WEATHER_API_KEY, _weatherApiKey.value)
+        put(KEY_OPENWEATHERMAP_API_KEY, _openWeatherMapApiKey.value)
+        put(KEY_WEATHERAPI_API_KEY, _weatherApiDotComApiKey.value)
+        put(KEY_IMD_API_KEY, _imdApiKey.value)
+        put(KEY_OPENMETEO_CONFIG, _openMeteoApiConfig.value)
+        put(KEY_GPS_MODE, _gpsMode.value)
+        put(KEY_DISTANCE_UNIT, _distanceUnit.value)
+        put(KEY_WIND_SPEED_UNIT, _windSpeedUnit.value)
+        put(KEY_TIME_FORMAT, _timeFormat.value)
+        put(KEY_DATE_FORMAT, _dateFormat.value)
+        put(KEY_MAP_TYPE, _mapType.value)
+        put(KEY_MAP_SHOW_LOCATION, _mapShowLocation.value)
+        put(KEY_FIELD_MODE_DEFAULT_SESSION, _fieldModeDefaultSession.value)
+        put(KEY_FIELD_MODE_AUTO_START_TIMER, _fieldModeAutoStartTimer.value)
+        put(KEY_FIELD_MODE_OBSERVATION_SPACING, _fieldModeObservationSpacing.value)
+        put(KEY_DEVELOPER_MODE, _developerMode.value)
+        put(KEY_DEBUG_LOGGING, _debugLogging.value)
+        put(KEY_DATA_INTEGRITY_CHECK, _dataIntegrityCheckOnLaunch.value)
+        put(KEY_LOCK_TIMEOUT, _lockTimeout.value)
+        put(KEY_AUTO_LOCK_BACKGROUND, _autoLockOnBackground.value)
+        put(KEY_SCREEN_CAPTURE_PROTECTION, _screenCaptureProtectionEnabled.value)
+        put(KEY_ALWAYS_ON_SCREEN, _alwaysOnScreenEnabled.value)
+        put(KEY_ALWAYS_ON_SCREEN_DURATION, _alwaysOnScreenDuration.value)
+        put(KEY_CLIPBOARD_CLEANUP, _clipboardAutoCleanupEnabled.value)
+        put(KEY_CLIPBOARD_CLEANUP_DELAY, _clipboardCleanupDelay.value)
+        put(KEY_CLEAR_CLIPBOARD_AFTER_EXPORT, _clearClipboardAfterExport.value)
+        put(KEY_EXPORT_GPS_PRIVACY, _exportGpsPrivacy.value)
+        put(KEY_EXPORT_EXCLUDE_MEDIA, _exportExcludeMedia.value)
+        put(KEY_SPECIES_ID_API_KEY, _speciesIdApiKey.value)
+        put(KEY_SPECIES_ID_OFFLINE_FIRST, _speciesIdOfflineFirst.value)
+        put(KEY_SPECIES_MODEL_BASE_URL, _speciesModelBaseUrl.value)
+        put(KEY_PERENUAL_API_KEY, _perenualApiKey.value)
+        put(KEY_APP_PIN_ENABLED, _appPinEnabled.value)
+        put(KEY_APP_PIN_HASH, _appPinHash.value)
+        put(KEY_USER_INTERESTS, UserInterests.toJson(_userInterests.value))
+        put(KEY_SCREEN_VISIBILITY, ScreenVisibility.toJson(_screenVisibility.value))
+        put(KEY_EXTENDED_TOUR_DONE, _onboardingExtendedTourCompleted.value)
+    }.toString(2)
+
+    /**
+     * Restore all settings from a previously exported JSON object.
+     */
+    fun applyFromJson(json: org.json.JSONObject) {
+        val edit = prefs.edit()
+        // Helper to read keys and apply
+        fun applyString(key: String) { if (json.has(key)) edit.putString(key, json.optString(key, "")) }
+        fun applyBoolean(key: String, default: Boolean = false) { if (json.has(key)) edit.putBoolean(key, json.optBoolean(key, default)) }
+        fun applyInt(key: String, default: Int = 0) { if (json.has(key)) edit.putInt(key, json.optInt(key, default)) }
+
+        applyString(KEY_DEFAULT_CATEGORY)
+        applyString(KEY_DEFAULT_CONFIDENCE)
+        applyString(KEY_LOCATION_MODE)
+        applyBoolean(KEY_MEDIA_ATTACHMENTS, true)
+        applyBoolean(KEY_AUDIO_RECORDING, true)
+        applyString(KEY_ATTACHMENT_EXPORT_MODE)
+        applyBoolean(KEY_GEMINI_ENABLED)
+        applyString(KEY_AI_PROVIDER)
+        applyString(KEY_GEMINI_API_KEY)
+        applyString(KEY_GEMINI_MODEL)
+        applyString(KEY_OPENAI_API_KEY)
+        applyString(KEY_OPENAI_MODEL)
+        applyBoolean(KEY_AI_CONFIRM, true)
+        applyBoolean(KEY_AI_SEND_ATTACHMENTS)
+        applyBoolean(KEY_REMINDERS)
+        applyBoolean(KEY_STREAKS, true)
+        applyString(KEY_EXPORT_FORMAT)
+        applyBoolean(KEY_PRIVACY_LOCK)
+        applyBoolean(KEY_PRIVACY_TYPING)
+        applyBoolean(KEY_DYNAMIC_COLOR)
+        applyString(KEY_THEME_MODE)
+        applyString(KEY_PROFILE_NAME)
+        applyString(KEY_PROFILE_ROLE)
+        applyString(KEY_PROFILE_FOCUS)
+        applyBoolean(KEY_LOCAL_MODEL_ENABLED)
+        applyString(KEY_LOCAL_MODEL_OPTION)
+        applyBoolean(KEY_LOCAL_MODEL_DOWNLOADED)
+        applyBoolean(KEY_LOCAL_MODEL_USE_STUDY, true)
+        applyBoolean(KEY_AUTO_BACKUP_ENABLED)
+        applyString(KEY_AUTO_BACKUP_INTERVAL)
+        applyString(KEY_BACKUP_FOLDER_URI)
+        applyBoolean(KEY_AUTO_WEATHER)
+        applyBoolean(KEY_AUTO_FLASHCARDS)
+        applyBoolean(KEY_AUTO_PATTERNS, true)
+        applyBoolean(KEY_AUTO_QUESTIONS)
+        applyString(KEY_TEMP_UNIT)
+        applyString(KEY_WEATHER_REFRESH)
+        applyBoolean(KEY_WEATHER_SHOW_TEMP, true)
+        applyBoolean(KEY_WEATHER_SHOW_CONDITION, true)
+        applyBoolean(KEY_WEATHER_SHOW_HUMIDITY, true)
+        applyBoolean(KEY_WEATHER_SHOW_WIND, true)
+        applyBoolean(KEY_WEATHER_SHOW_CLOUD, true)
+        applyBoolean(KEY_WEATHER_SHOW_PRESSURE)
+        applyBoolean(KEY_WEATHER_SHOW_CLOUD_ANIMATION, true)
+        applyString(KEY_WEATHER_PROVIDER)
+        applyString(KEY_WEATHER_PROVIDERS)
+        applyString(KEY_WEATHER_API_KEY)
+        applyString(KEY_OPENWEATHERMAP_API_KEY)
+        applyString(KEY_WEATHERAPI_API_KEY)
+        applyString(KEY_IMD_API_KEY)
+        applyString(KEY_OPENMETEO_CONFIG)
+        applyString(KEY_GPS_MODE)
+        applyString(KEY_DISTANCE_UNIT)
+        applyString(KEY_WIND_SPEED_UNIT)
+        applyString(KEY_TIME_FORMAT)
+        applyString(KEY_DATE_FORMAT)
+        applyString(KEY_MAP_TYPE)
+        applyBoolean(KEY_MAP_SHOW_LOCATION, true)
+        applyString(KEY_FIELD_MODE_DEFAULT_SESSION)
+        applyBoolean(KEY_FIELD_MODE_AUTO_START_TIMER)
+        applyString(KEY_FIELD_MODE_OBSERVATION_SPACING)
+        applyBoolean(KEY_DEVELOPER_MODE)
+        applyBoolean(KEY_DEBUG_LOGGING)
+        applyBoolean(KEY_DATA_INTEGRITY_CHECK)
+        applyString(KEY_LOCK_TIMEOUT)
+        applyBoolean(KEY_AUTO_LOCK_BACKGROUND, true)
+        applyBoolean(KEY_SCREEN_CAPTURE_PROTECTION)
+        applyBoolean(KEY_ALWAYS_ON_SCREEN)
+        applyString(KEY_ALWAYS_ON_SCREEN_DURATION)
+        applyBoolean(KEY_CLIPBOARD_CLEANUP, true)
+        applyString(KEY_CLIPBOARD_CLEANUP_DELAY)
+        applyBoolean(KEY_CLEAR_CLIPBOARD_AFTER_EXPORT, true)
+        applyString(KEY_EXPORT_GPS_PRIVACY)
+        applyBoolean(KEY_EXPORT_EXCLUDE_MEDIA)
+        applyString(KEY_SPECIES_ID_API_KEY)
+        applyBoolean(KEY_SPECIES_ID_OFFLINE_FIRST, true)
+        applyString(KEY_SPECIES_MODEL_BASE_URL)
+        applyString(KEY_PERENUAL_API_KEY)
+        applyBoolean(KEY_APP_PIN_ENABLED)
+        applyString(KEY_APP_PIN_HASH)
+        if (json.has(KEY_USER_INTERESTS)) {
+            val jsonStr = json.optString(KEY_USER_INTERESTS, "")
+            val interests = UserInterests.fromJson(jsonStr)
+            edit.putString(KEY_USER_INTERESTS, jsonStr)
+            _userInterests.value = interests
+        }
+        if (json.has(KEY_SCREEN_VISIBILITY)) {
+            val jsonStr = json.optString(KEY_SCREEN_VISIBILITY, "")
+            val vis = ScreenVisibility.fromJson(jsonStr)
+            edit.putString(KEY_SCREEN_VISIBILITY, jsonStr)
+            _screenVisibility.value = vis
+        }
+        applyBoolean(KEY_EXTENDED_TOUR_DONE)
+        applyInt(KEY_DAILY_GOAL)
+
+        edit.apply()
+
+        // Refresh StateFlows for all edited keys that have backing StateFlows
+        _dailyObservationGoal.value = prefs.getInt(KEY_DAILY_GOAL, 1)
+        _defaultCategory.value = prefs.getString(KEY_DEFAULT_CATEGORY, "Bird") ?: "Bird"
+        _defaultConfidence.value = prefs.getString(KEY_DEFAULT_CONFIDENCE, "Sure") ?: "Sure"
+        _locationMode.value = prefs.getString(KEY_LOCATION_MODE, "Manual only") ?: "Manual only"
+        _mediaAttachmentsEnabled.value = prefs.getBoolean(KEY_MEDIA_ATTACHMENTS, true)
+        _audioRecordingEnabled.value = prefs.getBoolean(KEY_AUDIO_RECORDING, true)
+        _attachmentExportMode.value = prefs.getString(KEY_ATTACHMENT_EXPORT_MODE, "Reference URIs") ?: "Reference URIs"
+        _geminiEnabled.value = prefs.getBoolean(KEY_GEMINI_ENABLED, false)
+        _aiProvider.value = prefs.getString(KEY_AI_PROVIDER, "Gemini") ?: "Gemini"
+        _geminiApiKey.value = prefs.getString(KEY_GEMINI_API_KEY, "") ?: ""
+        _geminiModel.value = prefs.getString(KEY_GEMINI_MODEL, "gemini-1.5-flash") ?: "gemini-1.5-flash"
+        _openAiApiKey.value = prefs.getString(KEY_OPENAI_API_KEY, "") ?: ""
+        _openAiModel.value = prefs.getString(KEY_OPENAI_MODEL, "gpt-4.1-mini") ?: "gpt-4.1-mini"
+        _aiRequireConfirmBeforeSave.value = prefs.getBoolean(KEY_AI_CONFIRM, true)
+        _aiSendAttachments.value = prefs.getBoolean(KEY_AI_SEND_ATTACHMENTS, false)
+        _remindersEnabled.value = prefs.getBoolean(KEY_REMINDERS, false)
+        _streaksEnabled.value = prefs.getBoolean(KEY_STREAKS, true)
+        _defaultExportFormat.value = prefs.getString(KEY_EXPORT_FORMAT, "Markdown") ?: "Markdown"
+        _privacyLockEnabled.value = prefs.getBoolean(KEY_PRIVACY_LOCK, false)
+        _privacyTypingEnabled.value = prefs.getBoolean(KEY_PRIVACY_TYPING, false)
+        _dynamicColorEnabled.value = prefs.getBoolean(KEY_DYNAMIC_COLOR, false)
+        _themeMode.value = prefs.getString(KEY_THEME_MODE, "Dark") ?: "Dark"
+        _profileName.value = prefs.getString(KEY_PROFILE_NAME, "") ?: ""
+        _profileRole.value = prefs.getString(KEY_PROFILE_ROLE, "Field learner") ?: "Field learner"
+        _profileFocus.value = prefs.getString(KEY_PROFILE_FOCUS, "Wildlife & ecology") ?: "Wildlife & ecology"
+        _localModelEnabled.value = prefs.getBoolean(KEY_LOCAL_MODEL_ENABLED, false)
+        _localModelOption.value = prefs.getString(KEY_LOCAL_MODEL_OPTION, "FieldLite 500 MB") ?: "FieldLite 500 MB"
+        _localModelDownloaded.value = prefs.getBoolean(KEY_LOCAL_MODEL_DOWNLOADED, false)
+        _localModelUseForStudy.value = prefs.getBoolean(KEY_LOCAL_MODEL_USE_STUDY, true)
+        _autoBackupEnabled.value = prefs.getBoolean(KEY_AUTO_BACKUP_ENABLED, false)
+        _autoBackupInterval.value = prefs.getString(KEY_AUTO_BACKUP_INTERVAL, "Weekly") ?: "Weekly"
+        _backupFolderUri.value = prefs.getString(KEY_BACKUP_FOLDER_URI, "") ?: ""
+        _autoWeatherEnabled.value = prefs.getBoolean(KEY_AUTO_WEATHER, false)
+        _autoFlashcardsEnabled.value = prefs.getBoolean(KEY_AUTO_FLASHCARDS, false)
+        _autoPatternDetectionEnabled.value = prefs.getBoolean(KEY_AUTO_PATTERNS, true)
+        _autoQuestionsEnabled.value = prefs.getBoolean(KEY_AUTO_QUESTIONS, false)
+        _tempUnit.value = prefs.getString(KEY_TEMP_UNIT, "Celsius") ?: "Celsius"
+        _weatherRefreshInterval.value = prefs.getString(KEY_WEATHER_REFRESH, "30 min") ?: "30 min"
+        _weatherShowTemperature.value = prefs.getBoolean(KEY_WEATHER_SHOW_TEMP, true)
+        _weatherShowCondition.value = prefs.getBoolean(KEY_WEATHER_SHOW_CONDITION, true)
+        _weatherShowHumidity.value = prefs.getBoolean(KEY_WEATHER_SHOW_HUMIDITY, true)
+        _weatherShowWind.value = prefs.getBoolean(KEY_WEATHER_SHOW_WIND, true)
+        _weatherShowCloudCover.value = prefs.getBoolean(KEY_WEATHER_SHOW_CLOUD, true)
+        _weatherShowPressure.value = prefs.getBoolean(KEY_WEATHER_SHOW_PRESSURE, false)
+        _weatherShowCloudAnimation.value = prefs.getBoolean(KEY_WEATHER_SHOW_CLOUD_ANIMATION, true)
+        _weatherProvider.value = prefs.getString(KEY_WEATHER_PROVIDER, "met-norway") ?: "met-norway"
+        _weatherProviders.value = prefs.getString(KEY_WEATHER_PROVIDERS, "met-norway") ?: "met-norway"
+        _weatherApiKey.value = prefs.getString(KEY_WEATHER_API_KEY, "") ?: ""
+        _openWeatherMapApiKey.value = prefs.getString(KEY_OPENWEATHERMAP_API_KEY, "") ?: ""
+        _weatherApiDotComApiKey.value = prefs.getString(KEY_WEATHERAPI_API_KEY, "") ?: ""
+        _imdApiKey.value = prefs.getString(KEY_IMD_API_KEY, "") ?: ""
+        _openMeteoApiConfig.value = prefs.getString(KEY_OPENMETEO_CONFIG, "") ?: ""
+        _gpsMode.value = prefs.getString(KEY_GPS_MODE, "On capture only") ?: "On capture only"
+        _distanceUnit.value = prefs.getString(KEY_DISTANCE_UNIT, "km") ?: "km"
+        _windSpeedUnit.value = prefs.getString(KEY_WIND_SPEED_UNIT, "km/h") ?: "km/h"
+        _timeFormat.value = prefs.getString(KEY_TIME_FORMAT, "24h") ?: "24h"
+        _dateFormat.value = prefs.getString(KEY_DATE_FORMAT, "ISO") ?: "ISO"
+        _mapType.value = prefs.getString(KEY_MAP_TYPE, "Standard") ?: "Standard"
+        _mapShowLocation.value = prefs.getBoolean(KEY_MAP_SHOW_LOCATION, true)
+        _fieldModeDefaultSession.value = prefs.getString(KEY_FIELD_MODE_DEFAULT_SESSION, "Quick capture") ?: "Quick capture"
+        _fieldModeAutoStartTimer.value = prefs.getBoolean(KEY_FIELD_MODE_AUTO_START_TIMER, false)
+        _fieldModeObservationSpacing.value = prefs.getString(KEY_FIELD_MODE_OBSERVATION_SPACING, "None") ?: "None"
+        _developerMode.value = prefs.getBoolean(KEY_DEVELOPER_MODE, false)
+        _debugLogging.value = prefs.getBoolean(KEY_DEBUG_LOGGING, false)
+        _dataIntegrityCheckOnLaunch.value = prefs.getBoolean(KEY_DATA_INTEGRITY_CHECK, false)
+        _lockTimeout.value = prefs.getString(KEY_LOCK_TIMEOUT, "Immediate") ?: "Immediate"
+        _autoLockOnBackground.value = prefs.getBoolean(KEY_AUTO_LOCK_BACKGROUND, true)
+        _screenCaptureProtectionEnabled.value = prefs.getBoolean(KEY_SCREEN_CAPTURE_PROTECTION, false)
+        _alwaysOnScreenEnabled.value = prefs.getBoolean(KEY_ALWAYS_ON_SCREEN, false)
+        _alwaysOnScreenDuration.value = prefs.getString(KEY_ALWAYS_ON_SCREEN_DURATION, "15 min") ?: "15 min"
+        _clipboardAutoCleanupEnabled.value = prefs.getBoolean(KEY_CLIPBOARD_CLEANUP, true)
+        _clipboardCleanupDelay.value = prefs.getString(KEY_CLIPBOARD_CLEANUP_DELAY, "30 sec") ?: "30 sec"
+        _clearClipboardAfterExport.value = prefs.getBoolean(KEY_CLEAR_CLIPBOARD_AFTER_EXPORT, true)
+        _exportGpsPrivacy.value = prefs.getString(KEY_EXPORT_GPS_PRIVACY, "Exact") ?: "Exact"
+        _exportExcludeMedia.value = prefs.getBoolean(KEY_EXPORT_EXCLUDE_MEDIA, false)
+        _speciesIdApiKey.value = prefs.getString(KEY_SPECIES_ID_API_KEY, "") ?: ""
+        _speciesIdOfflineFirst.value = prefs.getBoolean(KEY_SPECIES_ID_OFFLINE_FIRST, true)
+        _speciesModelBaseUrl.value = prefs.getString(KEY_SPECIES_MODEL_BASE_URL, "") ?: ""
+        _perenualApiKey.value = prefs.getString(KEY_PERENUAL_API_KEY, "") ?: ""
+        _appPinEnabled.value = prefs.getBoolean(KEY_APP_PIN_ENABLED, false)
+        _appPinHash.value = prefs.getString(KEY_APP_PIN_HASH, "") ?: ""
+    }
+
     private inline fun edit(key: String, value: String, after: () -> Unit) { prefs.edit().putString(key, value).apply(); after() }
     private inline fun edit(key: String, value: Boolean, after: () -> Unit) { prefs.edit().putBoolean(key, value).apply(); after() }
     private inline fun edit(key: String, value: Int, after: () -> Unit) { prefs.edit().putInt(key, value).apply(); after() }

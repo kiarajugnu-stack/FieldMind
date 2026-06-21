@@ -35,6 +35,78 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
         val dataRecords = repository.dataRecords.first()
         val reports = repository.reports.first()
         val flashcards = repository.flashcards.first()
+        // ── Added missing entity types (was missing from auto-backup) ──
+        val species = repository.species.first()
+        val weatherCatalog = repository.weatherCatalog.first()
+        val researchSessions = repository.researchSessions.first()
+        val tasks = repository.tasks.first()
+
+        // ── Collect cross-references for backup ──
+        val crossRefDao = FieldMindDatabase.getInstance(applicationContext).fieldMindDao()
+        val crossRefs = buildList {
+            crossRefDao.getAllObservationTagCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("observationTag", it.observationId, it.tagId)) }
+            crossRefDao.getAllQuestionObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionObservation", it.questionId, it.observationId)) }
+            crossRefDao.getAllQuestionSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionSource", it.questionId, it.sourceId)) }
+            crossRefDao.getAllProjectObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectObservation", it.projectId, it.observationId)) }
+            crossRefDao.getAllProjectSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectSource", it.projectId, it.sourceId)) }
+            crossRefDao.getAllReportSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("reportSource", it.reportId, it.sourceId)) }
+            crossRefDao.getAllProjectDataRecordCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectDataRecord", it.projectId, it.dataRecordId)) }
+            crossRefDao.getAllTaskObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskObservation", it.taskId, it.observationId)) }
+            crossRefDao.getAllTaskEvidenceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskEvidence", it.taskId, it.evidenceId)) }
+            crossRefDao.getAllSpeciesObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesObservation", it.speciesId, it.observationId)) }
+            crossRefDao.getAllSpeciesQuestionCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesQuestion", it.speciesId, it.questionId)) }
+            crossRefDao.getAllEvidenceReportCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("evidenceReport", it.evidenceId, it.reportId)) }
+            // SessionObservationCrossRef and HypothesisEvidenceCrossRef use observeAll flows (not direct query)
+            // Collect them via the database session and hypothesis_evidence tables
+            crossRefDao.observeAllSessionObservationCrossRefs().first<List<fieldmind.research.app.features.field.data.database.entity.SessionObservationCrossRef>>().forEach {
+                add(FieldMindExport.CrossReferenceEntry("sessionObservation", it.sessionId, it.observationId))
+            }
+            crossRefDao.observeAllHypothesisEvidence().first<List<fieldmind.research.app.features.field.data.database.entity.HypothesisEvidenceCrossRef>>().forEach {
+                add(FieldMindExport.CrossReferenceEntry("hypothesisEvidence", it.hypothesisId, it.observationId))
+            }
+        }
+
+        // ── Collect PhashDatabase and GeoFenceRegions for backup ──
+        val phashDb = fieldmind.research.app.features.field.data.vision.PhashDatabase(applicationContext)
+        val geoFence = fieldmind.research.app.features.field.data.location.GeoFenceReminder(applicationContext)
+
+        // Merge extra data into settings JSON
+        val settingsObj = org.json.JSONObject(settings.toExportJson())
+        val phashJson = phashDb.exportEntriesJson()
+        if (phashJson.isNotBlank() && phashJson != "[]") {
+            settingsObj.put("phashData", phashJson)
+        }
+        val geoFenceJson = geoFence.exportRegionsJson()
+        if (geoFenceJson.isNotBlank() && geoFenceJson != "[]") {
+            settingsObj.put("geoFenceData", geoFenceJson)
+        }
+
+        // ── Streak data ──
+        val streakPrefs = applicationContext.getSharedPreferences("fieldmind_streak", android.content.Context.MODE_PRIVATE)
+        val lastDate = streakPrefs.getString("last_streak_date", null)
+        val currentStreak = streakPrefs.getInt("current_streak", 0)
+        val bestStreak = streakPrefs.getInt("best_streak", 0)
+        if (lastDate != null || currentStreak > 0 || bestStreak > 0) {
+            settingsObj.put("streakData", org.json.JSONObject().apply {
+                if (lastDate != null) put("lastDate", lastDate)
+                put("current", currentStreak)
+                put("best", bestStreak)
+            })
+        }
+
+        // ── Achievement unlock state ──
+        val achievementPrefs = applicationContext.getSharedPreferences("fieldmind_achievements_v2", android.content.Context.MODE_PRIVATE)
+        val unlockedAchievements = org.json.JSONObject()
+        achievementPrefs.all.forEach { (key, value) ->
+            if (value is Boolean && value) {
+                unlockedAchievements.put(key, true)
+            }
+        }
+        if (unlockedAchievements.length() > 0) {
+            settingsObj.put("achievementData", unlockedAchievements)
+        }
+
+        val settingsJson = settingsObj.toString(2)
 
         val archiveJson = FieldMindExport.archiveJson(
             observations = observations,
@@ -45,7 +117,13 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
             sources = sources,
             dataRecords = dataRecords,
             reports = reports,
-            flashcards = flashcards
+            flashcards = flashcards,
+            species = species,
+            weatherCatalog = weatherCatalog,
+            researchSessions = researchSessions,
+            tasks = tasks,
+            crossReferences = crossRefs,
+            settingsJson = settingsJson
         )
 
         // Build .fieldmind package with media attachments
