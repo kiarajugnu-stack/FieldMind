@@ -230,6 +230,20 @@ class FieldMindSettings private constructor(context: Context) {
     private val _weatherApiKey = MutableStateFlow(prefs.getString(KEY_WEATHER_API_KEY, "") ?: "")
     val weatherApiKey: StateFlow<String> = _weatherApiKey.asStateFlow()
 
+    // Per-provider API keys (each provider that requires a key gets its own field)
+    private val _openWeatherMapApiKey = MutableStateFlow(prefs.getString(KEY_OPENWEATHERMAP_API_KEY, "") ?: "")
+    val openWeatherMapApiKey: StateFlow<String> = _openWeatherMapApiKey.asStateFlow()
+
+    private val _weatherApiDotComApiKey = MutableStateFlow(prefs.getString(KEY_WEATHERAPI_API_KEY, "") ?: "")
+    val weatherApiDotComApiKey: StateFlow<String> = _weatherApiDotComApiKey.asStateFlow()
+
+    private val _imdApiKey = MutableStateFlow(prefs.getString(KEY_IMD_API_KEY, "") ?: "")
+    val imdApiKey: StateFlow<String> = _imdApiKey.asStateFlow()
+
+    // Open-Meteo custom API configuration JSON (imported by user)
+    private val _openMeteoApiConfig = MutableStateFlow(prefs.getString(KEY_OPENMETEO_CONFIG, "") ?: "")
+    val openMeteoApiConfig: StateFlow<String> = _openMeteoApiConfig.asStateFlow()
+
     private val _gpsMode = MutableStateFlow(prefs.getString(KEY_GPS_MODE, "On capture only") ?: "On capture only")
     val gpsMode: StateFlow<String> = _gpsMode.asStateFlow()
 
@@ -403,6 +417,10 @@ class FieldMindSettings private constructor(context: Context) {
         setWeatherProviders(current.joinToString(","))
     }
     fun setWeatherApiKey(value: String) = edit(KEY_WEATHER_API_KEY, value.trim()) { _weatherApiKey.value = value.trim() }
+    fun setOpenWeatherMapApiKey(value: String) = edit(KEY_OPENWEATHERMAP_API_KEY, value.trim()) { _openWeatherMapApiKey.value = value.trim() }
+    fun setWeatherApiDotComApiKey(value: String) = edit(KEY_WEATHERAPI_API_KEY, value.trim()) { _weatherApiDotComApiKey.value = value.trim() }
+    fun setImdApiKey(value: String) = edit(KEY_IMD_API_KEY, value.trim()) { _imdApiKey.value = value.trim() }
+    fun setOpenMeteoApiConfig(value: String) = edit(KEY_OPENMETEO_CONFIG, value.trim()) { _openMeteoApiConfig.value = value.trim() }
     fun setGpsMode(value: String) = edit(KEY_GPS_MODE, value) { _gpsMode.value = value }
     fun setDistanceUnit(value: String) = edit(KEY_DISTANCE_UNIT, value) { _distanceUnit.value = value }
     fun setWindSpeedUnit(value: String) = edit(KEY_WIND_SPEED_UNIT, value) { _windSpeedUnit.value = value }
@@ -543,6 +561,10 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_WEATHER_PROVIDER = "weather_provider"
         private const val KEY_WEATHER_PROVIDERS = "weather_providers"
         private const val KEY_WEATHER_API_KEY = "weather_api_key"
+        private const val KEY_OPENWEATHERMAP_API_KEY = "openweathermap_api_key"
+        private const val KEY_WEATHERAPI_API_KEY = "weatherapi_api_key"
+        private const val KEY_IMD_API_KEY = "imd_api_key"
+        private const val KEY_OPENMETEO_CONFIG = "openmeteo_api_config"
         private const val KEY_GPS_MODE = "gps_mode"
         private const val KEY_DISTANCE_UNIT = "distance_unit"
         private const val KEY_WIND_SPEED_UNIT = "wind_speed_unit"

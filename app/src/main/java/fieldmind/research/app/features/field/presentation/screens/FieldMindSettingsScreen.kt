@@ -1143,6 +1143,10 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val showCloudAnimation by settings.weatherShowCloudAnimation.collectAsState()
     val providerSlugs by settings.weatherProviders.collectAsState()
     val apiKey by settings.weatherApiKey.collectAsState()
+    val openWeatherMapKey by settings.openWeatherMapApiKey.collectAsState()
+    val weatherApiDotComKey by settings.weatherApiDotComApiKey.collectAsState()
+    val imdApiKey by settings.imdApiKey.collectAsState()
+    val openMeteoConfig by settings.openMeteoApiConfig.collectAsState()
     val selectedProviderSet = remember(providerSlugs) { providerSlugs.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet().ifEmpty { setOf("met-norway") } }
     val keyProvider = remember(selectedProviderSet) { WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).firstOrNull { it.requiresApiKey } ?: WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).first() }
 
@@ -1193,13 +1197,22 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                         }
                     }
 
-                    if (keyProvider.requiresApiKey) {
-                        Spacer(Modifier.height(4.dp))
+                    // ── Per-provider API key fields ──
+                    // Show individual API key fields for each enabled provider that requires a key
+                    val enabledKeyProviders = WeatherProviders.selectedProviders(providerSlugs).filter { it.requiresApiKey }
+                    enabledKeyProviders.forEach { provider ->
+                        Spacer(Modifier.height(8.dp))
+                        val (keyValue, onKeyChange) = when (provider.slug) {
+                            "openweathermap" -> openWeatherMapKey to { v: String -> settings.setOpenWeatherMapApiKey(v) }
+                            "weatherapi" -> weatherApiDotComKey to { v: String -> settings.setWeatherApiDotComApiKey(v) }
+                            "imd-india" -> imdApiKey to { v: String -> settings.setImdApiKey(v) }
+                            else -> apiKey to { v: String -> settings.setWeatherApiKey(v) }
+                        }
                         OutlinedTextField(
-                            value = apiKey,
-                            onValueChange = settings::setWeatherApiKey,
-                            label = { Text(keyProvider.apiKeyLabel) },
-                            placeholder = { Text(keyProvider.apiKeyPlaceholder) },
+                            value = keyValue,
+                            onValueChange = onKeyChange,
+                            label = { Text(provider.apiKeyLabel) },
+                            placeholder = { Text(provider.apiKeyPlaceholder) },
                             visualTransformation = PasswordVisualTransformation(),
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp),
@@ -1212,29 +1225,71 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             },
                             supportingText = {
                                 Text(
-                                    if (apiKey.isBlank()) "No API key saved. Get one free from the provider's website."
+                                    if (keyValue.isBlank()) "No API key saved. Get one free from the provider's website."
                                     else "API key saved locally on this device."
                                 )
                             }
                         )
-                    } else {
-                        Spacer(Modifier.height(4.dp))
+                    }
+
+                    // ── Open-Meteo custom config import ──
+                    if ("open-meteo" in selectedProviderSet) {
+                        Spacer(Modifier.height(8.dp))
                         Surface(
+                            onClick = { /* Open file picker for JSON config */ },
                             shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                            color = if (openMeteoConfig.isNotBlank())
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
                         ) {
                             Row(
-                                Modifier.padding(12.dp).fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                Modifier.padding(14.dp).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
-                                Text(
-                                    "MET Norway, IMD India, Open-Meteo, and NWS are free with no API key. IMD is best inside India; NWS only returns data for U.S. points; paid-key services join the merge when a key is saved.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                Icon(
+                                    if (openMeteoConfig.isNotBlank()) FieldMindIcons.Check else FieldMindIcons.File,
+                                    null,
+                                    tint = if (openMeteoConfig.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    size = 20.dp
                                 )
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        if (openMeteoConfig.isNotBlank()) "Custom Open-Meteo config imported" else "Import Open-Meteo API config",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        if (openMeteoConfig.isNotBlank()) "Tap to replace or clear"
+                                        else "Import a JSON file with custom API endpoint and parameters",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
+                        }
+                    }
+
+                    // ── Info note about free providers ──
+                    Spacer(Modifier.height(4.dp))
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ) {
+                        Row(
+                            Modifier.padding(12.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(FieldMindIcons.Info, null, tint = MaterialTheme.colorScheme.primary, size = 18.dp)
+                            Text(
+                                "Each provider that requires an API key shows its own field above. " +
+                                "MET Norway, Open-Meteo, and NWS are free with no key needed. " +
+                                "IMD is best inside India; NWS only returns data for U.S. points.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }

@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Open-Meteo provider (free, no API key required, 10,000 requests/day).
  * Uses the Open-Meteo API to fetch current weather and daily forecasts.
- * Uses a single robust response model.
+ * Supports user-imported custom API configuration JSON for custom endpoints/parameters.
  */
 class OpenMeteoProvider : WeatherProvider {
     override val slug: String = "open-meteo"
@@ -20,6 +20,30 @@ class OpenMeteoProvider : WeatherProvider {
     override val requiresApiKey: Boolean = false
     override val apiKeyLabel: String = "N/A"
     override val apiKeyPlaceholder: String = "Open-Meteo is free and requires no API key"
+
+    /**
+     * Optional user-provided custom API configuration.
+     * Set via [configureWithJson] before calling fetchWeather.
+     */
+    private var customConfig: OpenMeteoConfig? = null
+
+    /**
+     * Configure this provider with a user-imported JSON config.
+     * The JSON should match the [OpenMeteoConfig] data class structure.
+     */
+    fun configureWithJson(jsonString: String) {
+        customConfig = try {
+            Gson().fromJson(jsonString, OpenMeteoConfig::class.java)
+        } catch (e: Exception) {
+            Log.w("OpenMeteo", "Failed to parse custom API config JSON", e)
+            null
+        }
+    }
+
+    /** Clear any user-imported config and revert to defaults. */
+    fun clearCustomConfig() {
+        customConfig = null
+    }
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
@@ -34,11 +58,19 @@ class OpenMeteoProvider : WeatherProvider {
         apiKey: String?
     ): WeatherSnapshot? = withContext(Dispatchers.IO) {
         try {
-            val url = "https://api.open-meteo.com/v1/forecast" +
+            // Use custom config if available, otherwise use defaults
+            val config = customConfig
+            val baseUrl = config?.baseUrl ?: "https://api.open-meteo.com/v1/forecast"
+            val currentParams = config?.currentParams ?: "temperature_2m,relative_humidity_2m,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m"
+            val dailyParams = config?.dailyParams ?: "sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,apparent_temperature_max,apparent_temperature_min,time"
+            val timezone = config?.timezone ?: "auto"
+
+            val url = "$baseUrl" +
                 "?latitude=$latitude&longitude=$longitude" +
-                "&current=temperature_2m,relative_humidity_2m,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m" +
-                "&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,apparent_temperature_max,apparent_temperature_min,time" +
-                "&timezone=auto"
+                "&current=$currentParams" +
+                "&daily=$dailyParams" +
+                "&timezone=$timezone" + "" +
+                (config?.extraParams?.let { "&$it" } ?: "")
 
             val request = Request.Builder()
                 .url(url)
@@ -126,6 +158,19 @@ class OpenMeteoProvider : WeatherProvider {
         }
     }
 }
+
+/**
+ * User-imported custom API configuration for Open-Meteo.
+ * Users can import a JSON file matching this structure to customize
+ * the API endpoint, parameters, and timezone.
+ */
+data class OpenMeteoConfig(
+    val baseUrl: String? = null,
+    val currentParams: String? = null,
+    val dailyParams: String? = null,
+    val timezone: String? = null,
+    val extraParams: String? = null
+)
 
 // ── Response models ──
 

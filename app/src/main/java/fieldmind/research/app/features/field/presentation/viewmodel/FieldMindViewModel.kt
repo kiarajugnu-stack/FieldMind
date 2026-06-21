@@ -482,14 +482,36 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     private var isWeatherFetching = false
         private set
 
+    /** Configure per-provider API keys and apply Open-Meteo custom config. */
+    private fun buildWeatherApiKeys(): Map<String, String> = buildMap {
+        val owm = fieldSettings.openWeatherMapApiKey.value.trim()
+        if (owm.isNotBlank()) put("openweathermap", owm)
+        val wapi = fieldSettings.weatherApiDotComApiKey.value.trim()
+        if (wapi.isNotBlank()) put("weatherapi", wapi)
+        val imd = fieldSettings.imdApiKey.value.trim()
+        if (imd.isNotBlank()) put("imd-india", imd)
+
+        // Apply Open-Meteo custom config to the singleton provider instance
+        val omConfig = fieldSettings.openMeteoApiConfig.value.trim()
+        if (omConfig.isNotBlank()) {
+            (fieldmind.research.app.features.field.data.weather.WeatherProviders.fromSlug("open-meteo") as? fieldmind.research.app.features.field.data.weather.OpenMeteoProvider)?.configureWithJson(omConfig)
+        }
+    }
+
     fun fetchWeatherForLocation(latitude: Double, longitude: Double) = viewModelScope.launch {
-        val apiKey = fieldSettings.weatherApiKey.value.ifBlank { null }
-        lastWeatherSnapshot = fieldmind.research.app.features.field.data.weather.WeatherProviders.fetchMergedWeather(fieldSettings.weatherProviders.value, latitude, longitude, apiKey)
+        val legacyKey = fieldSettings.weatherApiKey.value.ifBlank { null }
+        val perProviderKeys = buildWeatherApiKeys()
+        lastWeatherSnapshot = fieldmind.research.app.features.field.data.weather.WeatherProviders.fetchMergedWeather(
+            fieldSettings.weatherProviders.value, latitude, longitude, perProviderKeys, legacyKey
+        )
     }
 
     suspend fun fetchWeatherSnapshot(latitude: Double, longitude: Double): WeatherSnapshot? {
-        val apiKey = fieldSettings.weatherApiKey.value.ifBlank { null }
-        return fieldmind.research.app.features.field.data.weather.WeatherProviders.fetchMergedWeather(fieldSettings.weatherProviders.value, latitude, longitude, apiKey).also { lastWeatherSnapshot = it }
+        val legacyKey = fieldSettings.weatherApiKey.value.ifBlank { null }
+        val perProviderKeys = buildWeatherApiKeys()
+        return fieldmind.research.app.features.field.data.weather.WeatherProviders.fetchMergedWeather(
+            fieldSettings.weatherProviders.value, latitude, longitude, perProviderKeys, legacyKey
+        ).also { lastWeatherSnapshot = it }
     }
 
     /**
@@ -533,7 +555,11 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         isWeatherFetching = true
         val result = try {
             provider.lastKnownLocation()?.let { loc ->
-                fieldmind.research.app.features.field.data.weather.WeatherProviders.fetchMergedWeather(fieldSettings.weatherProviders.value, loc.latitude, loc.longitude, fieldSettings.weatherApiKey.value.ifBlank { null })
+                val legacyKey = fieldSettings.weatherApiKey.value.ifBlank { null }
+                val perProviderKeys = buildWeatherApiKeys()
+                fieldmind.research.app.features.field.data.weather.WeatherProviders.fetchMergedWeather(
+                    fieldSettings.weatherProviders.value, loc.latitude, loc.longitude, perProviderKeys, legacyKey
+                )
             }
         } finally {
             isWeatherFetching = false

@@ -78,6 +78,16 @@ Default section order:
 
 When the user requests a durable behavior change, record it here or in the relevant child AGENTS.md
 
+### ✅ Commit and Push After Every Change
+
+Agents MUST commit and push all changes before the task is complete. Do not leave changes uncommitted. Follow the commit workflow in the root `AGENTS.md`:
+
+1. **Stage:** `git add -A`
+2. **Commit:** `git commit -m "type: concise description"` (conventional format)
+3. **Push:** `git push`
+
+This is mandatory — do not skip unless the user explicitly says not to push.
+
 ## DOX Tree Diagram
 
 See [`DOX_TREE.md`](DOX_TREE.md) for a visual Mermaid diagram and ASCII tree of the complete AGENTS.md hierarchy.

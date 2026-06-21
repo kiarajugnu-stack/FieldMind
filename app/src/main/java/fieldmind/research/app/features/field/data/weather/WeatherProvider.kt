@@ -57,15 +57,30 @@ object WeatherProviders {
         return slugs.map { fromSlug(it) }.distinctBy { it.slug }.ifEmpty { listOf(MetNorwayProvider()) }
     }
 
+    /**
+     * Fetch merged weather from all selected providers.
+     * @param apiKeys Map of provider slug → API key for per-provider key support.
+     * @param apiKey Legacy single key (used as fallback if per-provider key not found).
+     */
     suspend fun fetchMergedWeather(
         slugsCsv: String?,
         latitude: Double,
         longitude: Double,
+        apiKeys: Map<String, String> = emptyMap(),
         apiKey: String? = null
     ): WeatherSnapshot? = coroutineScope {
         val snapshots = selectedProviders(slugsCsv)
-            .filter { !it.requiresApiKey || !apiKey.isNullOrBlank() }
-            .map { provider -> async { provider.fetchWeather(latitude, longitude, apiKey) } }
+            .filter { provider ->
+                if (!provider.requiresApiKey) true
+                else {
+                    val specificKey = apiKeys[provider.slug]
+                    !specificKey.isNullOrBlank() || !apiKey.isNullOrBlank()
+                }
+            }
+            .map { provider ->
+                val key = apiKeys[provider.slug].takeIf { !it.isNullOrBlank() } ?: apiKey
+                async { provider.fetchWeather(latitude, longitude, key) }
+            }
             .mapNotNull { it.await() }
         mergeSnapshots(snapshots)
     }
