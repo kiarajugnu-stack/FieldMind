@@ -41,6 +41,32 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
         val researchSessions = repository.researchSessions.first()
         val tasks = repository.tasks.first()
 
+        // ── Collect cross-references for backup ──
+        val crossRefs = buildList {
+            dao.getAllObservationTagCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("observationTag", it.observationId, it.tagId)) }
+            dao.getAllQuestionObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionObservation", it.questionId, it.observationId)) }
+            dao.getAllQuestionSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionSource", it.questionId, it.sourceId)) }
+            dao.getAllProjectObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectObservation", it.projectId, it.observationId)) }
+            dao.getAllProjectSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectSource", it.projectId, it.sourceId)) }
+            dao.getAllReportSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("reportSource", it.reportId, it.sourceId)) }
+            dao.getAllProjectDataRecordCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectDataRecord", it.projectId, it.dataRecordId)) }
+            dao.getAllTaskObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskObservation", it.taskId, it.observationId)) }
+            dao.getAllTaskEvidenceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskEvidence", it.taskId, it.evidenceId)) }
+            dao.getAllSpeciesObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesObservation", it.speciesId, it.observationId)) }
+            dao.getAllSpeciesQuestionCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesQuestion", it.speciesId, it.questionId)) }
+            dao.getAllEvidenceReportCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("evidenceReport", it.evidenceId, it.reportId)) }
+            // SessionObservationCrossRef and HypothesisEvidenceCrossRef use observeAll flows (not direct query)
+            // Collect them via the database session and hypothesis_evidence tables
+            dao.observeAllSessionObservationCrossRefs().first().forEach {
+                add(FieldMindExport.CrossReferenceEntry("sessionObservation", it.sessionId, it.observationId))
+            }
+            dao.observeAllHypothesisEvidence().first().forEach {
+                add(FieldMindExport.CrossReferenceEntry("hypothesisEvidence", it.hypothesisId, it.observationId))
+            }
+        }
+
+        val settingsJson = settings.toExportJson()
+
         val archiveJson = FieldMindExport.archiveJson(
             observations = observations,
             notes = notes,
@@ -54,7 +80,9 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
             species = species,
             weatherCatalog = weatherCatalog,
             researchSessions = researchSessions,
-            tasks = tasks
+            tasks = tasks,
+            crossReferences = crossRefs,
+            settingsJson = settingsJson
         )
 
         // Build .fieldmind package with media attachments

@@ -124,6 +124,32 @@ interface FieldMindDao {
     @Query("SELECT * FROM field_session_observations")
     fun observeAllSessionObservationCrossRefs(): Flow<List<SessionObservationCrossRef>>
 
+    // ── Cross-reference queries for export ──
+    @Query("SELECT * FROM field_observation_tags")
+    suspend fun getAllObservationTagCrossRefs(): List<ObservationTagCrossRef>
+    @Query("SELECT * FROM field_question_observations")
+    suspend fun getAllQuestionObservationCrossRefs(): List<QuestionObservationCrossRef>
+    @Query("SELECT * FROM field_question_sources")
+    suspend fun getAllQuestionSourceCrossRefs(): List<QuestionSourceCrossRef>
+    @Query("SELECT * FROM field_project_observations")
+    suspend fun getAllProjectObservationCrossRefs(): List<ProjectObservationCrossRef>
+    @Query("SELECT * FROM field_project_sources")
+    suspend fun getAllProjectSourceCrossRefs(): List<ProjectSourceCrossRef>
+    @Query("SELECT * FROM field_report_sources")
+    suspend fun getAllReportSourceCrossRefs(): List<ReportSourceCrossRef>
+    @Query("SELECT * FROM field_project_data_records")
+    suspend fun getAllProjectDataRecordCrossRefs(): List<ProjectDataRecordCrossRef>
+    @Query("SELECT * FROM field_task_observations")
+    suspend fun getAllTaskObservationCrossRefs(): List<TaskObservationCrossRef>
+    @Query("SELECT * FROM field_task_evidence")
+    suspend fun getAllTaskEvidenceCrossRefs(): List<TaskEvidenceCrossRef>
+    @Query("SELECT * FROM field_species_observations")
+    suspend fun getAllSpeciesObservationCrossRefs(): List<SpeciesObservationCrossRef>
+    @Query("SELECT * FROM field_species_questions")
+    suspend fun getAllSpeciesQuestionCrossRefs(): List<SpeciesQuestionCrossRef>
+    @Query("SELECT * FROM field_evidence_reports")
+    suspend fun getAllEvidenceReportCrossRefs(): List<EvidenceReportCrossRef>
+
     // ── Species Registry ──
     @Query("SELECT * FROM field_species WHERE deletedAt IS NULL ORDER BY commonName ASC")
     fun observeSpecies(): Flow<List<SpeciesEntity>>
@@ -155,6 +181,17 @@ interface FieldMindDao {
     suspend fun insertTask(entity: TaskEntity): Long
     @Update
     suspend fun updateTask(entity: TaskEntity)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun linkTaskObservation(ref: TaskObservationCrossRef)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun linkTaskEvidence(ref: TaskEvidenceCrossRef)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun linkSpeciesObservation(ref: SpeciesObservationCrossRef)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun linkSpeciesQuestion(ref: SpeciesQuestionCrossRef)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun linkEvidenceReport(ref: EvidenceReportCrossRef)
+
     @Query("UPDATE field_tasks SET deletedAt = :time, updatedAt = :time WHERE id = :id")
     suspend fun softDeleteTask(id: Long, time: Long)
 }

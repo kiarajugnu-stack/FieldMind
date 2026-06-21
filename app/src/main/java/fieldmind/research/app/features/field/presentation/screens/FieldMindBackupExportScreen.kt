@@ -370,6 +370,9 @@ fun BackupAndRestoreScreen(
                                                     evidAttachAll.addAll(atts)
                                                 }
                                             }
+                                            // Collect cross-references and settings for v3 archive
+                                            val crossRefs = viewModel.collectAllCrossRefs()
+                                            val settingsJson = viewModel.fieldSettings.toExportJson()
                                             val json = FieldMindExport.archiveJson(
                                                 observations = exportObs, notes = exportNotes,
                                                 questions = questions, hypotheses = hypotheses,
@@ -380,7 +383,9 @@ fun BackupAndRestoreScreen(
                                                 weatherCatalog = weatherCatalog,
                                                 researchSessions = researchSessions,
                                                 tasks = tasks,
-                                                evidenceAttachments = evidAttachAll
+                                                evidenceAttachments = evidAttachAll,
+                                                crossReferences = crossRefs,
+                                                settingsJson = settingsJson
                                             )
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
                                             val ext = when (format) {
@@ -646,11 +651,15 @@ fun BackupAndRestoreScreen(
                                                     evidAttachAll.addAll(atts)
                                                 }
                                             }
+                                            val crossRefs = viewModel.collectAllCrossRefs()
+                                            val settingsJson = viewModel.fieldSettings.toExportJson()
                                             val json = FieldMindExport.archiveJson(
                                                 backupObs, backupNotes, questions, hypotheses, projects, sources,
                                                 dataRecords, reports, flashcards, species, weatherCatalog,
                                                 researchSessions, tasks,
-                                                evidenceAttachments = evidAttachAll
+                                                evidenceAttachments = evidAttachAll,
+                                                crossReferences = crossRefs,
+                                                settingsJson = settingsJson
                                             )
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
                                             val backupDir = backupDirectory(context)
@@ -904,11 +913,15 @@ fun BackupAndRestoreScreen(
                                     val atts = viewModel.attachmentsForObservation(obs.id).first()
                                     evidAttachAll.addAll(atts)
                                 }
+                                val crossRefs = viewModel.collectAllCrossRefs()
+                                val settingsJson = viewModel.fieldSettings.toExportJson()
                                 val json = FieldMindExport.archiveJson(
                                     observations, notes, questions, hypotheses, projects, sources,
                                     dataRecords, reports, flashcards, species, weatherCatalog,
                                     researchSessions, tasks,
-                                    evidenceAttachments = evidAttachAll
+                                    evidenceAttachments = evidAttachAll,
+                                    crossReferences = crossRefs,
+                                    settingsJson = settingsJson
                                 )
                                 when (shareDialogFormat) {
                                     "JSON" -> exportFile.writeText(json)

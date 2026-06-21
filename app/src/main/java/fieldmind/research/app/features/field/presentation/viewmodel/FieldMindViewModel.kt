@@ -472,6 +472,179 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                 }
             }
 
+            // ════════════════════════════════════════════════════════════════════
+            //  Phase 1b: Restore Cross-References (many-to-many links)
+            //  Must run AFTER all entities are imported (old→new ID maps needed).
+            // ════════════════════════════════════════════════════════════════════
+            val allNewSpecies = repository.species.first()
+            bundle.species.forEach { oldSpecies ->
+                val match = allNewSpecies.find { newS ->
+                    newS.commonName == oldSpecies.commonName &&
+                    newS.scientificName == oldSpecies.scientificName
+                }
+                if (match != null) oldToNewSpeciesId[oldSpecies.id] = match.id
+            }
+
+            // ── Also build maps for questions, hypotheses, data records, reports, 🔄
+            val oldToNewQuestionId = mutableMapOf<Long, Long>()
+            val allNewQuestions = repository.questions.first()
+            bundle.questions.forEach { q ->
+                // Match by questionText (best unique field available)
+                val match = allNewQuestions.find { newQ -> newQ.questionText == q.questionText }
+                if (match != null) oldToNewQuestionId[q.id] = match.id
+            }
+
+            val oldToNewHypothesisId = mutableMapOf<Long, Long>()
+            val allNewHypotheses = repository.hypotheses.first()
+            bundle.hypotheses.forEach { h ->
+                val match = allNewHypotheses.find { newH -> newH.prediction == h.prediction }
+                if (match != null) oldToNewHypothesisId[h.id] = match.id
+            }
+
+            val oldToNewDataRecordId = mutableMapOf<Long, Long>()
+            val allNewDataRecords = repository.dataRecords.first()
+            bundle.dataRecords.forEach { d ->
+                val match = allNewDataRecords.find { newD -> newD.label == d.label && newD.value == d.value }
+                if (match != null) oldToNewDataRecordId[d.id] = match.id
+            }
+
+            val oldToNewReportId = mutableMapOf<Long, Long>()
+            val allNewReports = repository.reports.first()
+            bundle.reports.forEach { r ->
+                val match = allNewReports.find { newR -> newR.title == r.title }
+                if (match != null) oldToNewReportId[r.id] = match.id
+            }
+
+            val oldToNewFlashcardId = mutableMapOf<Long, Long>()
+            val allNewFlashcards = repository.flashcards.first()
+            bundle.flashcards.forEach { f ->
+                val match = allNewFlashcards.find { newF -> newF.front == f.front && newF.back == f.back }
+                if (match != null) oldToNewFlashcardId[f.id] = match.id
+            }
+
+            val oldToNewSessionId = mutableMapOf<Long, Long>()
+            val allNewSessions = repository.researchSessions.first()
+            bundle.researchSessions.forEach { s ->
+                val match = allNewSessions.find { newS -> newS.name == s.name && newS.startedAt == s.startedAt }
+                if (match != null) oldToNewSessionId[s.id] = match.id
+            }
+
+            val oldToNewTaskId = mutableMapOf<Long, Long>()
+            val allNewTasks = repository.tasks.first()
+            bundle.tasks.forEach { t ->
+                val match = allNewTasks.find { newT -> newT.title == t.title }
+                if (match != null) oldToNewTaskId[t.id] = match.id
+            }
+
+            val oldToNewSourceIdForCrossRef = mutableMapOf<Long, Long>()
+            val allNewSourcesForCrossRef = repository.sources.first()
+            bundle.sources.forEach { s ->
+                val match = allNewSourcesForCrossRef.find { newS -> newS.title == s.title && newS.link == s.link }
+                if (match != null) oldToNewSourceIdForCrossRef[s.id] = match.id
+            }
+
+            val oldToNewEvidenceId = mutableMapOf<Long, Long>()
+            // Evidence attachments were just imported, match by URI + observationId
+            val allNewAttachments = allNewSpecies // reuse the flow, just import fresh
+            // Actually evidence IDs are tricky. Let's just query fresh.
+            // They were imported from bundle.evidenceAttachments above.
+            // For cross-refs that reference evidenceId, we grab the new IDs.
+            val allNewEvidence = mutableListOf<EvidenceAttachmentEntity>()
+            bundle.evidenceAttachments.forEach { originalAtt ->
+                val newObsId = oldToNewObsId[originalAtt.observationId]
+                if (newObsId != null) {
+                    // We inserted attachments above (inside the forEach that handles
+                    // bundle.evidenceAttachments). Now we need their new IDs.
+                    // Query fresh from DB:
+                    repository.observeAttachmentsForObservation(newObsId).first().forEach { att ->
+                        if (att.uri == originalAtt.uri || att.caption == originalAtt.caption) {
+                            oldToNewEvidenceId[originalAtt.id] = att.id
+                            allNewEvidence.add(att)
+                        }
+                    }
+                }
+            }
+
+            // ── Restore each cross-reference with mapped IDs ──
+            fun resolveId(id: Long, map: Map<Long, Long>): Long = map[id] ?: 0L
+
+            bundle.crossReferences.forEach { ref ->
+                val newIdA: Long
+                val newIdB: Long
+                when (ref.type) {
+                    "observationTag" -> {
+                        newIdA = resolveId(ref.idA, oldToNewObsId)
+                        newIdB = ref.idB // tag IDs don't change (findOrCreateTag by name)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkObservationTag(newIdA, newIdB)
+                    }
+                    "questionObservation" -> {
+                        newIdA = resolveId(ref.idA, oldToNewQuestionId)
+                        newIdB = resolveId(ref.idB, oldToNewObsId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkQuestionObservation(newIdA, newIdB)
+                    }
+                    "questionSource" -> {
+                        newIdA = resolveId(ref.idA, oldToNewQuestionId)
+                        newIdB = resolveId(ref.idB, oldToNewSourceIdForCrossRef)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkQuestionSource(newIdA, newIdB)
+                    }
+                    "projectObservation" -> {
+                        newIdA = resolveId(ref.idA, oldToNewProjId)
+                        newIdB = resolveId(ref.idB, oldToNewObsId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkProjectObservation(newIdA, newIdB)
+                    }
+                    "projectSource" -> {
+                        newIdA = resolveId(ref.idA, oldToNewProjId)
+                        newIdB = resolveId(ref.idB, oldToNewSourceIdForCrossRef)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkProjectSource(newIdA, newIdB)
+                    }
+                    "reportSource" -> {
+                        newIdA = resolveId(ref.idA, oldToNewReportId)
+                        newIdB = resolveId(ref.idB, oldToNewSourceIdForCrossRef)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkReportSource(newIdA, newIdB)
+                    }
+                    "projectDataRecord" -> {
+                        newIdA = resolveId(ref.idA, oldToNewProjId)
+                        newIdB = resolveId(ref.idB, oldToNewDataRecordId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkProjectDataRecord(newIdA, newIdB)
+                    }
+                    "hypothesisEvidence" -> {
+                        newIdA = resolveId(ref.idA, oldToNewHypothesisId)
+                        newIdB = resolveId(ref.idB, oldToNewObsId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkHypothesisEvidence(newIdA, newIdB)
+                    }
+                    "sessionObservation" -> {
+                        newIdA = resolveId(ref.idA, oldToNewSessionId)
+                        newIdB = resolveId(ref.idB, oldToNewObsId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkSessionObservation(newIdA, newIdB)
+                    }
+                    "taskObservation" -> {
+                        newIdA = resolveId(ref.idA, oldToNewTaskId)
+                        newIdB = resolveId(ref.idB, oldToNewObsId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkTaskObservation(newIdA, newIdB)
+                    }
+                    "taskEvidence" -> {
+                        newIdA = resolveId(ref.idA, oldToNewTaskId)
+                        newIdB = resolveId(ref.idB, oldToNewEvidenceId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkTaskEvidence(newIdA, newIdB)
+                    }
+                    "speciesObservation" -> {
+                        newIdA = resolveId(ref.idA, oldToNewSpeciesId)
+                        newIdB = resolveId(ref.idB, oldToNewObsId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkSpeciesObservation(newIdA, newIdB)
+                    }
+                    "speciesQuestion" -> {
+                        newIdA = resolveId(ref.idA, oldToNewSpeciesId)
+                        newIdB = resolveId(ref.idB, oldToNewQuestionId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkSpeciesQuestion(newIdA, newIdB)
+                    }
+                    "evidenceReport" -> {
+                        newIdA = resolveId(ref.idA, oldToNewEvidenceId)
+                        newIdB = resolveId(ref.idB, oldToNewReportId)
+                        if (newIdA > 0L && newIdB > 0L) repository.linkEvidenceReport(newIdA, newIdB)
+                    }
+                }
+            }
+
             // Phase 2: Relink extracted media files to the newly imported entities.
             // Copy temp files to a permanent app-local directory so they survive
             // cleanupExtractedPackage() which runs in the caller's finally block.
@@ -563,6 +736,18 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                             repository.updateSourceFile(sourceEntity, fileUri = permUri)
                         }
                     }
+                }
+            }
+
+            // ════════════════════════════════════════════════════════════════════
+            //  Phase 3: Restore Settings from archive
+            // ════════════════════════════════════════════════════════════════════
+            if (bundle.settingsJson.isNotBlank()) {
+                try {
+                    val settingsObj = org.json.JSONObject(bundle.settingsJson)
+                    fieldSettings.applyFromJson(settingsObj)
+                } catch (_: Exception) {
+                    // Non-critical: settings restore failure shouldn't block data import
                 }
             }
 
@@ -817,6 +1002,28 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val tasks: StateFlow<List<TaskEntity>> = repository.tasks.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     fun observeTasksForProject(projectId: Long) = repository.observeTasksForProject(projectId)
     val weatherCatalog: StateFlow<List<WeatherCatalogEntity>> = repository.weatherCatalog.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // ── Cross-reference collection for backup/export ──
+    /**
+     * Collect ALL cross-reference entries from the database for export.
+     * Call from a coroutine/IO context to avoid blocking the UI.
+     */
+    suspend fun collectAllCrossRefs(): List<FieldMindExport.CrossReferenceEntry> = buildList {
+        repository.getAllObservationTagCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("observationTag", it.observationId, it.tagId)) }
+        repository.getAllQuestionObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionObservation", it.questionId, it.observationId)) }
+        repository.getAllQuestionSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionSource", it.questionId, it.sourceId)) }
+        repository.getAllProjectObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectObservation", it.projectId, it.observationId)) }
+        repository.getAllProjectSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectSource", it.projectId, it.sourceId)) }
+        repository.getAllReportSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("reportSource", it.reportId, it.sourceId)) }
+        repository.getAllProjectDataRecordCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectDataRecord", it.projectId, it.dataRecordId)) }
+        repository.getAllTaskObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskObservation", it.taskId, it.observationId)) }
+        repository.getAllTaskEvidenceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskEvidence", it.taskId, it.evidenceId)) }
+        repository.getAllSpeciesObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesObservation", it.speciesId, it.observationId)) }
+        repository.getAllSpeciesQuestionCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesQuestion", it.speciesId, it.questionId)) }
+        repository.getAllEvidenceReportCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("evidenceReport", it.evidenceId, it.reportId)) }
+        repository.sessionObservationCrossRefs.first().forEach { add(FieldMindExport.CrossReferenceEntry("sessionObservation", it.sessionId, it.observationId)) }
+        repository.hypothesisEvidenceCrossRefs.first().forEach { add(FieldMindExport.CrossReferenceEntry("hypothesisEvidence", it.hypothesisId, it.observationId)) }
+    }
 
     fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic", dedupKey: String = "") = viewModelScope.launch {
         val key = dedupKey.ifBlank { "${front.lowercase().trim()}:${back.lowercase().trim()}".hashCode().toLong().let { if (it == Long.MIN_VALUE) Long.MAX_VALUE else kotlin.math.abs(it) }.toString(36) }
