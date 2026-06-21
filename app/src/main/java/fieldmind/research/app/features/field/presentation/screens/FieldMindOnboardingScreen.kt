@@ -1659,8 +1659,9 @@ private fun OnboardingBackupOptionsPage(
                                 }
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     listOf("PDF", "CSV", "ZIP", "JSON").forEach { format ->
-                                    Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                                        Text(format, modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                                            Text(format, modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        }
                                     }
                                 }
                             }
