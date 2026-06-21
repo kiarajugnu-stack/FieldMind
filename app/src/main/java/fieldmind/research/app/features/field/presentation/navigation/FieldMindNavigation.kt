@@ -43,6 +43,7 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
+import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
 import androidx.compose.runtime.CompositionLocalProvider
 
 private fun formatElapsed(startedAt: Long): String {
@@ -151,8 +152,10 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel, reques
         ) {
             val privacyTyping by viewModel.fieldSettings.privacyTypingEnabled.collectAsState()
             CompositionLocalProvider(LocalPrivacyTypingEnabled provides privacyTyping) {
-                FieldMindSnackbarProvider { _ ->
-                    FieldMindNavigation(viewModel = viewModel, requestedDestination = requestedDestination, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+                PrivacyTextInputWrapper {
+                    FieldMindSnackbarProvider { _ ->
+                        FieldMindNavigation(viewModel = viewModel, requestedDestination = requestedDestination, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+                    }
                 }
             }
         }

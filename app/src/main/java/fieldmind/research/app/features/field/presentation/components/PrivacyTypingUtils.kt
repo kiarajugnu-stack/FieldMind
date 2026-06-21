@@ -2,8 +2,8 @@ package fieldmind.research.app.features.field.presentation.components
 
 import android.os.Build
 import android.text.InputType
-import android.view.inputmethod.EditorInfo
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +35,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.input.PlatformImeOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.platform.InterceptPlatformTextInput
+import androidx.compose.ui.platform.PlatformTextInputMethodRequest
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 /**
@@ -44,6 +47,45 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
  * IME_FLAG_NO_PERSONALIZED_LEARNING flag to the keyboard.
  */
 val LocalPrivacyTypingEnabled = compositionLocalOf { false }
+
+/**
+ * Global privacy text input wrapper.
+ *
+ * When [LocalPrivacyTypingEnabled] is true, this intercepts ALL text input
+ * connections within its content subtree and sets the platform-level
+ * [EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING] flag on every text field's
+ * [EditorInfo]. This is the official Android mechanism that tells keyboards
+ * to disable personalized learning, predictions, and suggestions — far more
+ * reliable than per-field private IME options strings.
+ *
+ * Keyboards like Gboard, SwiftKey, and Samsung Keyboard show an incognito
+ * badge when this flag is present. The flag is a request — not every keyboard
+ * guarantees compliance.
+ *
+ * Usage: wrap this around the entire Compose UI tree so ALL text fields
+ * automatically respect the privacy setting without any per-field annotations.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun PrivacyTextInputWrapper(content: @Composable () -> Unit) {
+    val privacyEnabled = LocalPrivacyTypingEnabled.current
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && privacyEnabled) {
+        InterceptPlatformTextInput(
+            interceptor = { request, nextHandler ->
+                val modifiedRequest = PlatformTextInputMethodRequest { outAttributes ->
+                    request.createInputConnection(outAttributes).also {
+                        outAttributes.imeOptions = outAttributes.imeOptions or
+                                EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
+                    }
+                }
+                nextHandler.startInputMethod(modifiedRequest)
+            },
+            content = content
+        )
+    } else {
+        content()
+    }
+}
 
 /**
  * Extension on [KeyboardOptions] that conditionally sets the
