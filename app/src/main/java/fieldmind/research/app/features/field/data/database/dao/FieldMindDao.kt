@@ -116,6 +116,7 @@ interface FieldMindDao {
     suspend fun softDeleteResearchSession(id: Long, time: Long)
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun linkSessionObservation(ref: SessionObservationCrossRef)
+    @Query("DELETE FROM field_session_observations WHERE sessionId = :sessionId AND observationId = :observationId")
     suspend fun deleteSessionObservationCrossRef(sessionId: Long, observationId: Long)
     @Query("SELECT o.* FROM field_observations o INNER JOIN field_session_observations x ON x.observationId = o.id WHERE x.sessionId = :sessionId AND o.deletedAt IS NULL ORDER BY o.timestamp DESC")
     fun observeObservationsForSession(sessionId: Long): Flow<List<ObservationEntity>>
