@@ -88,7 +88,7 @@ private val exportFormats = listOf(
     FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF558B2F), "document"),
     FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFFE65100), "document"),
     FormatOption("PDF", "Portable document format", FieldMindIcons.Report, androidx.compose.ui.graphics.Color(0xFF6A1B9A), "document"),
-    FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF2E7D32), "image"),
+    FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, androidx.compose.ui.graphics.colors.positive, "image"),
     FormatOption("SVG", "Scalable vector graphic", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF00838F), "image"),
     FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1B5E20), "package")
 )
@@ -513,6 +513,7 @@ fun BackupAndRestoreScreen(
                         BackupTab.IMPORT -> ImportTabContent(
                             selectedFileUri = importFileUri,
                             fileName = importFileName,
+                            importFileSize = importFileSize,
                             preview = importPreview,
                             importMode = importMode,
                             onModeChange = { importMode = it },
@@ -1830,6 +1831,7 @@ private fun ExportHistorySection(
 private fun ImportTabContent(
     selectedFileUri: Uri?,
     fileName: String,
+    importFileSize: String = "",
     preview: FieldMindExport.ArchivePreview?,
     importMode: String,
     onModeChange: (String) -> Unit,
@@ -1848,6 +1850,10 @@ private fun ImportTabContent(
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .border(
+                        BorderStroke(1.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                        RoundedCornerShape(24.dp)
+                    )
                     .clickable { onPickFile() }
             ) {
                 Column(
@@ -1899,13 +1905,30 @@ private fun ImportTabContent(
                             Icon(FieldMindIcons.Archive, null, tint = FieldMindTheme.colors.positive, size = 24.dp)
                         }
                         Column(Modifier.weight(1f)) {
-                            Text(fileName, fontWeight = FontWeight.SemiBold)
-                            preview?.let {
-                                Text(
-                                    "${it.total} records • ${it.observations} obs, ${it.projects} projects",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(fileName, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                if (fileName.endsWith(".encrypted")) {
+                                    Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.warning.copy(alpha = 0.15f)) {
+                                        Text("[Encrypted]", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.warning)
+                                    }
+                                } else {
+                                    val badge = when {
+                                        fileName.endsWith(".fieldmind") -> "PKG"
+                                        fileName.endsWith(".zip") -> "ZIP"
+                                        fileName.endsWith(".json") -> "JSON"
+                                        else -> fileName.substringAfterLast(".").uppercase()
+                                    }
+                                    Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)) {
+                                        Text(badge, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(4.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(importFileSize, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                preview?.let {
+                                    Text("${it.total} records", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                                }
                             }
                         }
                         IconButton(onClick = onClearFile) {
@@ -2208,13 +2231,13 @@ n                    if (passwordConfirm.isNotBlank() || passwordsMatch) {
                             Icon(
                                 if (passwordsMatch) FieldMindIcons.Check else FieldMindIcons.Close,
                                 null,
-                                tint = if (passwordsMatch) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                                tint = if (passwordsMatch) colors.positive else MaterialTheme.colorScheme.error,
                                 size = 16.dp
                             )
                             Text(
                                 if (passwordsMatch) "Passwords match" else "Passwords do not match",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (passwordsMatch) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                                color = if (passwordsMatch) colors.positive else MaterialTheme.colorScheme.error,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -2238,26 +2261,14 @@ n                    if (passwordConfirm.isNotBlank() || passwordsMatch) {
                 }
 
                 if (scheduleEnabled) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        listOf("Every 6 hours", "Every 12 hours", "Daily", "Weekly", "Monthly").forEach { interval ->
-                            val selected = scheduleInterval == interval
-                            Surface(
-                                onClick = { onScheduleIntervalChange(interval) },
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainerHigh
-                            ) {
-                                Text(interval, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
+                    Box(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                        OptionPickerField(
+                            label = "Interval",
+                            selected = scheduleInterval,
+                            options = listOf("Every 6 hours", "Every 12 hours", "Daily", "Weekly", "Monthly"),
+                            onSelected = onScheduleIntervalChange,
+                            icon = FieldMindIcons.Today
+                        )
                     }
                 }
             }
