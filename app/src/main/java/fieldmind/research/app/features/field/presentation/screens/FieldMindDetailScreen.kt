@@ -210,7 +210,7 @@ fun DetailScreen(
                         if (session != null) {
                             val linkedObsIds = sessionObservationCrossRefs.filter { it.sessionId == session.id }.map { it.observationId }.toSet()
                             val linkedObservations = observations.filter { it.id in linkedObsIds }
-                            item { ResearchSessionDetailContent(session, linkedObservations, onOpenDetail) }
+                            item { ResearchSessionDetailContent(session, linkedObservations, onOpenDetail, onUnlink = { obsId -> viewModel.unlinkObservationFromSession(session.id, obsId) }) }
                             item { BacklinksPanel(buildList {
                                 projects.firstOrNull { it.id == session.projectId }?.let { add(Triple("project", it.title, it.id)) }
                             }, onOpenDetail) }
@@ -2563,7 +2563,8 @@ private fun FlashcardDetailContent(
 private fun ResearchSessionDetailContent(
     session: ResearchSessionEntity,
     observations: List<ObservationEntity>,
-    onOpenDetail: (String, Long) -> Unit
+    onOpenDetail: (String, Long) -> Unit,
+    onUnlink: ((Long) -> Unit)? = null
 ) {
     val observationCount = observations.size
     val colors = MaterialTheme.colorScheme
@@ -2618,18 +2619,39 @@ private fun ResearchSessionDetailContent(
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(obs.title.ifBlank { "Observation #${obs.id}" }, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                        obs.description?.takeIf { it.isNotBlank() }?.let {
-                            Text(it, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Row(Modifier.fillMaxWidth()) {
+                        Column(
+                            Modifier.weight(1f).padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(obs.title.ifBlank { "Observation #${obs.id}" }, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                            obs.description?.takeIf { it.isNotBlank() }?.let {
+                                Text(it, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            }
+                            obs.observationType?.let {
+                                Text(it, style = MaterialTheme.typography.labelSmall, color = colors.primary)
+                            }
                         }
-                        obs.observationType?.let {
-                            Text(it, style = MaterialTheme.typography.labelSmall, color = colors.primary)
+                        // Unlink button
+                        if (onUnlink != null) {
+                            IconButton(
+                                onClick = { onUnlink(obs.id) },
+                                modifier = Modifier.size(40.dp).padding(end = 4.dp).align(Alignment.CenterVertically)
+                            ) {
+                                Icon(
+                                    FieldMindIcons.Close,
+                                    "Unlink observation",
+                                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                                    size = 18.dp
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}        }
     }
 }
 

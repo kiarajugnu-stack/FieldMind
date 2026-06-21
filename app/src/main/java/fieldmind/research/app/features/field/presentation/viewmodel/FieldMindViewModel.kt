@@ -548,6 +548,9 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun linkObservationToSession(sessionId: Long, observationId: Long) = viewModelScope.launch {
         repository.linkSessionObservation(sessionId, observationId)
     }
+    fun unlinkObservationFromSession(sessionId: Long, observationId: Long) = viewModelScope.launch {
+        repository.unlinkSessionObservation(sessionId, observationId)
+    }
     val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val sessionObservationCrossRefs: StateFlow<List<SessionObservationCrossRef>> = repository.sessionObservationCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val hypothesisEvidenceCrossRefs: StateFlow<List<HypothesisEvidenceCrossRef>> = repository.hypothesisEvidenceCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
