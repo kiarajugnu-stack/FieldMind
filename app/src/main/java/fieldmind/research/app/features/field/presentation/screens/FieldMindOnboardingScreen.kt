@@ -1655,44 +1655,6 @@ private fun OnboardingBackupOptionsPage(
         }
     }
 }
-                }
-                listOf(
-                    Triple("Auto-backup", "Schedule automatic backups of all your observations, projects, and settings. Configurable frequency.", FieldMindIcons.Export),
-                    Triple("Daily reminders", "Gentle nudges if you haven't logged an observation. Helps maintain your research streak.", FieldMindIcons.Notifications),
-                    Triple("Research streaks", "Track your daily observation streak for motivation. Visual streak cards on the home screen.", FieldMindIcons.Streak)
-                ).forEach { (title, desc, icon) ->
-                    AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
-                        Card(
-                            shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                        ) {
-                            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
-                                    Icon(icon, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                                }
-                                Column(Modifier.weight(1f)) {
-                                    Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                    Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Row(
-                Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedButton(onClick = onBack, shape = RoundedCornerShape(16.dp)) { Text("Back") }
-                Spacer(Modifier.weight(1f))
-                Button(onClick = onNext, shape = RoundedCornerShape(16.dp)) { Text("Continue") }
-            }
-        }
-    }
-}
 
 // ══════════════════════════════════════════════════════════════════════
 //  Extended Tour — Screen 9: Data Tools

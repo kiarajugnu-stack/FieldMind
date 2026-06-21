@@ -99,7 +99,7 @@ class CloudPhysicsSystem(
             cloud.vx *= (1f - dragCoefficient)
 
             // Perlin-based drift for natural sway
-            cloud.driftOffset = perlinNoise(cloud.x * 0.001f, time * 0.3f, 0f) * 20f
+            cloud.driftOffset = cloudDriftNoise(cloud.x * 0.001f, time * 0.3f) * 20f
 
             // Update position with wrap-around for seamless looping
             cloud.x += cloud.vx
@@ -124,10 +124,10 @@ class CloudPhysicsSystem(
     }
 }
 
-fun perlinNoise(x: Float, y: Float, z: Float): Float {
-    val sin1 = sin(x * 0.5f + y * 0.3f) * cos(z)
-    val sin2 = sin(x * 0.3f - y * 0.2f) * cos(z + 1f)
-    val sin3 = sin((x + y * 0.15f) * 0.2f) * cos(z + 2f)
+private fun cloudDriftNoise(x: Float, y: Float): Float {
+    val sin1 = sin(x * 0.5f + y * 0.3f)
+    val sin2 = sin(x * 0.3f - y * 0.2f)
+    val sin3 = sin((x + y * 0.15f) * 0.2f)
     return (sin1 + sin2 + sin3) / 2.5f
 }
 
