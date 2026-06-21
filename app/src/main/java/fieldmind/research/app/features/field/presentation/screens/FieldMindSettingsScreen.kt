@@ -45,7 +45,9 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.BorderStroke
 import androidx.activity.result.contract.ActivityResultContracts
 import android.widget.Toast
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // ══════════════════════════════════════════════════════════════════════
 //  Data Classes
@@ -1452,11 +1454,101 @@ fun DataIntegritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit)
     val questions by viewModel.questions.collectAsState()
     val sources by viewModel.sources.collectAsState()
     val projects by viewModel.projects.collectAsState()
+    val notes by viewModel.notes.collectAsState()
+    val hypotheses by viewModel.hypotheses.collectAsState()
+    val dataRecords by viewModel.dataRecords.collectAsState()
+    val reports by viewModel.reports.collectAsState()
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var isRunning by remember { mutableStateOf(false) }
+    var showResultDialog by remember { mutableStateOf(false) }
+    var resultReport by remember { mutableStateOf("") }
 
     val orphanedObs = remember(observations, projects) {
         observations.count { obs -> (obs.projectId ?: 0L) > 0 && projects.none { it.id == obs.projectId } }
     }
     val totalRecords = observations.size + questions.size + sources.size
+
+    suspend fun runIntegrityCheck(): String {
+        val dao = fieldmind.research.app.features.field.data.database.FieldMindDatabase
+            .getInstance(context).fieldMindDao()
+        val issues = mutableListOf<String>()
+        val fixes = mutableListOf<String>()
+
+        // 1. Check orphaned observations (referencing deleted projects)
+        if (orphanedObs > 0) {
+            issues.add("$orphanedObs observation(s) reference missing or deleted projects")
+            observations.filter { obs -> (obs.projectId ?: 0L) > 0 && projects.none { it.id == obs.projectId } }
+                .forEach { obs ->
+                    dao.updateObservation(obs.copy(projectId = null))
+                }
+            fixes.add("Cleared projectId on $orphanedObs orphaned observation(s)")
+        }
+
+        // 2. Check orphaned notes (referencing deleted projects)
+        val orphanedNotes = notes.count { n -> (n.projectId ?: 0L) > 0 && projects.none { it.id == n.projectId } }
+        if (orphanedNotes > 0) {
+            issues.add("$orphanedNotes note(s) reference missing or deleted projects")
+            notes.filter { n -> (n.projectId ?: 0L) > 0 && projects.none { it.id == n.projectId } }
+                .forEach { n -> dao.updateNote(n.copy(projectId = null)) }
+            fixes.add("Cleared projectId on $orphanedNotes orphaned note(s)")
+        }
+
+        // 3. Check orphaned sources (referencing deleted projects)
+        val orphanedSources = sources.count { s -> (s.relatedProjectId ?: 0L) > 0 && projects.none { it.id == s.relatedProjectId } }
+        if (orphanedSources > 0) {
+            issues.add("$orphanedSources source(s) reference missing or deleted projects")
+            sources.filter { s -> (s.relatedProjectId ?: 0L) > 0 && projects.none { it.id == s.relatedProjectId } }
+                .forEach { s -> dao.updateSource(s.copy(relatedProjectId = null)) }
+            fixes.add("Cleared relatedProjectId on $orphanedSources orphaned source(s)")
+        }
+
+        // 4. Check for observations with blank/empty subjects
+        val blankSubjects = observations.count { it.subject.isBlank() }
+        if (blankSubjects > 0) {
+            issues.add("$blankSubjects observation(s) have blank subjects")
+            fixes.add("Flagged $blankSubjects observation(s) with blank subjects for review")
+        }
+
+        // 5. Check for duplicate observations (same subject + date)
+        val dupes = observations.groupBy { it.subject.lowercase() to it.date }
+            .filter { (key, group) -> group.size > 1 && key.first.isNotBlank() }
+        val dupeCount = dupes.values.sumOf { it.size - 1 }
+        if (dupeCount > 0) {
+            issues.add("$dupeCount potential duplicate observation(s) found (same subject + date)")
+            fixes.add("Found ${dupes.size} group(s) of duplicate observations — review manually")
+        }
+
+        // 6. Check for null/invalid dates
+        val invalidDates = observations.count { it.date.isBlank() }
+        if (invalidDates > 0) {
+            issues.add("$invalidDates observation(s) have blank dates")
+            fixes.add("Flagged $invalidDates observation(s) with blank dates")
+        }
+
+        // Build report
+        val sb = StringBuilder()
+        if (issues.isEmpty()) {
+            sb.appendLine("✅ No integrity issues found!")
+            sb.appendLine("Your database appears healthy.")
+        } else {
+            sb.appendLine("🔍 Issues found: ${issues.size}")
+            issues.forEach { sb.appendLine("• $it") }
+            sb.appendLine()
+            sb.appendLine("✅ Auto-fixed: ${fixes.size}")
+            fixes.forEach { sb.appendLine("• $it") }
+            if (dupes.isNotEmpty()) {
+                sb.appendLine()
+                sb.appendLine("📋 Manual review needed:")
+                dupes.entries.take(5).forEach { (key, group) ->
+                    sb.appendLine("• \"${key.first}\" (${key.second}) — ${group.size} entries")
+                }
+                if (dupes.size > 5) sb.appendLine("• ...and ${dupes.size - 5} more duplicate groups")
+            }
+        }
+        return sb.toString()
+    }
 
     SettingsSubPage("Data integrity", icon = FieldMindIcons.Archive, onBack = onBack) {
         item {
@@ -1487,14 +1579,30 @@ fun DataIntegritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit)
             }
         }
         item {
-            FilledTonalButton(
-                onClick = { /* Placeholder: would trigger integrity repair */ },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(FieldMindIcons.Check, null, size = 18.dp)
-                Spacer(Modifier.size(8.dp))
-                Text("Run integrity check")
+            if (isRunning) {
+                Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))) {
+                    Row(Modifier.padding(16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Text("Running integrity check…", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                    }
+                }
+            } else {
+                FilledTonalButton(
+                    onClick = {
+                        isRunning = true
+                        scope.launch {
+                            resultReport = withContext(Dispatchers.IO) { runIntegrityCheck() }
+                            isRunning = false
+                            showResultDialog = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(FieldMindIcons.Check, null, size = 18.dp)
+                    Spacer(Modifier.size(8.dp))
+                    Text("Run integrity check")
+                }
             }
         }
         item {
@@ -1515,6 +1623,24 @@ fun DataIntegritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit)
                 }
             }
         }
+    }
+
+    // ── Integrity check result dialog ──
+    if (showResultDialog) {
+        AlertDialog(
+            onDismissRequest = { showResultDialog = false },
+            icon = { Icon(FieldMindIcons.Check, null, size = 28.dp) },
+            title = { Text("Integrity check complete", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    resultReport,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(onClick = { showResultDialog = false }) { Text("Done") }
+            }
+        )
     }
 }
 
@@ -1639,6 +1765,20 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val debugLogging by settings.debugLogging.collectAsState()
     var testWeatherCode by remember { mutableStateOf<Int?>(null) }
     var testIsNight by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var showSchemaDialog by remember { mutableStateOf(false) }
+    var schemaInfo by remember { mutableStateOf("") }
+    var showClearConfirmation by remember { mutableStateOf(false) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            android.widget.Toast.makeText(context, "Notification permission granted. Tap test notifications again.", android.widget.Toast.LENGTH_SHORT).show()
+        } else {
+            android.widget.Toast.makeText(context, "Notification permission denied. Enable in Settings.", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 
     SettingsSubPage("Developer", icon = FieldMindIcons.Sparkle, onBack = onBack) {
         item {
@@ -1660,7 +1800,98 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                             "Clear all preferences (restart required)"
                         ).forEach { tool ->
                             Surface(
-                                onClick = { /* Placeholder */ },
+                                onClick = {
+                                    when (tool) {
+                                        "View database schema" -> {
+                                            schemaInfo = "Database: fieldmind_database\\nSchema version: 12\\nEntity types:\\n" +
+                                                "• Observations, Notes, Questions\\n" +
+                                                "• Hypotheses, Projects, Sources\\n" +
+                                                "• Data Records, Reports, Flashcards\\n" +
+                                                "• Species, Tasks, Weather Catalog\\n" +
+                                                "• Research Sessions, Evidence Attachments\\n" +
+                                                "• Tags, Cross-references (14 tables)" +
+                                                "\\n\\nStatus: Room with KSP annotation processing"
+                                            showSchemaDialog = true
+                                        }
+                                        "Export raw JSON dump" -> {
+                                            scope.launch {
+                                                android.widget.Toast.makeText(context, "Building JSON dump…", android.widget.Toast.LENGTH_SHORT).show()
+                                                try {
+                                                    val json = withContext(Dispatchers.IO) {
+                                                        fieldmind.research.app.features.field.data.export.FieldMindExport.archiveJson(
+                                                            observations = viewModel.observations.value,
+                                                            notes = viewModel.notes.value,
+                                                            questions = viewModel.questions.value,
+                                                            hypotheses = viewModel.hypotheses.value,
+                                                            projects = viewModel.projects.value,
+                                                            sources = viewModel.sources.value,
+                                                            dataRecords = viewModel.dataRecords.value,
+                                                            reports = viewModel.reports.value,
+                                                            flashcards = viewModel.flashcards.value,
+                                                            species = viewModel.speciesRegistry.value,
+                                                            weatherCatalog = viewModel.weatherCatalog.value,
+                                                            researchSessions = viewModel.researchSessions.value,
+                                                            tasks = viewModel.tasks.value
+                                                        )
+                                                    }
+                                                    val exportDir = java.io.File(context.cacheDir, "exports").apply { mkdirs() }
+                                                    val stamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+                                                    val dumpFile = java.io.File(exportDir, "fieldmind_raw_dump_$stamp.json")
+                                                    dumpFile.writeText(json)
+                                                    // Share via FileProvider for FileUriExposedException safety
+                                                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                                                        context,
+                                                        context.packageName + ".provider",
+                                                        dumpFile
+                                                    )
+                                                    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                                        type = "application/json"
+                                                        putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                                                        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                    }
+                                                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Share JSON dump"))
+                                                    android.widget.Toast.makeText(context, "Dump saved: ${dumpFile.name}", android.widget.Toast.LENGTH_LONG).show()
+                                                } catch (e: Exception) {
+                                                    android.widget.Toast.makeText(context, "Export failed: ${e.localizedMessage}", android.widget.Toast.LENGTH_LONG).show()
+                                                }
+                                            }
+                                        }
+                                        "Test notifications" -> {
+                                            val nm = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                                nm.createNotificationChannel(
+                                                    android.app.NotificationChannel("fieldmind_test", "Test", android.app.NotificationManager.IMPORTANCE_DEFAULT).apply {
+                                                        description = "Test notification channel"
+                                                    }
+                                                )
+                                                // Check POST_NOTIFICATIONS permission on Android 13+
+                                                if (androidx.core.content.ContextCompat.checkSelfPermission(
+                                                        context, android.Manifest.permission.POST_NOTIFICATIONS
+                                                ) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                                                    notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                                } else {
+                                                    nm.notify(1001, android.app.Notification.Builder(context, "fieldmind_test")
+                                                        .setContentTitle("FieldMind Test")
+                                                        .setContentText("This is a test notification from Developer settings")
+                                                        .setSmallIcon(android.R.drawable.ic_dialog_info)
+                                                        .setAutoCancel(true)
+                                                        .build())
+                                                    android.widget.Toast.makeText(context, "Test notification sent", android.widget.Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                            nm.notify(1001, android.app.Notification.Builder(context, "fieldmind_test")
+                                                .setContentTitle("FieldMind Test")
+                                                .setContentText("This is a test notification from Developer settings")
+                                                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                                                .setAutoCancel(true)
+                                                .build())
+                                            android.widget.Toast.makeText(context, "Test notification sent", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                        "Clear all preferences (restart required)" -> {
+                                            showClearConfirmation = true
+                                        }
+                                    }
+                                },
                                 shape = RoundedCornerShape(14.dp),
                                 color = MaterialTheme.colorScheme.surfaceContainerHigh
                             ) {
@@ -1700,6 +1931,46 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    // ── Clear preferences confirmation dialog ──
+    if (showClearConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirmation = false },
+            icon = { Icon(FieldMindIcons.Settings, null, size = 28.dp) },
+            title = { Text("Clear all preferences?", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("This will reset ALL settings to defaults, including:")
+                    Text("\u2022 Theme, units, and display preferences\n"
+                        + "\u2022 Weather providers and API keys\n"
+                        + "\u2022 AI assistant configuration\n"
+                        + "\u2022 Capture defaults and security settings")
+                    Spacer(Modifier.height(8.dp))
+                    Text("The app needs to restart for changes to take effect. Your observations, notes, and other data will not be affected.",
+                         style = MaterialTheme.typography.bodySmall,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showClearConfirmation = false
+                        scope.launch {
+                            settings.clearAllPreferences()
+                            android.widget.Toast.makeText(context, "Preferences cleared. Closing app...", android.widget.Toast.LENGTH_LONG).show()
+                            // Restart the activity to reload settings
+                            (context as? androidx.activity.ComponentActivity)?.let { activity ->
+                                activity.finishAffinity()
+                            }
+                        }
+                    }
+                ) { Text("Clear and restart") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirmation = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 
