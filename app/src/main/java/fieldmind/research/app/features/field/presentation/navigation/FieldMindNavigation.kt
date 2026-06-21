@@ -481,8 +481,9 @@ private fun LiquidNavRow(
     }
 
     // ── Item bounds tracked via onGloballyPositioned ──
-    // positionInParent gives the actual x-offset within the Row, which
-    // automatically accounts for Arrangement.SpaceEvenly inter-item gaps.
+    // positionInRoot() (minus parent's root position) gives the actual
+    // x-offset within the Row, which automatically accounts for
+    // Arrangement.SpaceEvenly inter-item gaps.
     val tabBounds = remember { mutableStateListOf<TabBounds>() }
 
     // Capture color scheme in composable scope (Canvas DrawScope is not composable)
@@ -552,7 +553,11 @@ private fun LiquidNavRow(
                     modifier = Modifier
                         .onGloballyPositioned { coordinates ->
                             val width = coordinates.size.width.toFloat()
-                            val x = coordinates.positionInParent().x
+                            // positionInParent() was removed from Compose. Calculate
+                            // relative position by subtracting parent's root position.
+                            val childRoot = coordinates.positionInRoot()
+                            val parentRoot = coordinates.parentCoordinates?.positionInRoot() ?: Offset.Zero
+                            val x = (childRoot - parentRoot).x
                             if (tabBounds.size <= index) {
                                 while (tabBounds.size <= index) tabBounds.add(TabBounds(0f, 0f))
                             }
