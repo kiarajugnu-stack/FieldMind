@@ -223,11 +223,11 @@ fun DetailScreen(
                         }
                     }
         }
+    }
     if (showEdit) EditEntityDialog(kind, id, viewModel) { showEdit = false }
     if (showDelete) ConfirmDeleteDialog(kind, onDismiss = { showDelete = false }) {
         deleteEntityByKind(kind, id, viewModel); showDelete = false; onBack()
     }
-}
 }
 }
 }
@@ -2583,10 +2583,9 @@ private fun ResearchSessionDetailContent(
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(session.name.ifBlank { "Research Session" }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 DetailRow("Project ID", session.projectId?.toString() ?: "—")
-                DetailRow("Duration", formatDuration(session.durationMs))
-                DetailRow("Objective", session.objective)
+                DetailRow("Duration", formatDuration(session.totalDurationMs))
                 DetailRow("Notes", session.notes)
-                DetailRow("Created", session.createdAt?.let { formatTimestamp(it) } ?: "—")
+                DetailRow("Created", formatTimestamp(session.createdAt))
             }
         }
 
@@ -2626,14 +2625,8 @@ private fun ResearchSessionDetailContent(
                             Modifier.weight(1f).padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text(obs.title.ifBlank { "Observation #${obs.id}" }, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                            obs.description?.takeIf { it.isNotBlank() }?.let {
-                                Text(it, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            }
-                            obs.observationType?.let {
-                                Text(it, style = MaterialTheme.typography.labelSmall, color = colors.primary)
-                            }
-                        }
+                            Text(obs.subject.ifBlank { "Observation #${obs.id}" }, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                                                    }
                         // Unlink button
                         if (onUnlink != null) {
                             IconButton(
