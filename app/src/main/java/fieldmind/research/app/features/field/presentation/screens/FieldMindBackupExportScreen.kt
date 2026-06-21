@@ -86,12 +86,12 @@ data class FormatOption(
 )
 
 private val exportFormats = listOf(
-    FormatOption("JSON", "Structured archive with media", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF7B1FA2), "data"),
-    FormatOption("CSV", "Tabular data for spreadsheets", FieldMindIcons.Data, androidx.compose.ui.graphics.Color(0xFF1565C0), "data"),
-    FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF558B2F), "document"),
-    FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFFE65100), "document"),
-    FormatOption("PDF", "Portable document format", FieldMindIcons.Report, androidx.compose.ui.graphics.Color(0xFF6A1B9A), "document"),
-    FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1B5E20), "package")
+    FormatOption("JSON", "Structured archive with media", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1F6B4C), "data"),
+    FormatOption("CSV", "Tabular data for spreadsheets", FieldMindIcons.Data, androidx.compose.ui.graphics.Color(0xFF006D7A), "data"),
+    FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF2E7D32), "document"),
+    FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF1565C0), "document"),
+    FormatOption("PDF", "Portable document format", FieldMindIcons.Report, androidx.compose.ui.graphics.Color(0xFF1F6B4C), "document"),
+    FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1F6B4C), "package")
 )
 
 data class ExportRecord(
@@ -1323,7 +1323,7 @@ private fun HeroStatusCard(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ══���═══════════════════════════════════════════════════════════════════
 //  Tab Pill Selector
 // ══════════════════════════════════════════════════════════════════════
 
@@ -2236,7 +2236,7 @@ private fun BackupTabContent(
             }
         }
 
-        // ── Backup options ──
+        // ── Backup options ─��
         Card(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
