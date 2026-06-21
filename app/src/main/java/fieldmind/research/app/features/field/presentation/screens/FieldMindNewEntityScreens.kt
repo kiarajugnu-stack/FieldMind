@@ -56,7 +56,7 @@ fun NewProjectScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
         StandardScreenHeader(
             title = "New Project",
             subtitle = "Define the question, evidence plan, data fields, and report direction.",
@@ -117,7 +117,7 @@ fun NewQuestionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
         StandardScreenHeader(
             title = "New Question",
             subtitle = "Turn curiosity into something observable, measurable, comparable, or verifiable.",
@@ -171,7 +171,7 @@ fun NewHypothesisScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
         StandardScreenHeader(
             title = "New Hypothesis",
             subtitle = "State the prediction, what would support it, and what would weaken it.",
@@ -235,7 +235,7 @@ fun NewDataRecordScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
         StandardScreenHeader(
             title = "New Data Record",
             subtitle = "Choose a preset so units and labels match the kind of thing you measured.",
@@ -299,7 +299,7 @@ fun NewReportScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
         StandardScreenHeader(
             title = "Report Builder",
             subtitle = "Create a clean local draft: claim, evidence, reasoning, limitations, and next steps.",
