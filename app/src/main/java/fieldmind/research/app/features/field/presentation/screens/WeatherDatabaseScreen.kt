@@ -196,6 +196,7 @@ fun WeatherDatabaseScreen(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 shape = RoundedCornerShape(22.dp),
                 color = colors.info.copy(alpha = 0.08f),

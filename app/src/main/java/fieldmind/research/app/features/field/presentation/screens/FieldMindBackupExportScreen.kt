@@ -136,6 +136,10 @@ fun BackupAndRestoreScreen(
     val dataRecords by viewModel.dataRecords.collectAsState()
     val reports by viewModel.reports.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
+    val species by viewModel.speciesRegistry.collectAsState()
+    val weatherCatalog by viewModel.weatherCatalog.collectAsState()
+    val researchSessions by viewModel.researchSessions.collectAsState()
+    val tasks by viewModel.tasks.collectAsState()
 
     // Settings
     val settings = viewModel.fieldSettings
@@ -375,7 +379,11 @@ fun BackupAndRestoreScreen(
                                                 questions = questions, hypotheses = hypotheses,
                                                 projects = projects, sources = sources,
                                                 dataRecords = dataRecords, reports = reports,
-                                                flashcards = flashcards
+                                                flashcards = flashcards,
+                                                species = species,
+                                                weatherCatalog = weatherCatalog,
+                                                researchSessions = researchSessions,
+                                                tasks = tasks
                                             )
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
                                             val ext = when (format) {
@@ -524,6 +532,12 @@ fun BackupAndRestoreScreen(
                                             importProgress = 0.3f
                                             val isFieldMind = importFileName.endsWith(".fieldmind") || importFileName.endsWith(".zip") || importFileName.endsWith(".encrypted")
                                             val uriToRead = if (importFileName.endsWith(".encrypted")) {
+                                                // If already decrypted in password prompt, reuse the extracted data
+                                                if (importedPackage != null && importedPackage!!.archiveJson.isNotBlank()) {
+                                                    importStepText = "Using previously decrypted data…"
+                                                    importProgress = 0.5f
+                                                    return@withContext importedPackage!!.archiveJson
+                                                }
                                                 // Decrypt first
                                                 importStepText = "Decrypting with password…"
                                                 importProgress = 0.2f
@@ -624,7 +638,7 @@ fun BackupAndRestoreScreen(
                                             // Apply export privacy transforms to backup data
                                             val backupObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
                                             val backupNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
-                                            val json = FieldMindExport.archiveJson(backupObs, backupNotes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
+                                            val json = FieldMindExport.archiveJson(backupObs, backupNotes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards, species, weatherCatalog, researchSessions, tasks)
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
                                             val backupDir = backupDirectory(context)
                                             val baseName = "fieldmind-backup-$dateStamp"
@@ -871,7 +885,7 @@ fun BackupAndRestoreScreen(
                             val exportFile = File(exportDir, fileName)
 
                             withContext(Dispatchers.IO) {
-                                val json = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
+                                val json = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards, species, weatherCatalog, researchSessions, tasks)
                                 when (shareDialogFormat) {
                                     "JSON" -> exportFile.writeText(json)
                                     "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))

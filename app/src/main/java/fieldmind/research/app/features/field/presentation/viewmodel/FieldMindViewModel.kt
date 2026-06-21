@@ -456,6 +456,12 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             bundle.reports.forEach { repository.addReport(it) }
             bundle.flashcards.forEach { repository.addFlashcard(it) }
 
+            // ── Import new entity types (species, weather, sessions, tasks) ──
+            bundle.species.forEach { repository.addSpecies(it) }
+            bundle.weatherCatalog.forEach { repository.addWeatherCatalog(it) }
+            bundle.researchSessions.forEach { repository.addResearchSession(it) }
+            bundle.tasks.forEach { repository.addTask(it) }
+
             // Phase 2: Relink extracted media files to the newly imported entities.
             // Copy temp files to a permanent app-local directory so they survive
             // cleanupExtractedPackage() which runs in the caller's finally block.
@@ -466,12 +472,13 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                         "observation" -> {
                             val newObsId = oldToNewObsId[media.entityId]
                             if (newObsId != null) {
-                                val permUri = copyMediaToPermanentLocation(appContext, media, newObsId)
+                                val (permUri, permPath) = copyMediaToPermanentLocation(appContext, media, newObsId)
                                 repository.addAttachment(
                                     EvidenceAttachmentEntity(
                                         observationId = newObsId,
                                         type = media.mimeType,
                                         uri = permUri,
+                                        localPath = permPath,
                                         caption = media.caption
                                     )
                                 )
@@ -492,13 +499,14 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     /**
      * Copy an extracted media file from its temp location to a permanent app-local
      * directory so it survives [FieldMindExportMediaPacker.cleanupExtractedPackage].
-     * Returns the permanent [android.net.Uri] string.
+     * Returns (permanentUriString, localFilePath) pair. Sets both [uri] and [localPath]
+     * on the restored [EvidenceAttachmentEntity] so the media is accessible via either path.
      */
     private suspend fun copyMediaToPermanentLocation(
         appContext: android.app.Application,
         media: FieldMindExportMediaPacker.MediaEntry,
         newEntityId: Long
-    ): String {
+    ): Pair<String, String> {
         val permDir = java.io.File(appContext.filesDir, "imported_attachments/${media.entityType}s/$newEntityId")
         permDir.mkdirs()
         val permFile = java.io.File(permDir, media.fileName)
@@ -507,11 +515,11 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             val srcFile = java.io.File(tempUri.path!!)
             if (srcFile.exists()) {
                 srcFile.copyTo(permFile, overwrite = true)
-                return android.net.Uri.fromFile(permFile).toString()
+                return Pair(android.net.Uri.fromFile(permFile).toString(), permFile.absolutePath)
             }
         } catch (_: Exception) { }
         // Fallback: use original URI (may become stale after cleanup, but better than nothing)
-        return media.uri
+        return Pair(media.uri, android.net.Uri.parse(media.uri).path ?: "")
     }
 
     fun addHypothesis(questionId: Long?, prediction: String, evidenceNeeded: String, confidence: Int, reasoning: String = "", supportCriteria: String = "", weakeningCriteria: String = "", testMethod: String = "", resultStatus: String = "Unknown") = viewModelScope.launch {
@@ -734,6 +742,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun deleteTask(id: Long) = viewModelScope.launch { repository.deleteTask(id) }
     val tasks: StateFlow<List<TaskEntity>> = repository.tasks.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     fun observeTasksForProject(projectId: Long) = repository.observeTasksForProject(projectId)
+    val weatherCatalog: StateFlow<List<WeatherCatalogEntity>> = repository.weatherCatalog.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun addFlashcard(front: String, back: String, type: String, sourceId: Long? = null, projectId: Long? = null, deckMode: String = "basic", dedupKey: String = "") = viewModelScope.launch {
         val key = dedupKey.ifBlank { "${front.lowercase().trim()}:${back.lowercase().trim()}".hashCode().toLong().let { if (it == Long.MIN_VALUE) Long.MAX_VALUE else kotlin.math.abs(it) }.toString(36) }

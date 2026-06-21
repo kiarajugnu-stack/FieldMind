@@ -131,6 +131,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun deleteTask(id: Long) = dao.softDeleteTask(id, System.currentTimeMillis())
 
     // ── Weather Catalog ──
+    val weatherCatalog: Flow<List<WeatherCatalogEntity>> = dao.observeWeatherCatalogAll()
     fun observeWeatherCatalog(lat: Double, lon: Double) = dao.observeWeatherCatalog(lat, lon)
     fun observeWeatherCatalogAll() = dao.observeWeatherCatalogAll()
     suspend fun addWeatherCatalog(entity: WeatherCatalogEntity): Long = dao.insertWeatherCatalog(entity)

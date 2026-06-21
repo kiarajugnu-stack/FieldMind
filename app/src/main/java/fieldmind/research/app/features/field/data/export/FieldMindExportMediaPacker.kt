@@ -204,12 +204,15 @@ object FieldMindExportMediaPacker {
             var mediaCopied = 0
             mediaEntries.forEach { entry ->
                 try {
-                    val inputStream = if (entry.uri.startsWith("file://") || entry.uri.startsWith("/")) {
-                        // Local file path
+                    val inputStream = try {
+                        // Try content resolver first (works for content:// URIs)
                         context.contentResolver.openInputStream(Uri.parse(entry.uri))
-                    } else {
-                        // content:// URI
-                        context.contentResolver.openInputStream(Uri.parse(entry.uri))
+                    } catch (_: Exception) {
+                        // Fallback: read directly from file path for schemeless file URIs
+                        // (localPath on EvidenceAttachmentEntity stores raw file paths).
+                        // ContentResolver throws IllegalArgumentException for URIs without a scheme,
+                        // so we catch all exceptions and try direct file access.
+                        java.io.File(entry.uri).inputStream()
                     }
 
                     if (inputStream != null) {
