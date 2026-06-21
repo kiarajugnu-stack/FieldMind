@@ -22,9 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -47,13 +45,13 @@ import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -219,10 +217,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
             return
         }
         // Pop everything up to the start destination then navigate to the target tab
-        // Using startDestinationRoute for reliable route-based popUpTo
+        // Using startDestinationRoute for reliable route-based popUpTo.
+        // When the target IS the start destination (Home/Today), include it in the pop
+        // so the navigation actually re-enters the tab instead of being a no-op.
+        val startDest = navController.graph.startDestinationRoute ?: FieldMindScreen.Home.route
         navController.navigate(route) {
-            popUpTo(navController.graph.startDestinationRoute ?: FieldMindScreen.Home.route) {
-                inclusive = false
+            popUpTo(startDest) {
+                inclusive = (route == startDest)
                 saveState = true
             }
             launchSingleTop = true
@@ -306,7 +307,9 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 840.dp
         if (expanded) {
-            Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().haze(state = hazeState)) {
+            Row(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+                // Tablet rail — glassmorphic side panel. .hazeChild blurs the
+                // NavHost content behind the rail (captured via .haze() below).
                 if (!hideChrome) {
                     Surface(
                         shape = RoundedCornerShape(size = 24.dp),
@@ -331,13 +334,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                                     tints = listOf(
                                         HazeTint(
                                             color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                                alpha = if (isSystemInDarkTheme()) 0.78f else 0.85f
-                                            )
-                                        ),
-                                        HazeTint(
-                                            brush = Brush.verticalGradient(
-                                                0.0f to Color.White.copy(alpha = 0.05f),
-                                                0.15f to Color.Transparent
+                                                alpha = if (isSystemInDarkTheme()) 0.88f else 0.93f
                                             )
                                         )
                                     )
@@ -360,7 +357,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                         }
                     }
                 }
-                FieldMindNavHost(navController, viewModel, onResetOnboarding, Modifier.weight(1f))
+                // Content — blur source (captured by Haze for the rail's glass)
+                FieldMindNavHost(
+                    navController = navController,
+                    viewModel = viewModel,
+                    onResetOnboarding = onResetOnboarding,
+                    modifier = Modifier.weight(1f).haze(state = hazeState)
+                )
             }
         } else {
             // ── True floating overlay nav bar with liquid glass effect ──
@@ -368,13 +371,17 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
             // solid rectangular bottom-bar background behind the pill.
             // The content fills the full screen edge-to-edge; the pill is
             // overlaid at the bottom with real backdrop blur via Haze.
-            Box(Modifier.fillMaxSize().haze(state = hazeState)) {
-                // Content — fills full screen edge-to-edge
+            //
+            // IMPORTANT: .haze() is ONLY on the NavHost content, NOT the outer
+            // Box — this ensures the pill and its shadow/glow layers are never
+            // captured into the blur source, preventing visible layer artifacts.
+            Box(Modifier.fillMaxSize()) {
+                // Content — fills full screen edge-to-edge (blur source ONLY)
                 FieldMindNavHost(
                     navController = navController,
                     viewModel = viewModel,
                     onResetOnboarding = onResetOnboarding,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize().haze(state = hazeState)
                 )
 
                 // Floating pill — glassmorphic with liquid blob indicator
@@ -386,48 +393,21 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
-                        // ── Subtle glow/shadow beneath the pill for depth ──
-                        val glowColor = MaterialTheme.colorScheme.primary
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(66.dp)
-                                .drawBehind {
-                                    // Multi-layer soft glow: outer → inner, decreasing size, fading alpha
-                                    val layers = listOf(
-                                        1.3f to 0.03f,
-                                        1.2f to 0.05f,
-                                        1.1f to 0.08f,
-                                        1.0f to 0.06f,
-                                    )
-                                    val cr = 34.dp.toPx()
-                                    for ((scale, alpha) in layers) {
-                                        val w = size.width * scale
-                                        val h = size.height * scale
-                                        drawRoundRect(
-                                            color = glowColor.copy(alpha = alpha),
-                                            topLeft = Offset(-(w - size.width) / 2f, -(h - size.height) / 2f),
-                                            size = Size(w, h),
-                                            cornerRadius = CornerRadius(cr, cr)
-                                        )
-                                    }
-                                }
-                        )
-
                         // Glassmorphic nav pill — real backdrop blur via Haze with
                         // semi-transparent surface. The animated blob indicator
                         // (drawn by LiquidNavRow) provides the liquid micro-interaction.
+                        // shadowElevation provides clean shadow depth without drawBehind glows.
                         Surface(
                             shape = RoundedCornerShape(34.dp),
                             color = Color.Transparent,
                             tonalElevation = 0.dp,
-                            shadowElevation = 12.dp,
+                            shadowElevation = 16.dp,
                             border = androidx.compose.foundation.BorderStroke(
-                                width = 0.8.dp,
+                                width = 0.6.dp,
                                 color = if (isSystemInDarkTheme())
-                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
                                 else
-                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.30f)
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
                             ),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -440,13 +420,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                                         tints = listOf(
                                             HazeTint(
                                                 color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                                    alpha = if (isSystemInDarkTheme()) 0.78f else 0.85f
-                                                )
-                                            ),
-                                            HazeTint(
-                                                brush = Brush.verticalGradient(
-                                                    0.0f to Color.White.copy(alpha = 0.05f),
-                                                    0.15f to Color.Transparent
+                                                    alpha = if (isSystemInDarkTheme()) 0.88f else 0.93f
                                                 )
                                             )
                                         )
@@ -490,7 +464,7 @@ private fun LiquidNavRow(
     val animatedPosition = remember { Animatable(0f) }
     val animSpec = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessLow
+        stiffness = Spring.StiffnessVeryLow
     )
     LaunchedEffect(selectedIndex) {
         animatedPosition.animateTo(selectedIndex.toFloat(), animSpec)
@@ -509,12 +483,25 @@ private fun LiquidNavRow(
     ) {
         // ── Liquid blob indicator drawn behind the tabs ──
         // (Canvas is drawn first, so it appears behind the Row)
+        // Uses accumulated actual item widths for precise per-tab centering,
+        // with smooth interpolation between tab positions during animation.
         if (itemWidths.isNotEmpty() && selectedIndex < itemWidths.size) {
             Canvas(modifier = Modifier.matchParentSize()) {
-                val totalWidth = size.width
-                val tabCount = visibleTabs.size.coerceAtLeast(1)
-                val segmentWidth = totalWidth / tabCount
-                val centerX = segmentWidth * (animatedPosition.value + 0.5f)
+                val pos = animatedPosition.value.coerceIn(0f, (itemWidths.size - 1).toFloat())
+                val leftIdx = pos.toInt().coerceIn(0, itemWidths.size - 1)
+                val rightIdx = (leftIdx + 1).coerceAtMost(itemWidths.size - 1)
+                val fraction = pos - leftIdx
+
+                fun centerOf(idx: Int): Float {
+                    val acc = itemWidths.take(idx).sum()
+                    return acc + itemWidths[idx] / 2f
+                }
+
+                val centerX = if (leftIdx == rightIdx) {
+                    centerOf(leftIdx)
+                } else {
+                    centerOf(leftIdx) + (centerOf(rightIdx) - centerOf(leftIdx)) * fraction
+                }
                 val indicatorWidth = itemWidths.getOrElse(selectedIndex) { 60f }
                 val indicatorHeight = size.height * 0.82f
                 val indicatorY = (size.height - indicatorHeight) / 2f
