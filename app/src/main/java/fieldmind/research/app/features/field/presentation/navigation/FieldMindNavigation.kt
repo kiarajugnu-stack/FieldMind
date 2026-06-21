@@ -219,10 +219,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
             return
         }
         // Pop everything up to the start destination then navigate to the target tab
-        // Using startDestinationRoute for reliable route-based popUpTo
+        // Using startDestinationRoute for reliable route-based popUpTo.
+        // When the target IS the start destination (Home/Today), include it in the pop
+        // so the navigation actually re-enters the tab instead of being a no-op.
+        val startDest = navController.graph.startDestinationRoute ?: FieldMindScreen.Home.route
         navController.navigate(route) {
-            popUpTo(navController.graph.startDestinationRoute ?: FieldMindScreen.Home.route) {
-                inclusive = false
+            popUpTo(startDest) {
+                inclusive = (route == startDest)
                 saveState = true
             }
             launchSingleTop = true
@@ -490,7 +493,7 @@ private fun LiquidNavRow(
     val animatedPosition = remember { Animatable(0f) }
     val animSpec = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessLow
+        stiffness = Spring.StiffnessVeryLow
     )
     LaunchedEffect(selectedIndex) {
         animatedPosition.animateTo(selectedIndex.toFloat(), animSpec)
@@ -509,12 +512,25 @@ private fun LiquidNavRow(
     ) {
         // ── Liquid blob indicator drawn behind the tabs ──
         // (Canvas is drawn first, so it appears behind the Row)
+        // Uses accumulated actual item widths for precise per-tab centering,
+        // with smooth interpolation between tab positions during animation.
         if (itemWidths.isNotEmpty() && selectedIndex < itemWidths.size) {
             Canvas(modifier = Modifier.matchParentSize()) {
-                val totalWidth = size.width
-                val tabCount = visibleTabs.size.coerceAtLeast(1)
-                val segmentWidth = totalWidth / tabCount
-                val centerX = segmentWidth * (animatedPosition.value + 0.5f)
+                val pos = animatedPosition.value.coerceIn(0f, (itemWidths.size - 1).toFloat())
+                val leftIdx = pos.toInt().coerceIn(0, itemWidths.size - 1)
+                val rightIdx = (leftIdx + 1).coerceAtMost(itemWidths.size - 1)
+                val fraction = pos - leftIdx
+
+                fun centerOf(idx: Int): Float {
+                    val acc = itemWidths.take(idx).sum()
+                    return acc + itemWidths[idx] / 2f
+                }
+
+                val centerX = if (leftIdx == rightIdx) {
+                    centerOf(leftIdx)
+                } else {
+                    centerOf(leftIdx) + (centerOf(rightIdx) - centerOf(leftIdx)) * fraction
+                }
                 val indicatorWidth = itemWidths.getOrElse(selectedIndex) { 60f }
                 val indicatorHeight = size.height * 0.82f
                 val indicatorY = (size.height - indicatorHeight) / 2f
