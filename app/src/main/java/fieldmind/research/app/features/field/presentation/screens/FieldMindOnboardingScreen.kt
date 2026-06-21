@@ -1661,7 +1661,82 @@ private fun OnboardingBackupOptionsPage(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun OnboardingDataToolsPage(
+@Composable
+fun OnboardingBackupPage(
+    onNext: () -> Unit,
+    onBack: () -> Unit
+) {
+    var showContent by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { showContent = true }
+
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(
+            Modifier.fillMaxSize().padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Spacer(Modifier.height(16.dp))
+                AnimatedVisibility(visible = showContent, enter = fadeIn() + scaleIn(initialScale = 0.92f)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            Modifier.size(72.dp).background(
+                                Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary)),
+                                RoundedCornerShape(24.dp)
+                            ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Export, null, tint = MaterialTheme.colorScheme.onPrimary, size = 38.dp)
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text("Backup & Sync", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
+                        Text("Protect your research data with automatic backups.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    }
+                }
+
+                val features = listOf(
+                    Triple("Auto-backup", "Schedule automatic backups of all your observations, projects, and settings.", FieldMindIcons.Export),
+                    Triple("Cloud sync", "Seamlessly sync your data across devices for continuity in field research.", FieldMindIcons.Data),
+                    Triple("Data recovery", "Restore your data anytime with our secure backup system.", FieldMindIcons.Database)
+                )
+
+                features.forEach { (title, desc, icon) ->
+                    AnimatedVisibility(visible = showContent, enter = fadeIn(tween(300)) + slideInHorizontally(initialOffsetX = { 50 }, tween(300))) {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            tonalElevation = 0.dp
+                        ) {
+                            Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                                    Icon(icon, null, tint = MaterialTheme.colorScheme.primary, size = 24.dp)
+                                }
+                                Column(Modifier.weight(1f)) {
+                                    Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Row(
+                Modifier.fillMaxWidth().padding(top = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(onClick = onBack, Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) { Text("Back") }
+                Button(onClick = onNext, Modifier.weight(1f), shape = RoundedCornerShape(16.dp)) { Text("Continue") }
+            }
+        }
+    }
+}
+
+@Composable
+fun OnboardingDataToolsPage(
     onFinish: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -1762,7 +1837,8 @@ private fun OnboardingDataToolsPage(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun OnboardingSpeciesIdPage(
+@Composable
+fun OnboardingSpeciesIdPage(
     onNext: () -> Unit,
     onBack: () -> Unit,
     onFinish: () -> Unit
@@ -1881,7 +1957,8 @@ private fun OnboardingSpeciesIdPage(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun OnboardingFinalPage(
+@Composable
+fun OnboardingFinalPage(
     onFinish: () -> Unit,
     onBack: () -> Unit
 ) {

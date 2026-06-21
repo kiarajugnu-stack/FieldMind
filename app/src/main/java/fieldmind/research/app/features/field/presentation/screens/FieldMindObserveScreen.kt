@@ -577,7 +577,7 @@ fun ObserveScreen(
 
                 // ── Past Observation Sessions Grouped Display ──
                 if (observations.isNotEmpty() && !session.isActive) {
-                    val sessionGroups = observations.groupBy { it.captureSessionId ?: "ungrouped" }
+                    val sessionGroups = observations.groupBy { "all" }
                     if (sessionGroups.size > 1 || (sessionGroups.size == 1 && sessionGroups.keys.first() != "ungrouped")) {
                         item {
                             var expandSessions by remember { mutableStateOf(false) }
@@ -611,7 +611,7 @@ fun ObserveScreen(
                                                     Text("${sessionObs.size} observation${if (sessionObs.size != 1) "s" else ""}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
                                                     Text(java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.US).format(sessionObs.first().createdAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                                 }
-                                                Icon(FieldMindIcons.ChevronRight, null, size = 18.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                                                Icon(MaterialSymbolIcon("chevron_right"), null, size = 18.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                                             }
                                         }
                                     }

@@ -1048,7 +1048,7 @@ private fun timeOfDay(): String {
     }
 }
 
-// ═��════════════════════════════════════════════════════════════════════
+// ═���════════════════════════════════════════════════════════════════════
 //  Live Weather Dashboard Widget — Live Open-Meteo weather with animations
 // ══════════════════════════════════════════════════════════════════════
 
@@ -2071,7 +2071,7 @@ private fun ResearchSessionCtaCard(
                 )
             }
             Icon(
-                FieldMindIcons.ChevronRight,
+                MaterialSymbolIcon("chevron_right"),
                 null,
                 tint = (if (isActive) colors.observation else colors.positive).copy(alpha = 0.5f),
                 size = 24.dp

@@ -1102,11 +1102,11 @@ fun BackupAndRestoreScreen(
         )
     }
 
-    // ── Share Preview Dialog ──
-    if (showSharePreview) {
+    // ── Share Preview Dialog moved to ExportTabContent ──
+    /*if (showSharePreview) {
         AlertDialog(
             onDismissRequest = { showSharePreview = false },
-            icon = { Icon(icon = exportFormats.find { it.name == selectedExportFormat }?.icon ?: FieldMindIcons.Export, contentDescription = null, size = 32.dp, tint = exportFormats.find { it.name == selectedExportFormat }?.color ?: MaterialTheme.colorScheme.primary) },
+            icon = { Icon(icon = FieldMindIcons.Export, contentDescription = null, size = 32.dp, tint = MaterialTheme.colorScheme.primary) },
             title = { Text("Share Data Export") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -1309,7 +1309,7 @@ fun BackupAndRestoreScreen(
                 onDismiss = { showShareDialog = false }
             )
         }
-    }
+    }*/
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -2258,7 +2258,7 @@ private fun ImportTabContent(
                                         color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                                     )
                                 }
-                                Icon(FieldMindIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.tertiary, size = 18.dp)
+                                Icon(MaterialSymbolIcon("chevron_right"), null, tint = MaterialTheme.colorScheme.tertiary, size = 18.dp)
                             }
                         }
                     }
