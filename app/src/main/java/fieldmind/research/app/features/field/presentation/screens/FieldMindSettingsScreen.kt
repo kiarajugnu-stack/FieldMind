@@ -41,6 +41,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.BorderStroke
+import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
 import kotlinx.coroutines.launch
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1149,6 +1151,28 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val openMeteoConfig by settings.openMeteoApiConfig.collectAsState()
     val selectedProviderSet = remember(providerSlugs) { providerSlugs.split(",").map { it.trim() }.filter { it.isNotBlank() }.toSet().ifEmpty { setOf("met-norway") } }
     val keyProvider = remember(selectedProviderSet) { WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).firstOrNull { it.requiresApiKey } ?: WeatherProviders.selectedProviders(selectedProviderSet.joinToString(",")).first() }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var showClearOpenMeteoConfigDialog by remember { mutableStateOf(false) }
+    val openMeteoConfigPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val jsonString = inputStream?.bufferedReader()?.use { it.readText() } ?: ""
+                if (jsonString.isBlank()) {
+                    Toast.makeText(context, "Empty file selected.", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                // Validate JSON before saving
+                com.google.gson.JsonParser.parseString(jsonString)
+                settings.setOpenMeteoApiConfig(jsonString)
+                Toast.makeText(context, "Open-Meteo config imported successfully.", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Invalid JSON config: ${e.message?.take(60)}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     SettingsSubPage("Weather", icon = FieldMindIcons.Weather, onBack = onBack) {
         item {
@@ -1236,7 +1260,13 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     if ("open-meteo" in selectedProviderSet) {
                         Spacer(Modifier.height(8.dp))
                         Surface(
-                            onClick = { /* Open file picker for JSON config */ },
+                            onClick = {
+                                if (openMeteoConfig.isNotBlank()) {
+                                    showClearOpenMeteoConfigDialog = true
+                                } else {
+                                    openMeteoConfigPicker.launch(arrayOf("application/json", "*/*"))
+                                }
+                            },
                             shape = RoundedCornerShape(14.dp),
                             color = if (openMeteoConfig.isNotBlank())
                                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
@@ -1315,6 +1345,34 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     ToggleItem("Cloud animations", "Animated clouds and partly-cloudy sky effects.", showCloudAnimation, settings::setWeatherShowCloudAnimation, FieldMindIcons.Cloud)
         }
         }
+    }
+
+    // ── Clear Open-Meteo config confirmation dialog ──
+    if (showClearOpenMeteoConfigDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearOpenMeteoConfigDialog = false },
+            icon = { Icon(FieldMindIcons.File, null, size = 28.dp) },
+            title = { Text("Open-Meteo config", fontWeight = FontWeight.Bold) },
+            text = {
+                Text("You have a custom Open-Meteo configuration imported. What would you like to do?")
+            },
+            confirmButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = {
+                        settings.setOpenMeteoApiConfig("")
+                        showClearOpenMeteoConfigDialog = false
+                        Toast.makeText(context, "Open-Meteo config cleared.", Toast.LENGTH_SHORT).show()
+                    }) { Text("Clear config") }
+                    Button(onClick = {
+                        showClearOpenMeteoConfigDialog = false
+                        openMeteoConfigPicker.launch(arrayOf("application/json", "*/*"))
+                    }) { Text("Replace config") }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearOpenMeteoConfigDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 
