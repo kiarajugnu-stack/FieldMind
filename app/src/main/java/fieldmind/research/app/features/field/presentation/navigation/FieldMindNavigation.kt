@@ -555,9 +555,11 @@ private fun LiquidNavRow(
                             val width = coordinates.size.width.toFloat()
                             // positionInParent() was removed from Compose. Calculate
                             // relative position by subtracting parent's root position.
-                            val childRoot = coordinates.positionInRoot()
-                            val parentRoot = coordinates.parentCoordinates?.positionInRoot() ?: Offset.Zero
-                            val x = (childRoot - parentRoot).x
+                            // positionInRoot() was removed in Compose 2026.05.01.
+                            // Use positionInWindow() and subtract parent's window position.
+                            val childWindow = coordinates.positionInWindow()
+                            val parentWindow = coordinates.parentCoordinates?.positionInWindow() ?: Offset.Zero
+                            val x = (childWindow - parentWindow).x
                             if (tabBounds.size <= index) {
                                 while (tabBounds.size <= index) tabBounds.add(TabBounds(0f, 0f))
                             }
