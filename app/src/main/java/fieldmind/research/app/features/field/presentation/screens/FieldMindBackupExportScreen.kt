@@ -60,6 +60,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -198,6 +200,15 @@ fun BackupAndRestoreScreen(
     var showShareDialog by remember { mutableStateOf(false) }
     var shareDialogFormat by remember { mutableStateOf(".fieldmind") }
     var includeMedia by remember { mutableStateOf(false) }
+
+    // Export history state
+    val exportHistoryStore = remember { ExportHistoryStore(context) }
+    var exportHistory by remember { mutableStateOf(emptyList<ExportRecord>()) }
+    LaunchedEffect(lastBackupRefresh) {
+        withContext(Dispatchers.IO) {
+            exportHistory = exportHistoryStore.load()
+        }
+    }
 
     // Folder picker launcher (shared by Export + Backup tabs)
     val backupFolderPickerLauncher = rememberLauncherForActivityResult(
@@ -496,7 +507,21 @@ fun BackupAndRestoreScreen(
                                                 }
                                             }
                                         }
-                                        showFastSnackbar(snackbar, scope, "Export complete")
+                                        // Record export history (inside IO block so vars are in scope)
+                                        val _exportFile = exportFile
+                                        val _exportDir = exportDir
+                                        val _action = action
+                                        exportHistoryStore.add(ExportRecord(
+                                            format = format,
+                                            fileName = _exportFile.name,
+                                            fileSizeBytes = _exportFile.length(),
+                                            exportedAt = System.currentTimeMillis(),
+                                            destination = if (_action == "share") "Shared via intent" else "Saved to folder",
+                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                        ))
+                                    }
+                                    exportHistory = exportHistoryStore.load()
+                                    showFastSnackbar(snackbar, scope, "Export complete")
                                     } catch (e: Exception) {
                                         showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
                                     } finally {
@@ -720,8 +745,23 @@ fun BackupAndRestoreScreen(
                                                 } catch (_: Exception) { }
                                             }
                                         }
-                                        lastBackupRefresh++
-                                        showFastSnackbar(snackbar, scope, "Backup saved")
+                                        // Record backup history (inside IO block so vars are in scope)
+                                        val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
+                                            File(backupDir, baseName + ".encrypted")
+                                        else
+                                            fieldmindFile
+                                        exportHistoryStore.add(ExportRecord(
+                                            format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
+                                            fileName = _backupFile.name,
+                                            fileSizeBytes = _backupFile.length(),
+                                            exportedAt = System.currentTimeMillis(),
+                                            destination = "Backup saved",
+                                            entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                                        ))
+                                    }
+                                    exportHistory = exportHistoryStore.load()
+                                    lastBackupRefresh++
+                                    showFastSnackbar(snackbar, scope, "Backup saved")
                                     } catch (e: Exception) {
                                         showFastSnackbar(snackbar, scope, "Backup failed: ${e.localizedMessage}")
                                     } finally {
@@ -736,7 +776,76 @@ fun BackupAndRestoreScreen(
 
             // ── Export History Section ──
             item {
-                ExportHistorySection(lastBackupRefresh = lastBackupRefresh, context = context)
+                SectionHeader("Recent exports", "Your latest export and backup files")
+            }
+            if (exportHistory.isEmpty()) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(20.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(FieldMindIcons.Export, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 24.dp)
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                "No exports yet. Create your first export above.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(exportHistory, key = { it.id }) { record ->
+                    ExportHistoryItemCard(
+                        record = record,
+                        context = context,
+                        onShare = {
+                            try {
+                                val backupDir = File(context.filesDir, "fieldmind/backups")
+                                val exportDir = File(context.cacheDir, "exports")
+                                val file = (backupDir.listFiles()?.find { it.name == record.fileName }
+                                    ?: exportDir.listFiles()?.find { it.name == record.fileName })
+                                if (file != null && file.exists()) {
+                                    val shareUri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+                                    val mimeType = when {
+                                        record.fileName.endsWith(".pdf") -> "application/pdf"
+                                        record.fileName.endsWith(".png") -> "image/png"
+                                        record.fileName.endsWith(".svg") -> "image/svg+xml"
+                                        record.fileName.endsWith(".csv") -> "text/csv"
+                                        record.fileName.endsWith(".html") -> "text/html"
+                                        record.fileName.endsWith(".md") -> "text/markdown"
+                                        record.fileName.endsWith(".json") -> "application/json"
+                                        else -> "application/octet-stream"
+                                    }
+                                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                                        type = mimeType
+                                        putExtra(Intent.EXTRA_STREAM, shareUri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }, "Share ${record.fileName}"))
+                                }
+                            } catch (_: Exception) { }
+                        },
+                        onDelete = {
+                            scope.launch {
+                                withContext(Dispatchers.IO) {
+                                    val backupDir = File(context.filesDir, "fieldmind/backups")
+                                    val exportDir = File(context.cacheDir, "exports")
+                                    (backupDir.listFiles()?.find { it.name == record.fileName }
+                                        ?: exportDir.listFiles()?.find { it.name == record.fileName })?.delete()
+                                    exportHistoryStore.remove(record.id)
+                                    exportHistory = exportHistoryStore.load()
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
     }
@@ -1636,189 +1745,112 @@ private fun createFileInTree(context: Context, treeUri: Uri, mimeType: String, d
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Export History Section
+//  Export History Item Card
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun ExportHistorySection(
-    lastBackupRefresh: Int,
-    context: Context
+private fun ExportHistoryItemCard(
+    record: ExportRecord,
+    context: Context,
+    onShare: () -> Unit,
+    onDelete: () -> Unit
 ) {
-    val backupDir = remember(lastBackupRefresh) { backupDirectory(context) }
-    val exportDir = remember(lastBackupRefresh) { File(context.cacheDir, "exports") }
-    var exportFiles by remember { mutableStateOf(listOf<File>()) }
-
-    LaunchedEffect(lastBackupRefresh) {
-        withContext(Dispatchers.IO) {
-            val files = mutableListOf<File>()
-            // Collect from backup dir
-            backupDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.let { files.addAll(it) }
-            // Collect from export cache
-            if (exportDir.exists()) {
-                exportDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.let { files.addAll(it) }
-            }
-            // Sort by newest first, take last 10
-            exportFiles = files.sortedByDescending { it.lastModified() }.take(10)
-        }
+    val dateStr = remember(record.exportedAt) {
+        SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(record.exportedAt))
+    }
+    val formatColor = exportFormats.find {
+        it.name.equals(record.format, ignoreCase = true) ||
+        (record.format == "Encrypted" && it.name == ".fieldmind")
+    }?.color ?: MaterialTheme.colorScheme.primary
+    val formatIcon = when {
+        record.format == "Encrypted" || record.format == ".fieldmind" -> FieldMindIcons.Archive
+        record.format == "JSON" -> FieldMindIcons.Archive
+        record.format == "CSV" -> FieldMindIcons.Data
+        record.format == "Markdown" || record.format == "HTML" -> FieldMindIcons.Article
+        record.format == "PDF" -> FieldMindIcons.Report
+        record.format == "PNG" || record.format == "SVG" -> FieldMindIcons.Graph
+        else -> FieldMindIcons.File
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionHeader("Recent exports", "Your latest export and backup files")
-
-        if (exportFiles.isEmpty()) {
-            Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.clickable { onShare() }
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                    .background(formatColor.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
             ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(20.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(FieldMindIcons.Export, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 24.dp)
-                    Spacer(Modifier.width(10.dp))
+                Icon(formatIcon, null, tint = formatColor, size = 22.dp)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(record.fileName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    "${record.format} • ${formatFileSize(record.fileSizeBytes)} • $dateStr",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (record.destination.isNotBlank()) {
                     Text(
-                        "No exports yet. Create your first export above.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        record.destination,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
             }
-        } else {
-            exportFiles.forEach { file ->
-                val ext = file.extension
-                val formatName = when {
-                    ext == "fieldmind" -> ".fieldmind"
-                    ext == "encrypted" -> "🔒 Encrypted"
-                    ext == "json" -> "JSON"
-                    ext == "csv" -> "CSV"
-                    ext == "md" -> "Markdown"
-                    ext == "html" -> "HTML"
-                    ext == "pdf" -> "PDF"
-                    ext == "png" -> "PNG"
-                    ext == "svg" -> "SVG"
-                    else -> ext.uppercase()
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
+                    Icon(FieldMindIcons.Share, "Share", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
                 }
-                val formatIcon = when {
-                    ext == "fieldmind" || ext == "encrypted" -> FieldMindIcons.Archive
-                    ext == "json" -> FieldMindIcons.Archive
-                    ext == "csv" -> FieldMindIcons.Data
-                    ext == "md" || ext == "html" -> FieldMindIcons.Article
-                    ext == "pdf" -> FieldMindIcons.Report
-                    ext == "png" || ext == "svg" -> FieldMindIcons.Graph
-                    else -> FieldMindIcons.File
-                }
-                val formatColor = exportFormats.find { 
-                    it.name.lowercase() == ext || 
-                    (ext == "fieldmind" && it.name == ".fieldmind") ||
-                    (ext == "md" && it.name == "Markdown") ||
-                    (ext == "encrypted" && it.name == ".fieldmind")
-                }?.color ?: MaterialTheme.colorScheme.primary
-                val fileSize = formatFileSize(file.length())
-                val fileDate = remember(file.lastModified()) {
-                    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                    sdf.format(Date(file.lastModified()))
-                }
-
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    modifier = Modifier.clickable {
-                        // Re-share: open share intent via FileProvider
-                        try {
-                            val shareUri = FileProvider.getUriForFile(
-                                context,
-                                "${context.packageName}.provider",
-                                file
-                            )
-                            val mimeType = when (ext) {
-                                "pdf" -> "application/pdf"
-                                "png" -> "image/png"
-                                "svg" -> "image/svg+xml"
-                                "csv" -> "text/csv"
-                                "html" -> "text/html"
-                                "md" -> "text/markdown"
-                                "json" -> "application/json"
-                                "fieldmind", "encrypted" -> "application/octet-stream"
-                                else -> "application/octet-stream"
-                            }
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = mimeType
-                                putExtra(Intent.EXTRA_STREAM, shareUri)
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            }
-                            context.startActivity(Intent.createChooser(shareIntent, "Share ${file.name}"))
-                        } catch (_: Exception) { }
-                    }
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
-                                .background(formatColor.copy(alpha = 0.14f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(formatIcon, null, tint = formatColor, size = 22.dp)
-                        }
-                        Column(Modifier.weight(1f)) {
-                            Text(formatName, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
-                            Text("$fileSize • $fileDate", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            IconButton(onClick = {
-                                // Share via FileProvider
-                                try {
-                                    val shareUri = FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.provider",
-                                        file
-                                    )
-                                    val mimeType = when (ext) {
-                                        "pdf" -> "application/pdf"
-                                        "png" -> "image/png"
-                                        "svg" -> "image/svg+xml"
-                                        "csv" -> "text/csv"
-                                        "html" -> "text/html"
-                                        "md" -> "text/markdown"
-                                        "json" -> "application/json"
-                                        "fieldmind", "encrypted" -> "application/octet-stream"
-                                        else -> "application/octet-stream"
-                                    }
-                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                        type = mimeType
-                                        putExtra(Intent.EXTRA_STREAM, shareUri)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                    context.startActivity(Intent.createChooser(shareIntent, "Share ${file.name}"))
-                                } catch (_: Exception) { }
-                            }, modifier = Modifier.size(32.dp)) {
-                                Icon(FieldMindIcons.Share, "Share", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
-                            }
-                            IconButton(onClick = {
-                                // Placeholder: delete file
-                                file.delete()
-                                // Refresh
-                                val files2 = mutableListOf<File>()
-                                backupDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.let { files2.addAll(it) }
-                                if (exportDir.exists()) {
-                                    exportDir.listFiles()?.filter { it.isFile && it.length() > 0 }?.let { files2.addAll(it) }
-                                }
-                                exportFiles = files2.sortedByDescending { it.lastModified() }.take(10)
-                            }, modifier = Modifier.size(32.dp)) {
-                                Icon(FieldMindIcons.Close, "Delete", tint = MaterialTheme.colorScheme.error, size = 18.dp)
-                            }
-                        }
-                    }
+                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    Icon(FieldMindIcons.Close, "Delete", tint = MaterialTheme.colorScheme.error, size = 18.dp)
                 }
             }
         }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Export History Store
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * SharedPreferences-backed store for export history records.
+ */
+private class ExportHistoryStore(context: Context) {
+    private val prefs = context.getSharedPreferences("fieldmind_export_history", Context.MODE_PRIVATE)
+    private val gson = Gson()
+    private val type = object : TypeToken<List<ExportRecord>>() {}.type
+
+    fun load(): List<ExportRecord> {
+        val json = prefs.getString("records", "[]") ?: "[]"
+        return try {
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (_: Exception) { emptyList() }
+    }
+
+    fun add(record: ExportRecord) {
+        val records = load().toMutableList()
+        records.add(0, record)
+        if (records.size > 50) records.removeAt(records.lastIndex)
+        prefs.edit().putString("records", gson.toJson(records)).apply()
+    }
+
+    fun remove(id: String) {
+        val records = load().toMutableList()
+        records.removeAll { it.id == id }
+        prefs.edit().putString("records", gson.toJson(records)).apply()
+    }
+
+    fun clear() {
+        prefs.edit().remove("records").apply()
     }
 }
 
