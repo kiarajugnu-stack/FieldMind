@@ -2,20 +2,25 @@ package fieldmind.research.app.features.field.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +28,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -48,7 +55,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.draw.clip
@@ -71,6 +77,115 @@ import fieldmind.research.app.features.field.presentation.components.LocalPrivac
 import fieldmind.research.app.features.field.presentation.components.withPrivacyTyping
 // FieldMindIcons is in the same package (components.FieldMindIcons)
 // FieldMindIcons is in the same package (components.FieldMindIcons)
+
+// ══════════════════════════════════════════════════════════════════════
+//  FieldMindSubNavBar — shared horizontal chip/tab row for Library,
+//  Workspace, and any other screen with an inline sub-navigation.
+//
+//  Design principles:
+//  • Pill-shaped container with surfaceContainerLow fill and no underline.
+//  • Active chip uses primaryContainer fill with onPrimaryContainer text and
+//    a filled icon; inactive chips are ghost (transparent fill, onSurface text).
+//  • Horizontally scrollable so it handles 5+ items gracefully.
+//  • Optional per-tab icon (pass null to keep the bar text-only).
+//  • Consistent 12 dp padding inside each chip and 6 dp gap between chips.
+//  • Single-tap haptic via FieldMindHaptics.
+//  • contentDescription is set on each chip for accessibility.
+// ══════════════════════════════════════════════════════════════════════
+
+data class SubNavTab(
+    val label: String,
+    val icon: MaterialSymbolIcon? = null
+)
+
+@Composable
+fun FieldMindSubNavBar(
+    tabs: List<SubNavTab>,
+    selectedIndex: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val haptics = rememberFieldMindHaptics()
+    val scrollState = rememberScrollState()
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 0.dp)
+    ) {
+        // Pill container
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .horizontalScroll(scrollState)
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                tabs.forEachIndexed { index, tab ->
+                    val selected = index == selectedIndex
+                    val iconAlpha by animateFloatAsState(
+                        targetValue = if (selected) 1f else 0.65f,
+                        animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+                        label = "subNavIconAlpha_$index"
+                    )
+                    Surface(
+                        onClick = {
+                            if (!selected) {
+                                haptics.light()
+                                onTabSelected(index)
+                            }
+                        },
+                        shape = RoundedCornerShape(18.dp),
+                        color = if (selected)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            Color.Transparent,
+                        modifier = Modifier
+                            .height(IntrinsicSize.Min)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .padding(
+                                    horizontal = if (tab.icon != null) 14.dp else 16.dp,
+                                    vertical = 9.dp
+                                ),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            if (tab.icon != null) {
+                                Icon(
+                                    icon = if (selected) tab.icon.copy(filled = true) else tab.icon,
+                                    contentDescription = null,
+                                    tint = if (selected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = iconAlpha),
+                                    size = 16.dp
+                                )
+                            }
+                            Text(
+                                text = tab.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                                color = if (selected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = iconAlpha),
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 @Composable

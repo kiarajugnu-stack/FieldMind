@@ -35,6 +35,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -141,8 +143,16 @@ fun BackupAndRestoreScreen(
     val autoBackupInterval by settings.autoBackupInterval.collectAsState()
     val defaultExportFormat by settings.defaultExportFormat.collectAsState()
 
+    // Export privacy settings
+    val clearClipboardAfterExport by settings.clearClipboardAfterExport.collectAsState()
+    val exportGpsPrivacy by settings.exportGpsPrivacy.collectAsState()
+    val exportExcludeMedia by settings.exportExcludeMedia.collectAsState()
+
+    // Backup folder URI from settings (reactive) — must be declared before exportDestinationUri
+    val backupFolderUri by settings.backupFolderUri.collectAsState()
+
     // Export state
-    var exportDestinationUri by remember { mutableStateOf<Uri?>(null) }
+    var exportDestinationUri by remember(backupFolderUri) { mutableStateOf<Uri?>(backupFolderUri.takeIf { it.isNotBlank() }?.let(Uri::parse)) }
     var isExporting by remember { mutableStateOf(false) }
     var exportProgress by remember { mutableFloatStateOf(0f) }
     var exportStepText by remember { mutableStateOf("") }
@@ -176,11 +186,8 @@ fun BackupAndRestoreScreen(
 
     // Format state for export
     var showShareDialog by remember { mutableStateOf(false) }
-    var shareDialogFormat by remember { mutableStateOf("Markdown") }
+    var shareDialogFormat by remember { mutableStateOf(".fieldmind") }
     var includeMedia by remember { mutableStateOf(false) }
-
-    // Backup folder URI from settings (reactive)
-    val backupFolderUri by settings.backupFolderUri.collectAsState()
 
     // Folder picker launcher (export folder)
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -191,6 +198,7 @@ fun BackupAndRestoreScreen(
             val takeFlags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
                 android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             context.contentResolver.takePersistableUriPermission(uri, takeFlags)
+            settings.setBackupFolderUri(uri.toString())
         }
     }
 
@@ -242,7 +250,11 @@ fun BackupAndRestoreScreen(
                 scope.launch {
                     try {
                         val raw = withContext(Dispatchers.IO) {
-                            context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText() ?: ""
+                            if (importFileName.endsWith(".fieldmind") || importFileName.endsWith(".zip")) {
+                                FieldMindExportMediaPacker.extractPackage(context, uri)?.archiveJson ?: ""
+                            } else {
+                                context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText() ?: ""
+                            }
                         }
                         val preview = FieldMindExport.previewArchiveJson(raw)
                         importPreview = preview
@@ -333,6 +345,12 @@ fun BackupAndRestoreScreen(
                             isExporting = isExporting,
                             exportProgress = exportProgress,
                             exportStepText = exportStepText,
+                            gpsPrivacy = exportGpsPrivacy,
+                            onGpsPrivacyChange = { settings.setExportGpsPrivacy(it) },
+                            excludeMedia = exportExcludeMedia,
+                            onExcludeMediaChange = { settings.setExportExcludeMedia(it) },
+                            clearClipboard = clearClipboardAfterExport,
+                            onClearClipboardChange = { settings.setClearClipboardAfterExport(it) },
                             onExport = { format, action ->
                                 scope.launch {
                                     isExporting = true
@@ -341,8 +359,11 @@ fun BackupAndRestoreScreen(
                                     try {
                                         withContext(Dispatchers.IO) {
                                             exportProgress = 0.3f
+                                            // Apply export privacy transforms before building the archive
+                                            val exportObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
+                                            val exportNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
                                             val json = FieldMindExport.archiveJson(
-                                                observations = observations, notes = notes,
+                                                observations = exportObs, notes = exportNotes,
                                                 questions = questions, hypotheses = hypotheses,
                                                 projects = projects, sources = sources,
                                                 dataRecords = dataRecords, reports = reports,
@@ -351,7 +372,9 @@ fun BackupAndRestoreScreen(
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
                                             val ext = when (format) {
                                                 "Markdown" -> "md"
-                                                else -> format.lowercase()
+                                                ".fieldmind" -> "fieldmind"
+                                                ".zip" -> "zip"
+                                                else -> format.lowercase().removePrefix(".")
                                             }
                                             val fileName = "fieldmind-export-$dateStamp.$ext"
                                             val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
@@ -363,6 +386,27 @@ fun BackupAndRestoreScreen(
                                                     observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) }
                                                 )
                                                 "JSON" -> exportFile.writeText(json)
+                                                "PDF" -> exportFile.writeBytes(
+                                                    FieldMindExport.simplePdfBytes(
+                                                        "FieldMind Export",
+                                                        observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
+                                                    )
+                                                )
+                                                ".fieldmind", ".zip" -> {
+                                                    val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
+                                                    if (!exportExcludeMedia) {
+                                                        exportObs.forEach { obs ->
+                                                            val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                                            if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                                        }
+                                                    }
+                                                    val result = FieldMindExportMediaPacker.buildPackage(
+                                                        context = context, archiveJson = json,
+                                                        observations = exportObs, notes = exportNotes, projects = projects, sources = sources,
+                                                        attachments = allAttachments, outputDir = exportDir
+                                                    )
+                                                    result.packageFile.copyTo(exportFile, overwrite = true)
+                                                }
                                             }
 
                                             exportProgress = 0.8f
@@ -388,14 +432,14 @@ fun BackupAndRestoreScreen(
                                                 val mimeType = when (format) {
                                                     "PDF" -> "application/pdf"
                                                     ".fieldmind" -> "application/zip"
+                                                    ".zip" -> "application/zip"
                                                     "JSON" -> "application/json"
                                                     "CSV" -> "text/csv"
-                                                    else -> "text/plain"
+                                                    "Markdown" -> "text/markdown"
+                                                    else -> "application/octet-stream"
                                                 }
                                                 try {
-                                                    val createdDoc = android.provider.DocumentsContract.createDocument(
-                                                        context.contentResolver, destUri, mimeType, fileName
-                                                    )
+                                                    val createdDoc = createFileInTree(context, destUri, mimeType, fileName)
                                                     if (createdDoc != null) {
                                                         val outStream = context.contentResolver.openOutputStream(createdDoc)
                                                         if (outStream != null) {
@@ -463,7 +507,7 @@ fun BackupAndRestoreScreen(
                                         val raw = withContext(Dispatchers.IO) {
                                             importStepText = "Extracting data…"
                                             importProgress = 0.3f
-                                            val isFieldMind = importFileName.endsWith(".fieldmind") || importFileName.endsWith(".encrypted")
+                                            val isFieldMind = importFileName.endsWith(".fieldmind") || importFileName.endsWith(".zip") || importFileName.endsWith(".encrypted")
                                             val uriToRead = if (importFileName.endsWith(".encrypted")) {
                                                 // Decrypt first
                                                 importStepText = "Decrypting with password…"
@@ -550,27 +594,36 @@ fun BackupAndRestoreScreen(
                                 "Projects" to projects.size,
                                 "Sources" to sources.size
                             ),
+                            gpsPrivacy = exportGpsPrivacy,
+                            onGpsPrivacyChange = { settings.setExportGpsPrivacy(it) },
+                            excludeMedia = exportExcludeMedia,
+                            onExcludeMediaChange = { settings.setExportExcludeMedia(it) },
                             onCreateBackup = {
                                 scope.launch {
                                     isExporting = true
                                     try {
                                         withContext(Dispatchers.IO) {
-                                            val json = FieldMindExport.archiveJson(observations, notes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
+                                            // Apply export privacy transforms to backup data
+                                            val backupObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
+                                            val backupNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
+                                            val json = FieldMindExport.archiveJson(backupObs, backupNotes, questions, hypotheses, projects, sources, dataRecords, reports, flashcards)
                                             val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
                                             val backupDir = backupDirectory(context)
                                             val baseName = "fieldmind-backup-$dateStamp"
                                             
-                                            // Build .fieldmind package with media attachments
+                                            // Build .fieldmind package — skip media when exclusion is on
                                             val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
-                                            observations.forEach { obs ->
-                                                val atts = viewModel.attachmentsForObservation(obs.id).first()
-                                                if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                            if (!exportExcludeMedia) {
+                                                backupObs.forEach { obs ->
+                                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                                    if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                                }
                                             }
                                             val packResult = FieldMindExportMediaPacker.buildPackage(
                                                 context = context,
                                                 archiveJson = json,
-                                                observations = observations,
-                                                notes = notes,
+                                                observations = backupObs,
+                                                notes = backupNotes,
                                                 projects = projects,
                                                 sources = sources,
                                                 attachments = allAttachments,
@@ -597,12 +650,7 @@ fun BackupAndRestoreScreen(
                                                         "$baseName.encrypted"
                                                     else
                                                         "$baseName.fieldmind"
-                                                    val createdDoc = android.provider.DocumentsContract.createDocument(
-                                                        context.contentResolver,
-                                                        bkpUri,
-                                                        "application/octet-stream",
-                                                        docName
-                                                    )
+                                                    val createdDoc = createFileInTree(context, bkpUri, "application/octet-stream", docName)
                                                     if (createdDoc != null) {
                                                         context.contentResolver.openOutputStream(createdDoc)?.use { out ->
                                                             out.write(srcFile.readBytes())
@@ -1076,6 +1124,7 @@ private fun TabPillSelector(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun ExportTabContent(
     entityCounts: Map<String, Int>,
     context: android.content.Context,
@@ -1085,54 +1134,41 @@ private fun ExportTabContent(
     onExport: (format: String, action: String) -> Unit,
     onChooseFolder: () -> Unit,
     destinationUri: Uri?,
-    onSwitchToImport: (() -> Unit)? = null
+    onSwitchToImport: (() -> Unit)? = null,
+    gpsPrivacy: String = "Exact",
+    onGpsPrivacyChange: (String) -> Unit = {},
+    excludeMedia: Boolean = false,
+    onExcludeMediaChange: (Boolean) -> Unit = {},
+    clearClipboard: Boolean = true,
+    onClearClipboardChange: (Boolean) -> Unit = {}
 ) {
     val totalEntities = entityCounts.values.sum()
     val colors = FieldMindTheme.colors
-    var selectedExportFormat by remember { mutableStateOf("Markdown") }
+    var selectedExportFormat by remember { mutableStateOf(".fieldmind") }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        // ── Export formats (PDF + Markdown only) ──
-        Card(
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
+        // ── Primary actions ──
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            LargeBackupActionCard("Export / Save Backup", "Create a full .fieldmind, .zip, JSON, or readable export.", FieldMindIcons.Export, Modifier.weight(1f)) { onExport(selectedExportFormat, "save") }
+            LargeBackupActionCard("Import / Restore", "Preview and restore .fieldmind, .zip, or JSON archives.", FieldMindIcons.Download, Modifier.weight(1f)) { onSwitchToImport?.invoke() }
+        }
+
+        // ── Export formats ──
+        Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Icon(FieldMindIcons.Article, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                    Icon(FieldMindIcons.Archive, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
                     Text("Export format", fontWeight = FontWeight.SemiBold)
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // PDF option
-                    Surface(
-                        onClick = { selectedExportFormat = "PDF" },
-                        shape = RoundedCornerShape(16.dp),
-                        color = if (selectedExportFormat == "PDF") Color(0xFF6A1B9A).copy(alpha = 0.14f)
-                            else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        border = if (selectedExportFormat == "PDF") BorderStroke(1.5.dp, Color(0xFF6A1B9A)) else null,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(FieldMindIcons.Report, null, tint = if (selectedExportFormat == "PDF") Color(0xFF6A1B9A) else MaterialTheme.colorScheme.onSurfaceVariant, size = 28.dp)
-                            Text("PDF", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = if (selectedExportFormat == "PDF") Color(0xFF6A1B9A) else MaterialTheme.colorScheme.onSurface)
-                            Text("Portable document format", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    // Markdown option
-                    Surface(
-                        onClick = { selectedExportFormat = "Markdown" },
-                        shape = RoundedCornerShape(16.dp),
-                        color = if (selectedExportFormat == "Markdown") Color(0xFF558B2F).copy(alpha = 0.14f)
-                            else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        border = if (selectedExportFormat == "Markdown") BorderStroke(1.5.dp, Color(0xFF558B2F)) else null,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(FieldMindIcons.Article, null, tint = if (selectedExportFormat == "Markdown") Color(0xFF558B2F) else MaterialTheme.colorScheme.onSurfaceVariant, size = 28.dp)
-                            Text("Markdown", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = if (selectedExportFormat == "Markdown") Color(0xFF558B2F) else MaterialTheme.colorScheme.onSurface)
-                            Text("Readable text for docs", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    listOf(
+                        ".fieldmind" to "Full backup: data + photos + attachments",
+                        ".zip" to "Inspectable full backup package",
+                        "JSON" to "Complete archive JSON only",
+                        "Markdown" to "Readable notes and observations",
+                        "PDF" to "Readable PDF summary"
+                    ).forEach { (format, desc) ->
+                        ExportFormatChip(format, desc, selectedExportFormat == format) { selectedExportFormat = format }
                     }
                 }
             }
@@ -1178,6 +1214,17 @@ private fun ExportTabContent(
             }
         }
 
+        // ── Privacy options ──
+        ExportPrivacyOptionsCard(
+            gpsPrivacy = gpsPrivacy,
+            onGpsPrivacyChange = onGpsPrivacyChange,
+            excludeMedia = excludeMedia,
+            onExcludeMediaChange = onExcludeMediaChange,
+            clearClipboard = clearClipboard,
+            onClearClipboardChange = onClearClipboardChange,
+            showClearClipboard = true
+        )
+
         // ── Export progress ──
         AnimatedVisibility(visible = isExporting) {
             Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
@@ -1201,7 +1248,7 @@ private fun ExportTabContent(
             Button(
                 onClick = { onExport(selectedExportFormat, "save") },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
-                enabled = !isExporting && totalEntities > 0
+                enabled = !isExporting && totalEntities > 0 && destinationUri != null
             ) { Icon(FieldMindIcons.Save, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Save") }
         }
 
@@ -1266,6 +1313,165 @@ private fun ExportTabContent(
     }
 }
 
+
+@Composable
+private fun LargeBackupActionCard(title: String, subtitle: String, icon: MaterialSymbolIcon, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = modifier.clickable(onClick = onClick)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.primary, size = 28.dp)
+            Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun ExportFormatChip(format: String, desc: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(onClick = onClick, shape = RoundedCornerShape(16.dp), color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh, border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null) {
+        Column(Modifier.widthIn(min = 140.dp, max = 220.dp).padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(format, fontWeight = FontWeight.Bold, color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
+            Text(desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+// ── Privacy options card shared by Export and Backup tabs ──
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ExportPrivacyOptionsCard(
+    gpsPrivacy: String,
+    onGpsPrivacyChange: (String) -> Unit,
+    excludeMedia: Boolean,
+    onExcludeMediaChange: (Boolean) -> Unit,
+    clearClipboard: Boolean,
+    onClearClipboardChange: (Boolean) -> Unit,
+    showClearClipboard: Boolean
+) {
+    val gpsModes = listOf(
+        Triple("Exact", "Full coordinates", "Include precise latitude and longitude"),
+        Triple("Approximate", "~1 km precision", "Round to 2 decimal places"),
+        Triple("Remove", "No location", "Strip all GPS and location text")
+    )
+
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Header
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(FieldMindIcons.Lock, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                Text("Privacy options", fontWeight = FontWeight.SemiBold)
+            }
+
+            // GPS precision selector
+            Text(
+                "GPS precision in export",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                gpsModes.forEach { (mode, label, desc) ->
+                    val selected = gpsPrivacy == mode
+                    Surface(
+                        onClick = { onGpsPrivacyChange(mode) },
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
+                        modifier = Modifier.semantics(mergeDescendants = true) {
+                            contentDescription = "$label: $desc. ${if (selected) "Selected" else "Not selected"}"
+                        }
+                    ) {
+                        Column(
+                            Modifier.widthIn(min = 100.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                                        else MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                desc,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+            // Exclude media toggle
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onExcludeMediaChange(!excludeMedia) }
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = "Exclude media: ${if (excludeMedia) "enabled" else "disabled"}"
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Exclude media attachments", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                    Text(
+                        "Photos, audio, and files are not included in the export",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(checked = excludeMedia, onCheckedChange = onExcludeMediaChange)
+            }
+
+            // Clear clipboard toggle — only shown on Export tab
+            if (showClearClipboard) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onClearClipboardChange(!clearClipboard) }
+                        .semantics(mergeDescendants = true) {
+                            contentDescription = "Clear clipboard after copy: ${if (clearClipboard) "enabled" else "disabled"}"
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Clear clipboard after copy", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                        Text(
+                            "Clears exported text from the clipboard after 60 seconds",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(checked = clearClipboard, onCheckedChange = onClearClipboardChange)
+                }
+            }
+        }
+    }
+}
+
+private fun createFileInTree(context: Context, treeUri: Uri, mimeType: String, displayName: String): Uri {
+    val resolver = context.contentResolver
+    val treeDocumentId = android.provider.DocumentsContract.getTreeDocumentId(treeUri)
+    val parentDocumentUri = android.provider.DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocumentId)
+    return android.provider.DocumentsContract.createDocument(resolver, parentDocumentUri, mimeType, displayName)
+        ?: throw IOException("Could not create $displayName in selected folder")
+}
+
 // ══════════════════════════════════════════════════════════════════════
 //  Import Tab
 // ══════════════════════════════════════════════════════════════════════
@@ -1314,13 +1520,13 @@ private fun ImportTabContent(
                         size = 48.dp
                     )
                     Text(
-                        "Tap to select a .json or .fieldmind archive",
+                        "Tap to select a .fieldmind, .zip, or .json archive",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center
                     )
                     Text(
-                        "Supports FieldMind JSON archives and encrypted packages",
+                        "Supports full packages with media, ZIP packages, JSON archives, and encrypted packages",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -1501,7 +1707,11 @@ private fun BackupTabContent(
     onScheduleIntervalChange: (String) -> Unit,
     lastBackupLabel: String,
     entityCounts: Map<String, Int>,
-    onCreateBackup: () -> Unit
+    onCreateBackup: () -> Unit,
+    gpsPrivacy: String = "Exact",
+    onGpsPrivacyChange: (String) -> Unit = {},
+    excludeMedia: Boolean = false,
+    onExcludeMediaChange: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val colors = FieldMindTheme.colors
@@ -1547,6 +1757,17 @@ private fun BackupTabContent(
                 }
             }
         }
+
+        // ── Privacy options ──
+        ExportPrivacyOptionsCard(
+            gpsPrivacy = gpsPrivacy,
+            onGpsPrivacyChange = onGpsPrivacyChange,
+            excludeMedia = excludeMedia,
+            onExcludeMediaChange = onExcludeMediaChange,
+            clearClipboard = false,
+            onClearClipboardChange = {},
+            showClearClipboard = false
+        )
 
         // ── Backup options ──
         Card(

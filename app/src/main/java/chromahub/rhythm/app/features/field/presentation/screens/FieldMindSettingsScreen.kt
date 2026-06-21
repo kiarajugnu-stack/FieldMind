@@ -495,6 +495,7 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val autoLockOnBackground by settings.autoLockOnBackground.collectAsState()
     val appPinEnabled by settings.appPinEnabled.collectAsState()
     val appPinHash by settings.appPinHash.collectAsState()
+    val screenCaptureProtectionStatus by settings.screenCaptureProtectionEnabled.collectAsState()
     var showPinSetup by remember { mutableStateOf(false) }
     var pinInput by remember { mutableStateOf("") }
     var pinConfirm by remember { mutableStateOf("") }
@@ -503,7 +504,23 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     var currentPinInput by remember { mutableStateOf("") }
     var currentPinError by remember { mutableStateOf(false) }
 
+    // Derived convenience
+    val appLockActive = privacy || (appPinEnabled && appPinHash.isNotBlank())
+    // Backup encryption defaults on when biometric lock is active
+    val backupEncryptionDefaultsOn = privacy
+
     SettingsSubPage("Security", icon = FieldMindIcons.Lock, onBack = onBack) {
+
+        // ── Privacy Status Card ──
+        item {
+            PrivacyStatusCard(
+                screenCaptureEnabled = screenCaptureProtectionStatus,
+                privacyKeyboardEnabled = privacyTyping,
+                appLockEnabled = appLockActive,
+                backupEncryptionEnabled = backupEncryptionDefaultsOn
+            )
+        }
+
         // ── Device biometric lock ──
         item {
             SettingsGroupCard {
@@ -631,7 +648,15 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         // ── Privacy typing ──
         item {
             SettingsGroupCard {
-                ToggleItem("Privacy typing", "Prevents keyboards from learning your typing patterns. Gboard shows an incognito indicator when active.", privacyTyping, settings::setPrivacyTypingEnabled, FieldMindIcons.Lock)
+                ToggleItem(
+                    "Privacy keyboard",
+                    "Asks the keyboard not to learn from your input in sensitive fields. " +
+                    "Gboard shows an incognito badge; most other keyboards apply the hint silently or may ignore it. " +
+                    "Not every keyboard guarantees compliance.",
+                    privacyTyping,
+                    settings::setPrivacyTypingEnabled,
+                    FieldMindIcons.Lock
+                )
             }
         }
 
@@ -689,7 +714,7 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     Text("Privacy features", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                     Text("• Device biometric lock — uses Android's built-in security (fingerprint, face, PIN)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("• App PIN lock — self-contained 4-6 digit PIN, works even if device has no lock set", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("• Privacy typing — tells keyboards not to learn from what you type in FieldMind", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("• Privacy keyboard — requests that keyboards suppress learning in sensitive fields; Gboard shows an incognito badge, other keyboards may apply the hint silently", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("• Screen capture protection — prevents screenshots and recordings", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("• Always-on screen — keep display active during field work", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("• Clipboard auto-clear — automatically clears sensitive copied data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1373,7 +1398,7 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
         ScreenVisibilityItem("Species browser", "Taxonomic browser and species catalog", screenVis.showSpeciesBrowser, FieldMindIcons.Nature, colors.observation),
         ScreenVisibilityItem("Flashcards", "Flashcard review sessions", screenVis.showFlashcards, FieldMindIcons.Flashcard, colors.flashcard),
         ScreenVisibilityItem("Export studio", "Data export and report builder", screenVis.showExport, FieldMindIcons.Export, colors.data),
-        ScreenVisibilityItem("Field mode", "Dedicated field research mode", screenVis.showFieldMode, FieldMindIcons.Nature, colors.observation)
+
     )
 
     SettingsSubPage("Screen visibility", icon = FieldMindIcons.Visibility, onBack = onBack) {
@@ -1404,10 +1429,7 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
                                 FieldMindIcons.Book -> cur.copy(showLibrary = !item.isEnabled)
                                 FieldMindIcons.Map -> cur.copy(showMap = !item.isEnabled)
                                 FieldMindIcons.Weather -> cur.copy(showWeather = !item.isEnabled)
-                                FieldMindIcons.Nature -> {
-                                    if (item.title.startsWith("Species")) cur.copy(showSpeciesBrowser = !item.isEnabled)
-                                    else cur.copy(showFieldMode = !item.isEnabled)
-                                }
+                                FieldMindIcons.Nature -> cur.copy(showSpeciesBrowser = !item.isEnabled)
                                 FieldMindIcons.Flashcard -> cur.copy(showFlashcards = !item.isEnabled)
                                 FieldMindIcons.Export -> cur.copy(showExport = !item.isEnabled)
                                 else -> cur
@@ -1433,10 +1455,7 @@ fun ScreenVisibilitySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Un
                                 FieldMindIcons.Book -> cur.copy(showLibrary = it)
                                 FieldMindIcons.Map -> cur.copy(showMap = it)
                                 FieldMindIcons.Weather -> cur.copy(showWeather = it)
-                                FieldMindIcons.Nature -> {
-                                    if (item.title.startsWith("Species")) cur.copy(showSpeciesBrowser = it)
-                                    else cur.copy(showFieldMode = it)
-                                }
+                                FieldMindIcons.Nature -> cur.copy(showSpeciesBrowser = it)
                                 FieldMindIcons.Flashcard -> cur.copy(showFlashcards = it)
                                 FieldMindIcons.Export -> cur.copy(showExport = it)
                                 else -> cur
@@ -1636,7 +1655,7 @@ private fun SettingsTileGroup(title: String, content: @Composable ColumnScope.()
 
 // ══════════════════════════════════════════════════════════════════════
 //  Species Pack Management Page
-// ══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════��═════════════════════════════
 
 @Composable
 fun SpeciesPackSettingsPage(onBack: () -> Unit) {

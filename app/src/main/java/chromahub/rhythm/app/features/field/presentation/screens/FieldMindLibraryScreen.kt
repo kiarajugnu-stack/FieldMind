@@ -92,29 +92,39 @@ fun KnowledgeLibraryScreen(
     val notes by viewModel.notes.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     var tab by remember(startTab) { mutableIntStateOf(startTab) }
-    val tabs = listOf("Sources", "Notes", "Reading", "Flashcards", "Learn")
+    val subNavTabs = listOf(
+        SubNavTab("Sources", FieldMindIcons.Book),
+        SubNavTab("Notes", FieldMindIcons.Note),
+        SubNavTab("Reading", FieldMindIcons.Article),
+        SubNavTab("Flashcards", FieldMindIcons.Flashcard),
+        SubNavTab("Learn", FieldMindIcons.School)
+    )
     val haptics = rememberFieldMindHaptics()
-    fun selectTab(next: Int) {                val bounded = next.coerceIn(0, tabs.lastIndex)
-        if (bounded != tab) { 
+    fun selectTab(next: Int) {
+        val bounded = next.coerceIn(0, subNavTabs.lastIndex)
+        if (bounded != tab) {
             if (bounded == 4) {
                 // Navigate to standalone Learn screen
                 onNavigate(FieldMindScreen.Learn)
                 return@selectTab
             }
-            tab = bounded; haptics.light() 
+            tab = bounded; haptics.light()
         }
     }
     Column(Modifier.fillMaxSize()) {
-        Column(Modifier.padding(20.dp, 20.dp, 20.dp, 8.dp)) {
+        Column(Modifier.padding(20.dp, 20.dp, 20.dp, 12.dp)) {
             StandardScreenHeader(
                 title = "Knowledge Hub",
                 subtitle = "Sources, notes, reading, flashcards, and learning.",
                 icon = FieldMindIcons.Library
             )
         }
-        ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
-            tabs.forEachIndexed { i, label -> Tab(tab == i, { selectTab(i) }, text = { Text(label) }) }
-        }
+        FieldMindSubNavBar(
+            tabs = subNavTabs,
+            selectedIndex = tab,
+            onTabSelected = { selectTab(it) },
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
         Box(
             modifier = Modifier.fillMaxSize().pointerInput(tab) {
                 var totalDrag = 0f

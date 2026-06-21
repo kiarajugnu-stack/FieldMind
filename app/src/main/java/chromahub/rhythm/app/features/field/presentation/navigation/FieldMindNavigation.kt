@@ -133,7 +133,7 @@ private val bottomTabs = listOf(
 )
 
 @Composable
-fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
+fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel, requestedDestination: String? = null) {
     val onboardingCompleted by appSettings.onboardingCompleted.collectAsState()
     var appUnlocked by remember { mutableStateOf(!viewModel.fieldSettings.privacyLockEnabled.value) }
     val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
@@ -152,7 +152,7 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
             val privacyTyping by viewModel.fieldSettings.privacyTypingEnabled.collectAsState()
             CompositionLocalProvider(LocalPrivacyTypingEnabled provides privacyTyping) {
                 FieldMindSnackbarProvider { _ ->
-                    FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+                    FieldMindNavigation(viewModel = viewModel, requestedDestination = requestedDestination, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
                 }
             }
         }
@@ -171,7 +171,7 @@ private fun NavHostController.navigateToDestination(route: String) {
 }
 
 @Composable
-fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> Unit) {
+fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: String? = null, onResetOnboarding: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -207,6 +207,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             }
             launchSingleTop = true
             restoreState = true
+        }
+    }
+
+    LaunchedEffect(requestedDestination) {
+        when (requestedDestination) {
+            FieldMindScreen.FieldMode.route, "field_mode" -> navController.navigateToDestination(FieldMindScreen.FieldMode.route)
+            "field_timer" -> navController.navigateToDestination(FieldMindScreen.ResearchSession.route)
         }
     }
 
@@ -265,6 +272,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             when (tab.route) {
                 FieldMindScreen.Observe.route -> screenVisibility.showCapture
                 FieldMindScreen.Projects.route -> screenVisibility.showProjects
+                FieldMindScreen.FieldMode.route -> true
                 FieldMindScreen.Insights.route -> screenVisibility.showInsights
                 FieldMindScreen.Library.route -> screenVisibility.showLibrary
                 else -> true // Home always visible
@@ -302,63 +310,74 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 FieldMindNavHost(navController, viewModel, onResetOnboarding, Modifier.weight(1f))
             }
         } else {
-            Scaffold(
-                containerColor = MaterialTheme.colorScheme.background,
-                bottomBar = {
-                    if (!hideChrome) {
-                        // ── True glassmorphic pill-shaped floating bottom nav bar ──
-                        // Frosted-glass effect: semi-transparent surface with visible blur,
-                        // subtle border to define the edge in light themes, generous rounded
-                        // corners, lifted off bottom with safe-area-aware padding.
-                        Box(
+            // ── True floating overlay nav bar ──
+            // We use a raw Box instead of Scaffold so Android never draws a
+            // solid rectangular bottom-bar background behind the pill.
+            // The content fills the full screen edge-to-edge; the pill is
+            // overlaid at the bottom and the NavHost gets matching bottom
+            // padding so content isn't obscured.
+            Box(Modifier.fillMaxSize()) {
+                // Content — fills full screen, padded at bottom to clear pill
+                FieldMindNavHost(
+                    navController = navController,
+                    viewModel = viewModel,
+                    onResetOnboarding = onResetOnboarding,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(
+                            if (!hideChrome)
+                                Modifier.padding(bottom = 88.dp) // pill height + margins
+                            else
+                                Modifier
+                        )
+                )
+
+                // Floating pill — layered above content, no system background
+                if (!hideChrome) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(34.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                alpha = if (isSystemInDarkTheme()) 0.82f else 0.88f
+                            ),
+                            tonalElevation = 4.dp,
+                            shadowElevation = 12.dp,
+                            border = androidx.compose.foundation.BorderStroke(
+                                width = 0.8.dp,
+                                color = if (isSystemInDarkTheme())
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
+                                else
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.30f)
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                                .windowInsetsPadding(
-                                    WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-                                )
-                                .navigationBarsPadding()
+                                .height(66.dp)
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(34.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                    alpha = if (isSystemInDarkTheme()) 0.50f else 0.40f
-                                ),
-                                tonalElevation = 3.dp,
-                                shadowElevation = 8.dp,
-                                border = androidx.compose.foundation.BorderStroke(
-                                    width = 0.5.dp,
-                                    color = if (isSystemInDarkTheme())
-                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.08f)
-                                    else
-                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-                                ),
+                            Row(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(64.dp)
+                                    .fillMaxSize()
+                                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 2.dp, vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    visibleTabs.forEach { screen ->
-                                        val selected = isSelected(screen)
-                                        FloatingNavTabItem(
-                                            screen = screen,
-                                            selected = selected,
-                                            onClick = { haptics.light(); navigateToTab(screen.route) }
-                                        )
-                                    }
+                                visibleTabs.forEach { screen ->
+                                    val selected = isSelected(screen)
+                                    FloatingNavTabItem(
+                                        screen = screen,
+                                        selected = selected,
+                                        onClick = { haptics.light(); navigateToTab(screen.route) }
+                                    )
                                 }
                             }
                         }
                     }
                 }
-            ) { innerPadding ->
-                FieldMindNavHost(navController, viewModel, onResetOnboarding, Modifier.padding(innerPadding))
             }
         }
     }
@@ -428,7 +447,7 @@ private fun FloatingNavTabItem(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.18f * pillAlpha) 
                     else 
                         Color.Transparent,
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(18.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {

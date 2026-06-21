@@ -300,6 +300,24 @@ class FieldMindSettings private constructor(context: Context) {
     private val _clipboardCleanupDelay = MutableStateFlow(prefs.getString(KEY_CLIPBOARD_CLEANUP_DELAY, "30 sec") ?: "30 sec")
     val clipboardCleanupDelay: StateFlow<String> = _clipboardCleanupDelay.asStateFlow()
 
+    // ── Export privacy settings ──
+    /** When true, clear the system clipboard shortly after exported text is copied. */
+    private val _clearClipboardAfterExport = MutableStateFlow(prefs.getBoolean(KEY_CLEAR_CLIPBOARD_AFTER_EXPORT, true))
+    val clearClipboardAfterExport: StateFlow<Boolean> = _clearClipboardAfterExport.asStateFlow()
+
+    /**
+     * Controls GPS precision in exports.
+     * "Exact"       — include full coordinates as recorded
+     * "Approximate" — round to 2 decimal places (~1 km radius)
+     * "Remove"      — strip all location data from the export
+     */
+    private val _exportGpsPrivacy = MutableStateFlow(prefs.getString(KEY_EXPORT_GPS_PRIVACY, "Exact") ?: "Exact")
+    val exportGpsPrivacy: StateFlow<String> = _exportGpsPrivacy.asStateFlow()
+
+    /** When true, media file attachments are excluded from exports and backups. */
+    private val _exportExcludeMedia = MutableStateFlow(prefs.getBoolean(KEY_EXPORT_EXCLUDE_MEDIA, false))
+    val exportExcludeMedia: StateFlow<Boolean> = _exportExcludeMedia.asStateFlow()
+
     /** Call explicitly after initialization — avoids scheduling jobs on every getInstance(). */
     fun initializeBackgroundWork() {
         FieldMindBackgroundScheduler.syncAll(
@@ -368,6 +386,9 @@ class FieldMindSettings private constructor(context: Context) {
     fun setAlwaysOnScreenDuration(value: String) = edit(KEY_ALWAYS_ON_SCREEN_DURATION, value) { _alwaysOnScreenDuration.value = value }
     fun setClipboardAutoCleanupEnabled(value: Boolean) = edit(KEY_CLIPBOARD_CLEANUP, value) { _clipboardAutoCleanupEnabled.value = value }
     fun setClipboardCleanupDelay(value: String) = edit(KEY_CLIPBOARD_CLEANUP_DELAY, value) { _clipboardCleanupDelay.value = value }
+    fun setClearClipboardAfterExport(value: Boolean) = edit(KEY_CLEAR_CLIPBOARD_AFTER_EXPORT, value) { _clearClipboardAfterExport.value = value }
+    fun setExportGpsPrivacy(value: String) = edit(KEY_EXPORT_GPS_PRIVACY, value) { _exportGpsPrivacy.value = value }
+    fun setExportExcludeMedia(value: Boolean) = edit(KEY_EXPORT_EXCLUDE_MEDIA, value) { _exportExcludeMedia.value = value }
     fun setWeatherShowCloudAnimation(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD_ANIMATION, value) { _weatherShowCloudAnimation.value = value }
     fun setWeatherProvider(value: String) = edit(KEY_WEATHER_PROVIDER, value) { _weatherProvider.value = value }
     fun setWeatherProviders(value: String) = edit(KEY_WEATHER_PROVIDERS, value) {
@@ -555,5 +576,9 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_ALWAYS_ON_SCREEN_DURATION = "always_on_screen_duration"
         private const val KEY_CLIPBOARD_CLEANUP = "clipboard_cleanup"
         private const val KEY_CLIPBOARD_CLEANUP_DELAY = "clipboard_cleanup_delay"
+        // ── Export privacy ──
+        private const val KEY_CLEAR_CLIPBOARD_AFTER_EXPORT = "clear_clipboard_after_export"
+        private const val KEY_EXPORT_GPS_PRIVACY = "export_gps_privacy"
+        private const val KEY_EXPORT_EXCLUDE_MEDIA = "export_exclude_media"
     }
 }

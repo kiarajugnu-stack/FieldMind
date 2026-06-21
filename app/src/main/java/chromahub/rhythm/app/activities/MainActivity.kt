@@ -32,6 +32,7 @@ class MainActivity : FragmentActivity() {
          * while FieldMind owns the active app surface. The FieldMind shell ignores this extra.
          */
         const val EXTRA_OPEN_PLAYER = "extra_open_player"
+        const val EXTRA_FIELDMIND_DESTINATION = "fieldmind_destination"
 
         /**
          * Legacy request code used by inactive equalizer screens that are no longer reachable
@@ -44,6 +45,7 @@ class MainActivity : FragmentActivity() {
     private val themeViewModel: ThemeViewModel by viewModels()
     private val fieldMindViewModel: FieldMindViewModel by viewModels()
     private lateinit var appSettings: AppSettings
+    private var requestedFieldMindDestination = androidx.compose.runtime.mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -51,6 +53,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         appSettings = AppSettings.getInstance(applicationContext)
         handleSharedSource(intent)
+        requestedFieldMindDestination.value = intent?.getStringExtra(EXTRA_FIELDMIND_DESTINATION)
 
         setContent {
             val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()
@@ -84,7 +87,7 @@ class MainActivity : FragmentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    FieldMindApp(appSettings = appSettings, viewModel = fieldMindViewModel)
+                    FieldMindApp(appSettings = appSettings, viewModel = fieldMindViewModel, requestedDestination = requestedFieldMindDestination.value)
                 }
             }
         }
@@ -94,6 +97,7 @@ class MainActivity : FragmentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleSharedSource(intent)
+        requestedFieldMindDestination.value = intent.getStringExtra(EXTRA_FIELDMIND_DESTINATION)
     }
 
     private fun handleSharedSource(intent: Intent?) {
