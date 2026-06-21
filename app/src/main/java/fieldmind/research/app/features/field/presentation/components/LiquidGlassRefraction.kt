@@ -1,5 +1,6 @@
 package fieldmind.research.app.features.field.presentation.components
 
+import android.graphics.RenderEffect
 import android.graphics.RuntimeShader
 import android.os.Build
 import androidx.compose.runtime.Composable
@@ -9,9 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
-import androidx.compose.ui.ExperimentalComposeApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
@@ -86,7 +85,7 @@ half4 main(float2 fragCoord) {
  * backdrop blur (e.g. via Haze's `hazeChild`). The refraction processes the
  * blurred result, creating a premium liquid-glass aesthetic.
  */
-@OptIn(ExperimentalComposeApi::class)
+@Suppress("NewApi")
 @Composable
 fun Modifier.liquidGlassRefraction(): Modifier {
     // RuntimeShader requires API 33+ (Android 13)
@@ -122,6 +121,7 @@ fun Modifier.liquidGlassRefraction(): Modifier {
     }
 
     // Create the RenderEffect once (null-safe — shader may be null if AGSL init failed)
+    @Suppress("NewApi")
     val renderEffect = remember {
         shader?.let { RenderEffect.createRuntimeShaderEffect(it, "content") }
     }

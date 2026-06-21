@@ -1290,7 +1290,6 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                                 Toast.makeText(context, "Response format set to ${newFormat.uppercase()}", Toast.LENGTH_SHORT).show()
                             }
                         }
-                    }
 
                     // ── Open-Meteo custom config import ──
                     if ("open-meteo" in selectedProviderSet) {
