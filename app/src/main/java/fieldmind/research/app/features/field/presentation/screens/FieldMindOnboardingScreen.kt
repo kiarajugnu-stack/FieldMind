@@ -17,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material3.BorderStroke
 import androidx.compose.foundation.text.PasswordVisualTransformation
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -1456,10 +1455,11 @@ private fun OnboardingAiFeaturesPage(
                 }
 
                 // Additional Features
-                listOf(
-                    Triple("Species Identification", enableSpeciesId) { enableSpeciesId = it },
-                    Triple("Privacy Lock", enablePrivacyLock) { enablePrivacyLock = it }
-                ).forEach { (title, enabled, callback) ->
+                val featureOptions = listOf(
+                    Triple("Species Identification", enableSpeciesId, "Offline AI species ID from photos"),
+                    Triple("Privacy Lock", enablePrivacyLock, "Biometric or PIN lock for privacy")
+                )
+                featureOptions.forEach { (title, enabled, description) ->
                     AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
                         Card(
                             shape = RoundedCornerShape(20.dp),
@@ -1476,9 +1476,9 @@ private fun OnboardingAiFeaturesPage(
                                 }
                                 Column(Modifier.weight(1f)) {
                                     Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                    Text(if (title.contains("Species")) "Offline AI species ID from photos" else "Biometric or PIN lock for privacy", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                Switch(checked = enabled, onCheckedChange = { (list.find { it.first == title }?.second as? ((Boolean) -> Unit))?.invoke(it) })
+                                Switch(checked = enabled, onCheckedChange = { if (title.contains("Species")) enableSpeciesId = it else enablePrivacyLock = it })
                             }
                         }
                     }
@@ -1727,7 +1727,7 @@ fun OnboardingBackupPage(
                 )
 
                 features.forEach { (title, desc, icon) ->
-                    AnimatedVisibility(visible = showContent, enter = fadeIn(tween(300)) + slideInHorizontally(initialOffsetX = { 50 }, tween(300))) {
+                    AnimatedVisibility(visible = showContent, enter = fadeIn(tween(300)) + slideInHorizontally(tween(300), initialOffsetX = { 50 })) {
                         Surface(
                             shape = RoundedCornerShape(16.dp),
                             color = MaterialTheme.colorScheme.surfaceContainerHigh,

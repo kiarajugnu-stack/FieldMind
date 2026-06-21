@@ -2059,7 +2059,6 @@ private class ExportHistoryStore(context: Context) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-@Composable
 private fun ImportTabContent(
     selectedFileUri: Uri?,
     fileName: String,
@@ -2636,7 +2635,7 @@ private fun BackupTabContent(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════��════
 //  Export History Item
 // ══════════════════════════════════════════════════════════════════════
 
@@ -2736,7 +2735,7 @@ private fun decodeBase64FromDataUri(dataUri: String): ByteArray? {
 
 // ══════════════════════════════════════════════════════════════════════
 //  Share Dialog Content
-// ══════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════��═══════════════
 
 @Composable
 // ── Helper function to estimate export file size ──
@@ -2761,6 +2760,7 @@ private fun estimateExportSize(format: String, obsCount: Int, noteCount: Int, pr
     }
 }
 
+@Composable
 private fun ShareDialogContent(
     format: String,
     onFormatChange: (String) -> Unit,
