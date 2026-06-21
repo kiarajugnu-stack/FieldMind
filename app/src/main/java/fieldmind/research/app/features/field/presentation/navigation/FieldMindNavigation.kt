@@ -22,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -384,7 +385,36 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             .fillMaxWidth()
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp)
-                    ) {                        // Glassmorphic nav pill — real backdrop blur via Haze with
+                    ) {
+                        // ── Subtle glow/shadow beneath the pill for depth ──
+                        val glowColor = MaterialTheme.colorScheme.primary
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(66.dp)
+                                .drawBehind {
+                                    // Multi-layer soft glow: outer → inner, decreasing size, fading alpha
+                                    val layers = listOf(
+                                        1.3f to 0.03f,
+                                        1.2f to 0.05f,
+                                        1.1f to 0.08f,
+                                        1.0f to 0.06f,
+                                    )
+                                    val cr = 34.dp.toPx()
+                                    for ((scale, alpha) in layers) {
+                                        val w = size.width * scale
+                                        val h = size.height * scale
+                                        drawRoundRect(
+                                            color = glowColor.copy(alpha = alpha),
+                                            topLeft = Offset(-(w - size.width) / 2f, -(h - size.height) / 2f),
+                                            size = Size(w, h),
+                                            cornerRadius = CornerRadius(cr, cr)
+                                        )
+                                    }
+                                }
+                        )
+
+                        // Glassmorphic nav pill — real backdrop blur via Haze with
                         // semi-transparent surface. The animated blob indicator
                         // (drawn by LiquidNavRow) provides the liquid micro-interaction.
                         Surface(
