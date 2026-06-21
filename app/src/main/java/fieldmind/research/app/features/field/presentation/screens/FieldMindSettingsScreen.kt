@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -908,46 +909,61 @@ fun AboutPage(onBack: () -> Unit, onOpenChangelog: (() -> Unit)? = null) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Redesigned Export Format Selector
+//  Redesigned Export Format Selector — 4-column full grid with consistent sizing
 // ══════════════════════════════════════════════════════════════════════
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExportFormatSelector(selected: String, onSelect: (String) -> Unit) {
     val formats = listOf(
-        FormatOption("Markdown", "Readable text for docs and notes", FieldMindIcons.Article, FieldMindTheme.colors.source),
-        FormatOption("CSV", "Tabular data for spreadsheets", FieldMindIcons.Data, FieldMindTheme.colors.data),
-        FormatOption("JSON", "Structured data for migration", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis),
-        FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, FieldMindTheme.colors.question),
-        FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, FieldMindTheme.colors.observation),
-        FormatOption("SVG", "Scalable vector graphic", FieldMindIcons.Graph, FieldMindTheme.colors.flashcard),
-        FormatOption("PDF", "Portable document format", FieldMindIcons.Report, FieldMindTheme.colors.report),
-        FormatOption("Plain text", "Raw text without formatting", FieldMindIcons.Note, FieldMindTheme.colors.info)
+        FormatOption("Markdown", "Readable text", FieldMindIcons.Article, FieldMindTheme.colors.source),
+        FormatOption("CSV", "Tabular data", FieldMindIcons.Data, FieldMindTheme.colors.data),
+        FormatOption("JSON", "Structured archive", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis),
+        FormatOption("HTML", "Web layout", FieldMindIcons.Article, FieldMindTheme.colors.question),
+        FormatOption("PNG", "Snapshot image", FieldMindIcons.Graph, FieldMindTheme.colors.observation),
+        FormatOption("SVG", "Vector graphic", FieldMindIcons.Graph, FieldMindTheme.colors.flashcard),
+        FormatOption("PDF", "Document format", FieldMindIcons.Report, FieldMindTheme.colors.report),
+        FormatOption("Plain text", "Raw text", FieldMindIcons.Note, FieldMindTheme.colors.info)
     )
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        formats.chunked(2).forEach { row ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { format ->
-                    val isSelected = selected == format.name
-                    Card(
-                        modifier = Modifier.weight(1f).clickable { onSelect(format.name) },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) format.color.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, format.color) else null
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        formats.forEach { format ->
+            val isSelected = selected == format.name
+            val itemWeight = 0.235f // ~4 items per row with spacing (100% - 3*8dp gaps / 4)
+            Surface(
+                onClick = { onSelect(format.name) },
+                modifier = Modifier.fillMaxWidth(itemWeight),
+                shape = RoundedCornerShape(16.dp),
+                color = if (isSelected) format.color.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                border = if (isSelected) BorderStroke(1.5.dp, format.color) else null
+            ) {
+                Column(
+                    Modifier.padding(10.dp).heightIn(min = 72.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Box(
+                        Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
+                            .background(if (isSelected) format.color.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceContainerLow),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(format.icon, null, tint = format.color, size = 24.dp)
-                            Text(format.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                            Text(format.desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            if (isSelected) {
-                                Icon(FieldMindIcons.Check, null, tint = format.color, size = 16.dp)
-                            }
+                        Icon(format.icon, null, tint = format.color, size = 20.dp)
+                    }
+                    Text(format.name, style = MaterialTheme.typography.labelSmall, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(format.desc, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                    if (isSelected) {
+                        Box(
+                            Modifier.size(18.dp).clip(CircleShape)
+                                .background(format.color),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, size = 12.dp)
                         }
                     }
                 }
-                if (row.size == 1) Spacer(Modifier.weight(1f))
             }
         }
     }

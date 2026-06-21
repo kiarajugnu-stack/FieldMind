@@ -173,6 +173,10 @@ fun BackupAndRestoreScreen(
     var importPassword by remember { mutableStateOf("") }
     var showPasswordPrompt by remember { mutableStateOf(false) }
 
+    // Export encryption state
+    var exportEncrypt by remember { mutableStateOf(false) }
+    var exportPassword by remember { mutableStateOf("") }
+
     // Backup tab state
     val privacyLockEnabled by settings.privacyLockEnabled.collectAsState()
     var backupEncrypt by remember { mutableStateOf(privacyLockEnabled) }
@@ -349,8 +353,8 @@ fun BackupAndRestoreScreen(
                             onGpsPrivacyChange = { settings.setExportGpsPrivacy(it) },
                             excludeMedia = exportExcludeMedia,
                             onExcludeMediaChange = { settings.setExportExcludeMedia(it) },
-                            clearClipboard = clearClipboardAfterExport,
-                            onClearClipboardChange = { settings.setClearClipboardAfterExport(it) },
+                            clearClipboard = false,
+                            onClearClipboardChange = {},
                             onExport = { format, action ->
                                 scope.launch {
                                     isExporting = true
@@ -431,7 +435,7 @@ fun BackupAndRestoreScreen(
                                                 }
                                                 val mimeType = when (format) {
                                                     "PDF" -> "application/pdf"
-                                                    ".fieldmind" -> "application/zip"
+                                                    ".fieldmind" -> "application/octet-stream"
                                                     ".zip" -> "application/zip"
                                                     "JSON" -> "application/json"
                                                     "CSV" -> "text/csv"
@@ -1139,7 +1143,7 @@ private fun ExportTabContent(
     onGpsPrivacyChange: (String) -> Unit = {},
     excludeMedia: Boolean = false,
     onExcludeMediaChange: (Boolean) -> Unit = {},
-    clearClipboard: Boolean = true,
+    clearClipboard: Boolean = false,
     onClearClipboardChange: (Boolean) -> Unit = {}
 ) {
     val totalEntities = entityCounts.values.sum()
@@ -1252,64 +1256,6 @@ private fun ExportTabContent(
             ) { Icon(FieldMindIcons.Save, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Save") }
         }
 
-        // ── Import callout ──
-        if (onSwitchToImport != null) {
-            Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.08f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onSwitchToImport() }
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Box(
-                        Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(FieldMindTheme.colors.observation.copy(alpha = 0.18f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            FieldMindIcons.Download,
-                            null,
-                            tint = FieldMindTheme.colors.observation,
-                            size = 26.dp
-                        )
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            "Need to restore data?",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = FieldMindTheme.colors.observation
-                        )
-                        Text(
-                            "Import a .json or .fieldmind backup to recover your observations, notes, and projects.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    FilledTonalButton(
-                        onClick = { onSwitchToImport() },
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.18f)
-                        )
-                    ) {
-                        Icon(FieldMindIcons.Download, null, size = 16.dp)
-                        Spacer(Modifier.width(4.dp))
-                        Text("Import", fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -1437,29 +1383,7 @@ private fun ExportPrivacyOptionsCard(
             }
 
             // Clear clipboard toggle — only shown on Export tab
-            if (showClearClipboard) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { onClearClipboardChange(!clearClipboard) }
-                        .semantics(mergeDescendants = true) {
-                            contentDescription = "Clear clipboard after copy: ${if (clearClipboard) "enabled" else "disabled"}"
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Clear clipboard after copy", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        Text(
-                            "Clears exported text from the clipboard after 60 seconds",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(checked = clearClipboard, onCheckedChange = onClearClipboardChange)
-                }
-            }
+            // REMOVED: clear clipboard is a privacy feature that belongs in Security settings, not export
         }
     }
 }

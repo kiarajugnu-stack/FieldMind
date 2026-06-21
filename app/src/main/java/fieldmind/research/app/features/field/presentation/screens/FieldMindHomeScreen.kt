@@ -396,6 +396,60 @@ fun HomeScreen(
                 }
             }
 
+            // ── Data Tools ──
+            item {
+                val dataToolsCards = listOf(
+                    Triple("Counter", "Tally with live count", FieldMindIcons.Add) to FieldMindScreen.CounterTool,
+                    Triple("Measurement", "Log with units", FieldMindIcons.Graph) to FieldMindScreen.MeasurementTool,
+                    Triple("Weather Log", "Conditions record", FieldMindIcons.Weather) to FieldMindScreen.WeatherLogTool,
+                    Triple("Species", "Quick observation", FieldMindIcons.Nature) to FieldMindScreen.SpeciesTool
+                )
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
+                                    .background(FieldMindTheme.colors.data.copy(alpha = 0.14f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(FieldMindIcons.Data, null, tint = FieldMindTheme.colors.data, size = 24.dp)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text("Data tools", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("Quick tools for field observations", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            FilledTonalButton(
+                                onClick = { onNavigate(FieldMindScreen.DataTools) },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = FieldMindTheme.colors.data.copy(alpha = 0.12f))
+                            ) {
+                                Text("All tools", fontWeight = FontWeight.SemiBold)
+                                Spacer(Modifier.size(4.dp))
+                                Icon(FieldMindIcons.Forward, null, size = 16.dp)
+                            }
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            dataToolsCards.take(2).forEach { (info, screen) ->
+                                DataToolMiniCard(info.first, info.second, info.third, FieldMindTheme.colors.data) { onNavigate(screen) }
+                            }
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            dataToolsCards.drop(2).forEach { (info, screen) ->
+                                DataToolMiniCard(info.first, info.second, info.third, FieldMindTheme.colors.data) { onNavigate(screen) }
+                            }
+                        }
+                    }
+                }
+            }
+
             item { Spacer(Modifier.height(24.dp)) }
         }
 
@@ -2559,6 +2613,41 @@ private fun ExpandInfoChip(
                 color = Color.White.copy(alpha = 0.8f),
                 fontWeight = FontWeight.Medium
             )
+        }
+    }
+}
+
+@Composable
+private fun DataToolMiniCard(
+    title: String,
+    description: String,
+    icon: MaterialSymbolIcon,
+    color: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.weight(1f),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                Modifier.size(32.dp).clip(RoundedCornerShape(10.dp))
+                    .background(color.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, null, tint = color, size = 18.dp)
+            }
+            Column {
+                Text(title, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }
