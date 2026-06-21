@@ -53,6 +53,10 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
 
 private fun formatElapsed(startedAt: Long): String {
     val ms = System.currentTimeMillis() - startedAt
@@ -293,6 +297,9 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
         }
     }
 
+    // ── HazeState for backdrop blur on the floating nav pill ──
+    val hazeState = remember { HazeState() }
+
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 840.dp
         if (expanded) {
@@ -339,8 +346,8 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
             // We use a raw Box instead of Scaffold so Android never draws a
             // solid rectangular bottom-bar background behind the pill.
             // The content fills the full screen edge-to-edge; the pill is
-            // overlaid at the bottom with glassmorphism effects.
-            Box(Modifier.fillMaxSize()) {
+            // overlaid at the bottom with real backdrop blur via Haze.
+            Box(Modifier.fillMaxSize().haze(state = hazeState)) {
                 // Content — fills full screen edge-to-edge
                 FieldMindNavHost(
                     navController = navController,
@@ -357,15 +364,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             .fillMaxWidth()
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp)
-                    ) {                        // Glassmorphic nav pill — semi-transparent surface with border
-                        // for the frosted glass aesthetic. The animated blob indicator
+                    ) {                        // Glassmorphic nav pill — real backdrop blur via Haze with
+                        // semi-transparent surface. The animated blob indicator
                         // (drawn by LiquidNavRow) provides the liquid micro-interaction.
                         Surface(
                             shape = RoundedCornerShape(34.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                alpha = if (isSystemInDarkTheme()) 0.82f else 0.88f
-                            ),
-                            tonalElevation = 4.dp,
+                            color = Color.Transparent,
+                            tonalElevation = 0.dp,
                             shadowElevation = 12.dp,
                             border = androidx.compose.foundation.BorderStroke(
                                 width = 0.8.dp,
@@ -377,6 +382,15 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(66.dp)
+                                .hazeChild(
+                                    state = hazeState,
+                                    style = HazeStyle(
+                                        blurRadius = 24.dp,
+                                        tint = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                            alpha = if (isSystemInDarkTheme()) 0.78f else 0.85f
+                                        )
+                                    )
+                                )
                         ) {
                             LiquidNavRow(
                                 visibleTabs = visibleTabs,
