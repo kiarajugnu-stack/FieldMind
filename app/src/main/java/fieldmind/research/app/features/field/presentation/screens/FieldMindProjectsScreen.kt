@@ -146,10 +146,15 @@ fun ProjectsScreen(
         // ── Research Hub Header (expanded) ──
         StandardScreenHeader(
             title = "Research Hub",
-            subtitle = "Manage projects, templates, and research workflow",
+            subtitle = "19 templates + multi-workspace collab. Queries, data tools, reports, and async teams.",
             icon = FieldMindIcons.Projects,
             heroColor = FieldMindTheme.colors.project,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            trailing = {
+                IconButton(onClick = { searchQuery = if (searchQuery.isEmpty()) "search" else "" }, modifier = Modifier.size(40.dp)) {
+                    Icon(FieldMindIcons.Search, contentDescription = "Search", size = 20.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         )
         FieldMindSubNavBar(
             tabs = workspaceSubNavTabs,
@@ -201,6 +206,7 @@ private fun ResearchHubOverviewTab(
     var showNewProject by remember { mutableStateOf(false) }
     var showTemplates by remember { mutableStateOf(false) }
     var showTypes by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     // Project creation state (full spec)
     var projTitle by remember { mutableStateOf("") }
@@ -236,6 +242,25 @@ private fun ResearchHubOverviewTab(
         contentPadding = PaddingValues(20.dp, 14.dp, 20.dp, 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        if (searchQuery.isNotEmpty()) {
+            item {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Search projects, observations...") },
+                    leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
+                    trailingIcon = { if (searchQuery.isNotBlank()) IconButton(onClick = { searchQuery = "" }) { Icon(MaterialSymbolIcon("close"), contentDescription = "Clear", size = 18.dp) } },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ),
+                    singleLine = true
+                )
+            }
+        }
+
         // ── 1. Start Research Session ──
         item {
             Card(
@@ -297,13 +322,23 @@ private fun ResearchHubOverviewTab(
         }
 
         // ── 7. Projects List ──
+        val filteredProjects = if (searchQuery.isBlank()) projects else projects.filter { project ->
+            project.title.contains(searchQuery, ignoreCase = true) || 
+            project.description.contains(searchQuery, ignoreCase = true) ||
+            project.category.contains(searchQuery, ignoreCase = true)
+        }
+        
         if (totalProjects == 0) {
             item {
                 EmptyState("No projects yet", "Start with a name and a question. Use templates or pick a project type to get started.", icon = FieldMindIcons.Project, actionLabel = "Create project") { onNavigate?.invoke(FieldMindScreen.NewProject) ?: run { showNewProject = true } }
             }
+        } else if (searchQuery.isNotBlank() && filteredProjects.isEmpty()) {
+            item {
+                EmptyState("No projects match", "Try searching with different keywords", icon = FieldMindIcons.Search) { searchQuery = "" }
+            }
         } else {
-            item { SectionHeader("Projects ($totalProjects)", "Tap any project to open the workspace") }
-            items(projects) { project -> ProjectDashboardCardCompact(project, observations, questions, hypotheses, sources, data, reports, researchSessions) { onOpenDetail("project", project.id) } }
+            item { SectionHeader("Projects (${filteredProjects.size})", if (searchQuery.isNotBlank()) "Search results" else "Tap any project to open the workspace") }
+            items(filteredProjects) { project -> ProjectDashboardCardCompact(project, observations, questions, hypotheses, sources, data, reports, researchSessions) { onOpenDetail("project", project.id) } }
         }
     }
     // Dialogs outside LazyColumn
