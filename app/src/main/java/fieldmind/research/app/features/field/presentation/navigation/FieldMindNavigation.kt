@@ -211,20 +211,23 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
     var pendingNavRoute by remember { mutableStateOf<String?>(null) }
 
     fun navigateToTab(route: String) {
+        // Skip navigation if already on the target tab — prevents the
+        // inclusive=true + restoreState=true cycle that causes flickering
+        // and state-restoration failures when tapping the current tab.
+        if (currentRoute == route) return
+
         // Protect against accidental navigation while a capture session is active
-        if (currentRoute == FieldMindScreen.Observe.route && viewModel.captureSessionActive && route != FieldMindScreen.Observe.route) {
+        if (currentRoute == FieldMindScreen.Observe.route && viewModel.captureSessionActive) {
             pendingNavRoute = route
             showNavigateConfirm = true
             return
         }
-        // Pop everything up to the start destination then navigate to the target tab
-        // Using startDestinationRoute for reliable route-based popUpTo.
-        // When the target IS the start destination (Home/Today), include it in the pop
-        // so the navigation actually re-enters the tab instead of being a no-op.
+        // Pop everything up to the start destination then navigate to the target tab.
+        // Only use inclusive=true when navigating to a non-start tab that's nested
+        // below it. For the start destination itself, skip entirely (handled above).
         val startDest = navController.graph.startDestinationRoute ?: FieldMindScreen.Home.route
         navController.navigate(route) {
             popUpTo(startDest) {
-                inclusive = (route == startDest)
                 saveState = true
             }
             launchSingleTop = true
@@ -403,7 +406,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             shape = RoundedCornerShape(34.dp),
                             color = Color.Transparent,
                             tonalElevation = 0.dp,
-                            shadowElevation = 16.dp,
+                            shadowElevation = 0.dp,
                             border = androidx.compose.foundation.BorderStroke(
                                 width = 0.6.dp,
                                 color = if (isSystemInDarkTheme())
@@ -448,6 +451,10 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
 
 
 
+/** Actual per-tab position+width from onGloballyPositioned, used for
+ * precise blob centering regardless of Arrangement inter-item spacing. */
+private data class TabBounds(val x: Float, val width: Float)
+
 /**
  * Liquid glassmorphism nav row with animated blob indicator.
  * Draws a fluid rounded pill that slides between active tab positions
@@ -473,8 +480,10 @@ private fun LiquidNavRow(
         animatedPosition.animateTo(selectedIndex.toFloat(), animSpec)
     }
 
-    // ── Item widths tracked via onGloballyPositioned ──
-    val itemWidths = remember { mutableStateListOf<Float>() }
+    // ── Item bounds tracked via onGloballyPositioned ──
+    // positionInParent gives the actual x-offset within the Row, which
+    // automatically accounts for Arrangement.SpaceEvenly inter-item gaps.
+    val tabBounds = remember { mutableStateListOf<TabBounds>() }
 
     // Capture color scheme in composable scope (Canvas DrawScope is not composable)
     val blobColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
@@ -486,26 +495,28 @@ private fun LiquidNavRow(
     ) {
         // ── Liquid blob indicator drawn behind the tabs ──
         // (Canvas is drawn first, so it appears behind the Row)
-        // Uses accumulated actual item widths for precise per-tab centering,
-        // with smooth interpolation between tab positions during animation.
-        if (itemWidths.isNotEmpty() && selectedIndex < itemWidths.size) {
+        // Uses actual per-tab x-position (from onGloballyPositioned) for
+        // precise centering regardless of inter-item spacing, with smooth
+        // interpolation of both position and width between tab stops.
+        if (tabBounds.isNotEmpty() && selectedIndex < tabBounds.size) {
             Canvas(modifier = Modifier.matchParentSize()) {
-                val pos = animatedPosition.value.coerceIn(0f, (itemWidths.size - 1).toFloat())
-                val leftIdx = pos.toInt().coerceIn(0, itemWidths.size - 1)
-                val rightIdx = (leftIdx + 1).coerceAtMost(itemWidths.size - 1)
+                val pos = animatedPosition.value.coerceIn(0f, (tabBounds.size - 1).toFloat())
+                val leftIdx = pos.toInt().coerceIn(0, tabBounds.size - 1)
+                val rightIdx = (leftIdx + 1).coerceAtMost(tabBounds.size - 1)
                 val fraction = pos - leftIdx
 
-                fun centerOf(idx: Int): Float {
-                    val acc = itemWidths.take(idx).sum()
-                    return acc + itemWidths[idx] / 2f
-                }
+                val leftBounds = tabBounds[leftIdx]
+                val rightBounds = tabBounds.getOrElse(rightIdx) { leftBounds }
 
-                val centerX = if (leftIdx == rightIdx) {
-                    centerOf(leftIdx)
-                } else {
-                    centerOf(leftIdx) + (centerOf(rightIdx) - centerOf(leftIdx)) * fraction
-                }
-                val indicatorWidth = itemWidths.getOrElse(selectedIndex) { 60f }
+                // Interpolate center position
+                val leftCenter = leftBounds.x + leftBounds.width / 2f
+                val rightCenter = rightBounds.x + rightBounds.width / 2f
+                val centerX = if (leftIdx == rightIdx) leftCenter
+                    else leftCenter + (rightCenter - leftCenter) * fraction
+
+                // Also interpolate width smoothly between tabs so the blob
+                // doesn't abruptly jump when selection changes mid-animation.
+                val indicatorWidth = leftBounds.width + (rightBounds.width - leftBounds.width) * fraction
                 val indicatorHeight = size.height * 0.82f
                 val indicatorY = (size.height - indicatorHeight) / 2f
 
@@ -526,26 +537,26 @@ private fun LiquidNavRow(
         ) {
             visibleTabs.forEachIndexed { index, screen ->
                 val selected = isSelected(screen)
-                val tabWidth = remember { mutableFloatStateOf(0f) }
                 var isPressed by remember { mutableStateOf(false) }
 
-                            val pressScale by animateFloatAsState(
-                                targetValue = if (isPressed && !selected) 0.92f else 1f,
-                                animationSpec = if (isPressed)
-                                    tween(durationMillis = FieldMindMotion.durationMicro, easing = FastOutSlowInEasing)
-                                else
-                                    FieldMindMotion.expressiveSpring,
-                                label = "tabScale_$index"
-                            )
+                val pressScale by animateFloatAsState(
+                    targetValue = if (isPressed && !selected) 0.92f else 1f,
+                    animationSpec = if (isPressed)
+                        tween(durationMillis = FieldMindMotion.durationMicro, easing = FastOutSlowInEasing)
+                    else
+                        FieldMindMotion.expressiveSpring,
+                    label = "tabScale_$index"
+                )
 
                 Column(
                     modifier = Modifier
                         .onGloballyPositioned { coordinates ->
-                            tabWidth.floatValue = coordinates.size.width.toFloat()
-                            if (itemWidths.size <= index) {
-                                while (itemWidths.size <= index) itemWidths.add(0f)
+                            val width = coordinates.size.width.toFloat()
+                            val x = coordinates.positionInParent().x
+                            if (tabBounds.size <= index) {
+                                while (tabBounds.size <= index) tabBounds.add(TabBounds(0f, 0f))
                             }
-                            itemWidths[index] = tabWidth.floatValue
+                            tabBounds[index] = TabBounds(x, width)
                         }
                         .clip(RoundedCornerShape(20.dp))
                         .clickable(
