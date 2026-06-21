@@ -355,6 +355,10 @@ fun BackupAndRestoreScreen(
                             onExcludeMediaChange = { settings.setExportExcludeMedia(it) },
                             clearClipboard = false,
                             onClearClipboardChange = {},
+                            encrypt = exportEncrypt,
+                            onEncryptChange = { exportEncrypt = it },
+                            password = exportPassword,
+                            onPasswordChange = { exportPassword = it },
                             onExport = { format, action ->
                                 scope.launch {
                                     isExporting = true
@@ -410,6 +414,13 @@ fun BackupAndRestoreScreen(
                                                         attachments = allAttachments, outputDir = exportDir
                                                     )
                                                     result.packageFile.copyTo(exportFile, overwrite = true)
+                                                    // Apply encryption if enabled
+                                                    if (exportEncrypt && exportPassword.isNotBlank()) {
+                                                        val encryptedFile = FieldMindExportEncryption.encryptFile(exportFile, exportPassword)
+                                                        exportFile.delete()
+                                                        val encryptedName = exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted")
+                                                        encryptedFile.renameTo(File(exportFile.parentFile, encryptedName))
+                                                    }
                                                 }
                                             }
 
@@ -1144,7 +1155,11 @@ private fun ExportTabContent(
     excludeMedia: Boolean = false,
     onExcludeMediaChange: (Boolean) -> Unit = {},
     clearClipboard: Boolean = false,
-    onClearClipboardChange: (Boolean) -> Unit = {}
+    onClearClipboardChange: (Boolean) -> Unit = {},
+    encrypt: Boolean = false,
+    onEncryptChange: (Boolean) -> Unit = {},
+    password: String = "",
+    onPasswordChange: (String) -> Unit = {}
 ) {
     val totalEntities = entityCounts.values.sum()
     val colors = FieldMindTheme.colors
@@ -1228,6 +1243,63 @@ private fun ExportTabContent(
             onClearClipboardChange = onClearClipboardChange,
             showClearClipboard = true
         )
+
+        // ── Export encryption ──
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                Row(
+                    Modifier.fillMaxWidth().clickable { onEncryptChange(!encrypt) }.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Icon(FieldMindIcons.Lock, null, tint = if (encrypt) FieldMindTheme.colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+                    Column(Modifier.weight(1f)) {
+                        Text("Encrypt export", fontWeight = FontWeight.SemiBold)
+                        Text("Password-protect the exported .fieldmind file", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(checked = encrypt, onCheckedChange = onEncryptChange)
+                }
+
+                if (encrypt) {
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = onPasswordChange,
+                        label = { Text("Export password") },
+                        placeholder = { Text("Enter a strong password") },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
+                        trailingIcon = {
+                            if (LocalPrivacyTypingEnabled.current) {
+                                PrivacyTypingIndicator()
+                            }
+                        }
+                    )
+                    val strength = remember(password) { FieldMindExportEncryption.PasswordStrength.evaluate(password) }
+                    if (password.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            LinearProgressIndicator(
+                                progress = { strength.score / 5f },
+                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
+                                color = Color(strength.color),
+                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                            Text(strength.label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(strength.color))
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+        }
 
         // ── Export progress ──
         AnimatedVisibility(visible = isExporting) {
