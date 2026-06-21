@@ -142,7 +142,7 @@ fun ProjectsScreen(
         if (bounded != tab) { tab = bounded; haptics.light() }
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().statusBarsPadding()) {
         // ── Research Hub Header (expanded) ──
         StandardScreenHeader(
             title = "Research Hub",

@@ -89,7 +89,11 @@ fun FieldMindSettingsScreen(
     onOpenScreenVisibility: (() -> Unit)? = null
 ) {
     BackHandler(enabled = true) { onBack() }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().statusBarsPadding(),
+        contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 40.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         item {
             StandardScreenHeader(
                 title = "Settings",
@@ -1693,7 +1697,11 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 @Composable
 private fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () -> Unit, content: LazyListScope.() -> Unit) {
     BackHandler(enabled = true) { onBack() }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().statusBarsPadding(),
+        contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 40.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         item {
             StandardScreenHeader(
                 title = title,

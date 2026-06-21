@@ -111,7 +111,7 @@ fun KnowledgeLibraryScreen(
             tab = bounded; haptics.light()
         }
     }
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Column(Modifier.padding(20.dp, 20.dp, 20.dp, 12.dp)) {
             StandardScreenHeader(
                 title = "Knowledge Hub",
