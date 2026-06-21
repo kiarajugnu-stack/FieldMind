@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -476,86 +477,78 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
             //  Phase 1b: Restore Cross-References (many-to-many links)
             //  Must run AFTER all entities are imported (old→new ID maps needed).
             // ════════════════════════════════════════════════════════════════════
+            val oldToNewSpeciesId = mutableMapOf<Long, Long>()
             val allNewSpecies = repository.species.first()
             bundle.species.forEach { oldSpecies ->
-                val match = allNewSpecies.find { newS ->
+                val match = allNewSpecies.firstOrNull { newS ->
                     newS.commonName == oldSpecies.commonName &&
                     newS.scientificName == oldSpecies.scientificName
                 }
                 if (match != null) oldToNewSpeciesId[oldSpecies.id] = match.id
             }
 
-            // ── Also build maps for questions, hypotheses, data records, reports, 🔄
+            // ── Also build maps for questions, hypotheses, data records, reports, etc. ──
             val oldToNewQuestionId = mutableMapOf<Long, Long>()
             val allNewQuestions = repository.questions.first()
             bundle.questions.forEach { q ->
-                // Match by questionText (best unique field available)
-                val match = allNewQuestions.find { newQ -> newQ.questionText == q.questionText }
+                val match = allNewQuestions.firstOrNull { newQ -> newQ.questionText == q.questionText }
                 if (match != null) oldToNewQuestionId[q.id] = match.id
             }
 
             val oldToNewHypothesisId = mutableMapOf<Long, Long>()
             val allNewHypotheses = repository.hypotheses.first()
             bundle.hypotheses.forEach { h ->
-                val match = allNewHypotheses.find { newH -> newH.prediction == h.prediction }
+                val match = allNewHypotheses.firstOrNull { newH -> newH.prediction == h.prediction }
                 if (match != null) oldToNewHypothesisId[h.id] = match.id
             }
 
             val oldToNewDataRecordId = mutableMapOf<Long, Long>()
             val allNewDataRecords = repository.dataRecords.first()
             bundle.dataRecords.forEach { d ->
-                val match = allNewDataRecords.find { newD -> newD.label == d.label && newD.value == d.value }
+                val match = allNewDataRecords.firstOrNull { newD -> newD.label == d.label && newD.value == d.value }
                 if (match != null) oldToNewDataRecordId[d.id] = match.id
             }
 
             val oldToNewReportId = mutableMapOf<Long, Long>()
             val allNewReports = repository.reports.first()
             bundle.reports.forEach { r ->
-                val match = allNewReports.find { newR -> newR.title == r.title }
+                val match = allNewReports.firstOrNull { newR -> newR.title == r.title }
                 if (match != null) oldToNewReportId[r.id] = match.id
             }
 
             val oldToNewFlashcardId = mutableMapOf<Long, Long>()
             val allNewFlashcards = repository.flashcards.first()
             bundle.flashcards.forEach { f ->
-                val match = allNewFlashcards.find { newF -> newF.front == f.front && newF.back == f.back }
+                val match = allNewFlashcards.firstOrNull { newF -> newF.front == f.front && newF.back == f.back }
                 if (match != null) oldToNewFlashcardId[f.id] = match.id
             }
 
             val oldToNewSessionId = mutableMapOf<Long, Long>()
             val allNewSessions = repository.researchSessions.first()
             bundle.researchSessions.forEach { s ->
-                val match = allNewSessions.find { newS -> newS.name == s.name && newS.startedAt == s.startedAt }
+                val match = allNewSessions.firstOrNull { newS -> newS.name == s.name && newS.startedAt == s.startedAt }
                 if (match != null) oldToNewSessionId[s.id] = match.id
             }
 
             val oldToNewTaskId = mutableMapOf<Long, Long>()
             val allNewTasks = repository.tasks.first()
             bundle.tasks.forEach { t ->
-                val match = allNewTasks.find { newT -> newT.title == t.title }
+                val match = allNewTasks.firstOrNull { newT -> newT.title == t.title }
                 if (match != null) oldToNewTaskId[t.id] = match.id
             }
 
             val oldToNewSourceIdForCrossRef = mutableMapOf<Long, Long>()
             val allNewSourcesForCrossRef = repository.sources.first()
             bundle.sources.forEach { s ->
-                val match = allNewSourcesForCrossRef.find { newS -> newS.title == s.title && newS.link == s.link }
+                val match = allNewSourcesForCrossRef.firstOrNull { newS -> newS.title == s.title && newS.link == s.link }
                 if (match != null) oldToNewSourceIdForCrossRef[s.id] = match.id
             }
 
             val oldToNewEvidenceId = mutableMapOf<Long, Long>()
-            // Evidence attachments were just imported, match by URI + observationId
-            val allNewAttachments = allNewSpecies // reuse the flow, just import fresh
-            // Actually evidence IDs are tricky. Let's just query fresh.
-            // They were imported from bundle.evidenceAttachments above.
-            // For cross-refs that reference evidenceId, we grab the new IDs.
             val allNewEvidence = mutableListOf<EvidenceAttachmentEntity>()
             bundle.evidenceAttachments.forEach { originalAtt ->
                 val newObsId = oldToNewObsId[originalAtt.observationId]
                 if (newObsId != null) {
-                    // We inserted attachments above (inside the forEach that handles
-                    // bundle.evidenceAttachments). Now we need their new IDs.
-                    // Query fresh from DB:
                     repository.observeAttachmentsForObservation(newObsId).first().forEach { att ->
                         if (att.uri == originalAtt.uri || att.caption == originalAtt.caption) {
                             oldToNewEvidenceId[originalAtt.id] = att.id

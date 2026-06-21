@@ -131,6 +131,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun getAllEvidenceReportCrossRefs(): List<EvidenceReportCrossRef> = dao.getAllEvidenceReportCrossRefs()
 
     // ── Cross-reference link methods (missing ones) ──
+    suspend fun linkObservationTag(observationId: Long, tagId: Long) = dao.linkObservationTag(ObservationTagCrossRef(observationId, tagId))
     suspend fun linkTaskObservation(taskId: Long, observationId: Long) = dao.linkTaskObservation(TaskObservationCrossRef(taskId, observationId))
 
     suspend fun linkTaskEvidence(taskId: Long, evidenceId: Long) = dao.linkTaskEvidence(TaskEvidenceCrossRef(taskId, evidenceId))

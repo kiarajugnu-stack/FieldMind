@@ -1724,7 +1724,6 @@ private fun ExportHistorySection(
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     modifier = Modifier.clickable {
                         // Placeholder: re-share or open file
-                        showFastSnackbar(remember { SnackbarHostState() }, rememberCoroutineScope(), "Tap to re-share: ${file.name}")
                     }
                 ) {
                     Row(
@@ -1745,8 +1744,7 @@ private fun ExportHistorySection(
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             IconButton(onClick = {
-                                // Placeholder: share file
-                                showFastSnackbar(remember { SnackbarHostState() }, rememberCoroutineScope(), "Share: ${file.name}")
+                                // Placeholder: share file via FileProvider
                             }, modifier = Modifier.size(32.dp)) {
                                 Icon(FieldMindIcons.Share, "Share", tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
                             }

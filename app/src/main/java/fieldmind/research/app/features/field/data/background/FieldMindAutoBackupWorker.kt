@@ -42,25 +42,26 @@ class FieldMindAutoBackupWorker(context: Context, params: WorkerParameters) : Co
         val tasks = repository.tasks.first()
 
         // ── Collect cross-references for backup ──
+        val crossRefDao = FieldMindDatabase.getInstance(applicationContext).fieldMindDao()
         val crossRefs = buildList {
-            dao.getAllObservationTagCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("observationTag", it.observationId, it.tagId)) }
-            dao.getAllQuestionObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionObservation", it.questionId, it.observationId)) }
-            dao.getAllQuestionSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionSource", it.questionId, it.sourceId)) }
-            dao.getAllProjectObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectObservation", it.projectId, it.observationId)) }
-            dao.getAllProjectSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectSource", it.projectId, it.sourceId)) }
-            dao.getAllReportSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("reportSource", it.reportId, it.sourceId)) }
-            dao.getAllProjectDataRecordCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectDataRecord", it.projectId, it.dataRecordId)) }
-            dao.getAllTaskObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskObservation", it.taskId, it.observationId)) }
-            dao.getAllTaskEvidenceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskEvidence", it.taskId, it.evidenceId)) }
-            dao.getAllSpeciesObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesObservation", it.speciesId, it.observationId)) }
-            dao.getAllSpeciesQuestionCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesQuestion", it.speciesId, it.questionId)) }
-            dao.getAllEvidenceReportCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("evidenceReport", it.evidenceId, it.reportId)) }
+            crossRefDao.getAllObservationTagCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("observationTag", it.observationId, it.tagId)) }
+            crossRefDao.getAllQuestionObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionObservation", it.questionId, it.observationId)) }
+            crossRefDao.getAllQuestionSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("questionSource", it.questionId, it.sourceId)) }
+            crossRefDao.getAllProjectObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectObservation", it.projectId, it.observationId)) }
+            crossRefDao.getAllProjectSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectSource", it.projectId, it.sourceId)) }
+            crossRefDao.getAllReportSourceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("reportSource", it.reportId, it.sourceId)) }
+            crossRefDao.getAllProjectDataRecordCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("projectDataRecord", it.projectId, it.dataRecordId)) }
+            crossRefDao.getAllTaskObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskObservation", it.taskId, it.observationId)) }
+            crossRefDao.getAllTaskEvidenceCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("taskEvidence", it.taskId, it.evidenceId)) }
+            crossRefDao.getAllSpeciesObservationCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesObservation", it.speciesId, it.observationId)) }
+            crossRefDao.getAllSpeciesQuestionCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("speciesQuestion", it.speciesId, it.questionId)) }
+            crossRefDao.getAllEvidenceReportCrossRefs().forEach { add(FieldMindExport.CrossReferenceEntry("evidenceReport", it.evidenceId, it.reportId)) }
             // SessionObservationCrossRef and HypothesisEvidenceCrossRef use observeAll flows (not direct query)
             // Collect them via the database session and hypothesis_evidence tables
-            dao.observeAllSessionObservationCrossRefs().first().forEach {
+            crossRefDao.observeAllSessionObservationCrossRefs().first<List<fieldmind.research.app.features.field.data.database.entity.SessionObservationCrossRef>>().forEach {
                 add(FieldMindExport.CrossReferenceEntry("sessionObservation", it.sessionId, it.observationId))
             }
-            dao.observeAllHypothesisEvidence().first().forEach {
+            crossRefDao.observeAllHypothesisEvidence().first<List<fieldmind.research.app.features.field.data.database.entity.HypothesisEvidenceCrossRef>>().forEach {
                 add(FieldMindExport.CrossReferenceEntry("hypothesisEvidence", it.hypothesisId, it.observationId))
             }
         }
