@@ -17,6 +17,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.BorderStroke
+import androidx.compose.foundation.text.PasswordVisualTransformation
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1455,9 +1457,9 @@ private fun OnboardingAiFeaturesPage(
 
                 // Additional Features
                 listOf(
-                    Pair("Species Identification", enableSpeciesId) { enableSpeciesId = it },
-                    Pair("Privacy Lock", enablePrivacyLock) { enablePrivacyLock = it }
-                ).forEach { (title, enabled) ->
+                    Triple("Species Identification", enableSpeciesId) { enableSpeciesId = it },
+                    Triple("Privacy Lock", enablePrivacyLock) { enablePrivacyLock = it }
+                ).forEach { (title, enabled, callback) ->
                     AnimatedVisibility(visible = showContent, enter = fadeIn(FieldMindMotion.expressiveFloat)) {
                         Card(
                             shape = RoundedCornerShape(20.dp),
@@ -1590,7 +1592,7 @@ private fun OnboardingBackupOptionsPage(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
-                                    Icon(FieldMindIcons.Storage, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
+                                    Icon(FieldMindIcons.Export, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
                                 }
                                 Column(Modifier.weight(1f)) {
                                     Text("Local Archive", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
@@ -1679,11 +1681,10 @@ private fun OnboardingBackupOptionsPage(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═══════════════��══════════════════════════════════════════════════════
 //  Extended Tour — Screen 9: Data Tools
 // ══════════════════════════════════════════════════════════════════════
 
-@Composable
 @Composable
 fun OnboardingBackupPage(
     onNext: () -> Unit,
@@ -1722,7 +1723,7 @@ fun OnboardingBackupPage(
                 val features = listOf(
                     Triple("Auto-backup", "Schedule automatic backups of all your observations, projects, and settings.", FieldMindIcons.Export),
                     Triple("Cloud sync", "Seamlessly sync your data across devices for continuity in field research.", FieldMindIcons.Data),
-                    Triple("Data recovery", "Restore your data anytime with our secure backup system.", FieldMindIcons.Database)
+                    Triple("Data recovery", "Restore your data anytime with our secure backup system.", FieldMindIcons.Export)
                 )
 
                 features.forEach { (title, desc, icon) ->
@@ -1860,7 +1861,6 @@ fun OnboardingDataToolsPage(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-@Composable
 fun OnboardingSpeciesIdPage(
     onNext: () -> Unit,
     onBack: () -> Unit,
@@ -1979,7 +1979,6 @@ fun OnboardingSpeciesIdPage(
 //  Extended Tour — Screen 11: Getting Started Final Page
 // ══════════════════════════════════════════════════════════════════════
 
-@Composable
 @Composable
 fun OnboardingFinalPage(
     onFinish: () -> Unit,
