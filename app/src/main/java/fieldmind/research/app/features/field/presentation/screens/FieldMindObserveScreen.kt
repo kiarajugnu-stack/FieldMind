@@ -189,9 +189,6 @@ fun ObserveScreen(
 
     // ── Observations state (collected for reactive stats dashboard) ──
     val observations by viewModel.observations.collectAsState()
-    
-    // ── Research Sessions state (for grouping observations) ──
-    val researchSessions by viewModel.researchSessions.collectAsState()
 
     // ── Action: add attachment ──
     fun addAttachment(attachment: DraftEvidenceAttachment) {
@@ -578,41 +575,44 @@ fun ObserveScreen(
                     }
                 }
 
-                // ── Research Sessions Grouped Display ──
-                if (researchSessions.isNotEmpty() && !session.isActive) {
-                    item {
-                        var expandSessions by remember { mutableStateOf(false) }
-                        Card(
-                            modifier = Modifier.fillMaxWidth().clickable { expandSessions = !expandSessions },
-                            shape = RoundedCornerShape(20.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                        ) {
-                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.observation.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
-                                        Icon(FieldMindIcons.Timer, null, tint = FieldMindTheme.colors.observation, size = 22.dp)
+                // ── Past Observation Sessions Grouped Display ──
+                if (observations.isNotEmpty() && !session.isActive) {
+                    val sessionGroups = observations.groupBy { it.captureSessionId ?: "ungrouped" }
+                    if (sessionGroups.size > 1 || (sessionGroups.size == 1 && sessionGroups.keys.first() != "ungrouped")) {
+                        item {
+                            var expandSessions by remember { mutableStateOf(false) }
+                            Card(
+                                modifier = Modifier.fillMaxWidth().clickable { expandSessions = !expandSessions },
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        Box(Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.observation.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
+                                            Icon(FieldMindIcons.Timer, null, tint = FieldMindTheme.colors.observation, size = 22.dp)
+                                        }
+                                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text("${sessionGroups.size} Capture Session${if (sessionGroups.size != 1) "s" else ""}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text("${observations.size} observations logged", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        Icon(
+                                            MaterialSymbolIcon(if (expandSessions) "expand_less" else "expand_more"),
+                                            null,
+                                            size = 24.dp,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                        )
                                     }
-                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Text("${researchSessions.size} Research Session${if (researchSessions.size != 1) "s" else ""}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                        Text("${researchSessions.sumOf { it.sessionObservationCount } ?: 0} observations logged", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                    Icon(
-                                        MaterialSymbolIcon(if (expandSessions) "expand_less" else "expand_more"),
-                                        null,
-                                        size = 24.dp,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                                    )
-                                }
-                                if (expandSessions) {
-                                    Divider(Modifier.padding(vertical = 8.dp))
-                                    researchSessions.sortedByDescending { it.startedAt }.take(5).forEach { session ->
-                                        Row(Modifier.fillMaxWidth().padding(8.dp, 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                                Text(session.name ?: "Untitled Session", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
-                                                Text("${session.sessionObservationCount} observations • ${String.format("%.1f", session.totalDurationMs / 3600000.0)} hours", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    if (expandSessions) {
+                                        Divider(Modifier.padding(vertical = 8.dp))
+                                        sessionGroups.entries.sortedByDescending { it.value.firstOrNull()?.createdAt }.take(5).forEach { (sessionId, sessionObs) ->
+                                            Row(Modifier.fillMaxWidth().padding(8.dp, 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                    Text("${sessionObs.size} observation${if (sessionObs.size != 1) "s" else ""}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
+                                                    Text(java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.US).format(sessionObs.first().createdAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                                Icon(FieldMindIcons.ChevronRight, null, size = 18.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                                             }
-                                            Icon(FieldMindIcons.ChevronRight, null, size = 18.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                                         }
                                     }
                                 }

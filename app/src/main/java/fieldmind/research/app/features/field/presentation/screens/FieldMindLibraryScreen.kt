@@ -92,6 +92,7 @@ fun KnowledgeLibraryScreen(
     val notes by viewModel.notes.collectAsState()
     val flashcards by viewModel.flashcards.collectAsState()
     var tab by remember(startTab) { mutableIntStateOf(startTab) }
+    var searchQuery by remember { mutableStateOf("") }
     val subNavTabs = listOf(
         SubNavTab("Sources", FieldMindIcons.Book),
         SubNavTab("Notes", FieldMindIcons.Note),
@@ -116,8 +117,30 @@ fun KnowledgeLibraryScreen(
             StandardScreenHeader(
                 title = "Knowledge Hub",
                 subtitle = "Sources, notes, reading, flashcards, and learning.",
-                icon = FieldMindIcons.Library
+                icon = FieldMindIcons.Library,
+                trailing = {
+                    IconButton(onClick = { searchQuery = if (searchQuery.isEmpty()) "search" else "" }, modifier = Modifier.size(40.dp)) {
+                        Icon(FieldMindIcons.Search, contentDescription = "Search", size = 20.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             )
+            if (searchQuery.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Search sources, notes...") },
+                    leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
+                    trailingIcon = { if (searchQuery.isNotBlank()) IconButton(onClick = { searchQuery = "" }) { Icon(MaterialSymbolIcon("close"), contentDescription = "Clear", size = 18.dp) } },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ),
+                    singleLine = true
+                )
+            }
         }
         FieldMindSubNavBar(
             tabs = subNavTabs,
@@ -364,17 +387,26 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
                 }
             }
             if (isExpanded) {
-                items(sources) { source ->
-                    SourceCardWithCitations(
-                        source = source,
-                        clipboard = clipboard,
-                        onClick = { onOpenDetail("source", source.id) },
-                        onToggleRead = {
-                            viewModel.updateSourceEntity(source.copy(
-                                readingStatus = if (source.readingStatus == "Read") "In progress" else "Read"
-                            ))
-                        }
-                    )
+                val filteredSources = if (searchQuery.isBlank()) sources else sources.filter { source ->
+                    source.title.contains(searchQuery, ignoreCase = true) ||
+                    source.authors.contains(searchQuery, ignoreCase = true) ||
+                    source.doi.contains(searchQuery, ignoreCase = true)
+                }
+                if (filteredSources.isEmpty() && searchQuery.isNotBlank()) {
+                    item { Text("No sources match your search", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp)) }
+                } else {
+                    items(filteredSources) { source ->
+                        SourceCardWithCitations(
+                            source = source,
+                            clipboard = clipboard,
+                            onClick = { onOpenDetail("source", source.id) },
+                            onToggleRead = {
+                                viewModel.updateSourceEntity(source.copy(
+                                    readingStatus = if (source.readingStatus == "Read") "In progress" else "Read"
+                                ))
+                            }
+                        )
+                    }
                 }
             }
         }
