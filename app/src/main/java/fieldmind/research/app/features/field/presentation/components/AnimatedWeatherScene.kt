@@ -684,6 +684,22 @@ private fun DayCloudyScene(
     cloudIntensity: Float = 0.5f  // 0.0 = clear, 0.5 = partly cloudy, 1.0 = overcast
 ) {
     val isDark = FieldMindTheme.colors.isDark
+    
+    // Physics-based cloud system for seamless infinite scrolling
+    val cloudSystem = remember(cloudIntensity) {
+        CloudPhysicsSystem(
+            canvasWidth = 1f,
+            canvasHeight = 1f,
+            maxClouds = if (compact) 4 else 8,
+            windForce = 0.01f + cloudIntensity * 0.01f
+        )
+    }
+    
+    // Thunder system for realistic lightning with ground effects
+    val thunderSystem = remember {
+        ThunderPhysicsSystem()
+    }
+    
     val infiniteTransition = rememberInfiniteTransition(label = "dayClouds")
     val sunRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -696,6 +712,12 @@ private fun DayCloudyScene(
         targetValue = 1.0f,
         animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "sunGlow"
+    )
+    val windGust by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 0.5f,
+        animationSpec = infiniteRepeatable(tween(7000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "windGust"
     )
     val cloudOffset1 by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -748,8 +770,54 @@ private fun DayCloudyScene(
         val cy = sunVerticalY(timeOfDay, size.height)
         val sunRadius = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
 
+        // Update physics systems
+        cloudSystem.update(deltaTime = 0.016f, windGust = windGust)
+        thunderSystem.update(deltaTime = 0.016f)
+        
+        // Trigger occasional lightning during overcast conditions
+        if (cloudIntensity > 0.7f && (cloudOffset1 * 100f).toInt() % 300 == 0) {
+            thunderSystem.triggerLightning(
+                cx + (cloudOffset1 * 400f - 200f),
+                cy - size.height * 0.3f,
+                size.height * 0.9f
+            )
+        }
+
         // Draw the sun
         drawSun(palette, timeOfDay, sunRotation, sunGlow, compact)
+
+        // Render physics-based clouds with infinite scrolling
+        val activeClouds = cloudSystem.getActiveClouds()
+        activeClouds.forEach { cloud ->
+            val cloudDrawColor = if (cloud.type == PhysicsCloud.CloudType.CUMULONIMBUS) {
+                cloudColorDark.copy(alpha = cloud.opacity * cloudAlphaMul)
+            } else {
+                cloudColor.copy(alpha = cloud.opacity * cloudAlphaMul * 0.7f)
+            }
+            drawCloud(
+                offset = (cloud.x + cloud.driftOffset) / size.width,
+                baseX = cloud.x,
+                baseY = cloud.y,
+                scale = cloud.width,
+                color = cloudDrawColor,
+                morph = cloudMorph + cloud.depth * 2f
+            )
+        }
+
+        // Draw lightning bolts
+        val activeBolts = thunderSystem.getActiveBolts()
+        activeBolts.forEach { bolt ->
+            drawLightningBolt(bolt, size.width, size.height)
+        }
+
+        // Add illumination flash during lightning
+        val illumination = thunderSystem.getIlluminationIntensity()
+        if (illumination > 0f) {
+            drawRect(
+                color = Color.White.copy(alpha = illumination * 0.3f),
+                size = Size(size.width, size.height)
+            )
+        }
 
         // Back layer clouds (slow drift, behind sun) - scales with cloudIntensity
         // At low intensity (0.25): 1 faint cloud. At high intensity (0.85): 3 thick clouds
@@ -2507,7 +2575,7 @@ private fun DrawScope.drawMoon(
     )
 }
 
-// ══════════════════════════════════════════════════════════════════���═══
+// ═══════════════════════════════════════════════════════════════��══���═══
 
 /**
  * Compute the current moon phase as a value from 0.0 to 1.0.
@@ -2608,7 +2676,7 @@ private fun DrawScope.drawMoonPhase(
 
 // ══════════════════════════════════════════════════════════════════════
 //  Birds — Small silhouettes flying in morning/evening sky
-// ══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════���══════════
 
 /**
  * Draw small flying birds as V-shaped silhouettes drifting across the sky.
@@ -4015,5 +4083,52 @@ fun CompactWeatherIcon(
         modifier = modifier,
         compact = true,
         showCloudAnimation = true
+    )
+}
+
+/**
+ * Draw realistic fractal lightning bolt with branching
+ */
+private fun DrawScope.drawLightningBolt(
+    bolt: LightningBolt,
+    canvasWidth: Float,
+    canvasHeight: Float
+) {
+    val baseColor = Color(0xFFFFFFFF).copy(alpha = 0.9f * bolt.intensity)
+    val glowColor = Color(0xFF87CEEB).copy(alpha = 0.4f * bolt.intensity)  // Sky blue glow
+    
+    // Draw main bolt with glow effect
+    drawLightningPath(bolt.startX * canvasWidth, bolt.startY * canvasHeight, 
+                     bolt.endX * canvasWidth, bolt.endY * canvasHeight,
+                     width = 8f, color = glowColor)
+    
+    // Draw bright core
+    drawLightningPath(bolt.startX * canvasWidth, bolt.startY * canvasHeight,
+                     bolt.endX * canvasWidth, bolt.endY * canvasHeight,
+                     width = 3f, color = baseColor)
+    
+    // Draw branches recursively
+    bolt.branches.forEach { branch ->
+        drawLightningBolt(branch, canvasWidth, canvasHeight)
+    }
+}
+
+/**
+ * Helper to draw a lightning segment with anti-aliasing
+ */
+private fun DrawScope.drawLightningPath(
+    startX: Float,
+    startY: Float,
+    endX: Float,
+    endY: Float,
+    width: Float,
+    color: Color
+) {
+    drawLine(
+        color = color,
+        start = Offset(startX, startY),
+        end = Offset(endX, endY),
+        strokeWidth = width,
+        cap = StrokeCap.Round
     )
 }
