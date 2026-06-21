@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RenderEffect
+import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
@@ -121,9 +121,14 @@ fun Modifier.liquidGlassRefraction(): Modifier {
     }
 
     // Create the RenderEffect once (null-safe — shader may be null if AGSL init failed)
+    // Use android.graphics.RenderEffect.createRuntimeShaderEffect() then convert to
+    // Compose's RenderEffect via .asComposeRenderEffect() for graphicsLayer assignment.
     @Suppress("NewApi")
     val renderEffect = remember {
-        shader?.let { RenderEffect.createRuntimeShaderEffect(it, "content") }
+        shader?.let {
+            android.graphics.RenderEffect.createRuntimeShaderEffect(it, "content")
+                .asComposeRenderEffect()
+        }
     }
 
     return this
