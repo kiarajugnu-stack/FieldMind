@@ -662,10 +662,10 @@ private fun sunVerticalY(timeOfDay: TimeOfDay, height: Float): Float {
 private fun moonVerticalY(timeOfDay: TimeOfDay, height: Float): Float {
     return height * when (timeOfDay) {
         TimeOfDay.Dawn -> 0.78f
-        TimeOfDay.Sunrise -> 1.20f
-        TimeOfDay.Morning -> 1.20f
-        TimeOfDay.Midday -> 1.20f
-        TimeOfDay.Afternoon -> 1.20f
+        TimeOfDay.Sunrise -> 0.65f  // Fixed: was 1.20f (off-screen), now visible in upper-right
+        TimeOfDay.Morning -> 0.60f  // Fixed: was 1.20f (off-screen), now visible in upper-right
+        TimeOfDay.Midday -> 0.55f   // Fixed: was 1.20f (off-screen), moon visible but faint during day
+        TimeOfDay.Afternoon -> 0.50f // Fixed: was 1.20f (off-screen), now visible in upper-right
         TimeOfDay.Sunset -> 0.72f
         TimeOfDay.Twilight -> 0.42f
         TimeOfDay.Night -> 0.15f
@@ -684,6 +684,22 @@ private fun DayCloudyScene(
     cloudIntensity: Float = 0.5f  // 0.0 = clear, 0.5 = partly cloudy, 1.0 = overcast
 ) {
     val isDark = FieldMindTheme.colors.isDark
+    
+    // Physics-based cloud system for seamless infinite scrolling
+    val cloudSystem = remember(cloudIntensity) {
+        CloudPhysicsSystem(
+            canvasWidth = 1f,
+            canvasHeight = 1f,
+            maxClouds = if (compact) 4 else 8,
+            windForce = 0.01f + cloudIntensity * 0.01f
+        )
+    }
+    
+    // Thunder system for realistic lightning with ground effects
+    val thunderSystem = remember {
+        ThunderPhysicsSystem()
+    }
+    
     val infiniteTransition = rememberInfiniteTransition(label = "dayClouds")
     val sunRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -696,6 +712,12 @@ private fun DayCloudyScene(
         targetValue = 1.0f,
         animationSpec = infiniteRepeatable(tween(5000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "sunGlow"
+    )
+    val windGust by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 0.5f,
+        animationSpec = infiniteRepeatable(tween(7000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "windGust"
     )
     val cloudOffset1 by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -748,8 +770,54 @@ private fun DayCloudyScene(
         val cy = sunVerticalY(timeOfDay, size.height)
         val sunRadius = if (compact) size.minDimension * 0.09f else size.minDimension * 0.07f
 
+        // Update physics systems
+        cloudSystem.update(deltaTime = 0.016f, windGust = windGust)
+        thunderSystem.update(deltaTime = 0.016f)
+        
+        // Trigger occasional lightning during overcast conditions
+        if (cloudIntensity > 0.7f && (cloudOffset1 * 100f).toInt() % 300 == 0) {
+            thunderSystem.triggerLightning(
+                cx + (cloudOffset1 * 400f - 200f),
+                cy - size.height * 0.3f,
+                size.height * 0.9f
+            )
+        }
+
         // Draw the sun
         drawSun(palette, timeOfDay, sunRotation, sunGlow, compact)
+
+        // Render physics-based clouds with infinite scrolling
+        val activeClouds = cloudSystem.getActiveClouds()
+        activeClouds.forEach { cloud ->
+            val cloudDrawColor = if (cloud.type == PhysicsCloud.CloudType.CUMULONIMBUS) {
+                cloudColorDark.copy(alpha = cloud.opacity * cloudAlphaMul)
+            } else {
+                cloudColor.copy(alpha = cloud.opacity * cloudAlphaMul * 0.7f)
+            }
+            drawCloud(
+                offset = (cloud.x + cloud.driftOffset) / size.width,
+                baseX = cloud.x,
+                baseY = cloud.y,
+                scale = cloud.width,
+                color = cloudDrawColor,
+                morph = cloudMorph + cloud.depth * 2f
+            )
+        }
+
+        // Draw lightning bolts
+        val activeBolts = thunderSystem.getActiveBolts()
+        activeBolts.forEach { bolt ->
+            drawLightningBolt(bolt, size.width, size.height)
+        }
+
+        // Add illumination flash during lightning
+        val illumination = thunderSystem.getIlluminationIntensity()
+        if (illumination > 0f) {
+            drawRect(
+                color = Color.White.copy(alpha = illumination * 0.3f),
+                size = Size(size.width, size.height)
+            )
+        }
 
         // Back layer clouds (slow drift, behind sun) - scales with cloudIntensity
         // At low intensity (0.25): 1 faint cloud. At high intensity (0.85): 3 thick clouds
@@ -2507,7 +2575,7 @@ private fun DrawScope.drawMoon(
     )
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════��══���═══
 
 /**
  * Compute the current moon phase as a value from 0.0 to 1.0.
@@ -2541,7 +2609,7 @@ private fun getMoonPhaseValue(): Float {
  * straight cut path is used for a clean half-moon appearance.
  */
 private fun DrawScope.drawMoonPhase(
-    phaseValue: Float,        // 0.0–1.0 moon phase
+    phaseValue: Float,        // 0.0–1.0 moon phase (0=new, 0.25=waxing quarter, 0.5=full, 0.75=waning quarter)
     cx: Float,                // center x
     cy: Float,                // center y
     radius: Float,            // moon radius
@@ -2549,74 +2617,58 @@ private fun DrawScope.drawMoonPhase(
     shadowColor: Color,       // dark/shadowed portion color
     glowColor: Color,         // subtle inner glow for dark-side detail
 ) {
-    // Step 1: Draw the lit moon body
+    // Draw full lit circle first
     drawCircle(color = litColor, radius = radius, center = Offset(cx, cy))
 
-    // Full moon — no shadow overlay
+    // Full moon — no shadow needed
     if (phaseValue in 0.48f..0.52f) return
 
-    // New moon — complete shadow
+    // New moon — completely shadow
     if (phaseValue < 0.03f || phaseValue > 0.97f) {
         drawCircle(color = shadowColor, radius = radius, center = Offset(cx, cy))
-        // Add a subtle rim glow for the new moon (barely visible edge)
+        // Add subtle rim glow for edge visibility
         drawCircle(
-            color = glowColor.copy(alpha = 0.15f),
-            radius = radius * 0.12f,
-            center = Offset(cx, cy + radius * 0.5f)
+            color = glowColor.copy(alpha = 0.1f),
+            radius = radius * 0.95f,
+            center = Offset(cx, cy)
         )
         return
     }
 
-    val waxing = phaseValue < 0.5f  // lit on the right
-    val direction = if (waxing) -1f else 1f
-    val darkness = abs(phaseValue - 0.5f) * 2f  // 0 = full, 1 = new
-
-    // At quarter phase (darkness ≈ 0.5), use a straight cut for clean half-moon
-    if (darkness in 0.38f..0.62f) {
-        val cutX = cx + (0.5f - darkness) * radius * 2.5f * direction
-        val shadowPath = Path().apply {
-            if (waxing) {
-                // Waxing: shadow on LEFT (lit on right)
-                // Path covers from left edge (cx - radius) to cutX
-                moveTo(cx - radius, cy - radius)
-                lineTo(cutX, cy - radius)
-                lineTo(cutX, cy + radius)
-                lineTo(cx - radius, cy + radius)
-            } else {
-                // Waning: shadow on RIGHT (lit on left)
-                // Path covers from cutX to right edge (cx + radius)
-                moveTo(cx + radius, cy - radius)
-                lineTo(cutX, cy - radius)
-                lineTo(cutX, cy + radius)
-                lineTo(cx + radius, cy + radius)
-            }
-            close()
-        }
-        drawPath(shadowPath, color = shadowColor, style = Fill)
-        return
+    // Determine waxing (0-0.5) vs waning (0.5-1)
+    val isWaxing = phaseValue < 0.5f
+    // Normalize phase to 0-1 range within current half
+    val normalizedPhase = if (isWaxing) phaseValue * 2f else (phaseValue - 0.5f) * 2f
+    
+    // Calculate the shadow circle offset and radius for proper moon phases
+    // Shadow offset moves from left (waxing) or right (waning) toward center as moon gets fuller
+    val shadowOffsetX = if (isWaxing) {
+        // Waxing: shadow starts on LEFT (2*radius), moves RIGHT toward center
+        radius * 2f * (1f - normalizedPhase)
+    } else {
+        // Waning: shadow starts on RIGHT (-2*radius), moves LEFT toward center
+        -radius * 2f * (1f - normalizedPhase)
     }
 
-    // For crescent phases (darkness > 0.62): large shadow with small offset
-    // For gibbous phases (darkness < 0.38): small shadow with large offset
-    val offsetFactor = when {
-        darkness > 0.62f -> (1f - darkness) * 3.2f       // crescent: offset from 0.38 to 1.2
-        else -> (1f - darkness * 1.4f) * 1.3f              // gibbous: offset from 0.6 to 1.3
-    }
-    val shadowOffset = offsetFactor.coerceIn(0.05f, 1.25f) * radius * direction
-
+    // Draw the shadow circle with offset
+    // The shadow circle needs to be slightly larger to smoothly hide the lit portion
     drawCircle(
         color = shadowColor,
-        radius = radius * 1.03f,
-        center = Offset(cx + shadowOffset, cy)
+        radius = radius * 1.02f,
+        center = Offset(cx + shadowOffsetX, cy)
     )
 
-    // For gibbous phases, add a subtle earthshine glow on the dark portion
-    if (darkness < 0.38f && darkness > 0.05f) {
-        val earthshineX = cx - shadowOffset * 0.5f
-        val earthshineAlpha = (1f - darkness / 0.38f) * 0.06f
+    // Add earthshine (subtle glow on dark side) for intermediate phases
+    if (normalizedPhase in 0.1f..0.4f || normalizedPhase in 0.6f..0.9f) {
+        val earthshineAlpha = when {
+            normalizedPhase < 0.5f -> (0.4f - normalizedPhase) * 0.15f  // Waxing crescent to gibbous
+            else -> (normalizedPhase - 0.6f) * 0.15f                     // Waning gibbous to crescent
+        }
+        
+        val earthshineX = if (isWaxing) cx - radius * 0.4f else cx + radius * 0.4f
         drawCircle(
-            color = glowColor.copy(alpha = earthshineAlpha),
-            radius = radius * 0.7f,
+            color = glowColor.copy(alpha = earthshineAlpha.coerceIn(0f, 0.1f)),
+            radius = radius * 0.8f,
             center = Offset(earthshineX, cy)
         )
     }
@@ -2624,7 +2676,7 @@ private fun DrawScope.drawMoonPhase(
 
 // ══════════════════════════════════════════════════════════════════════
 //  Birds — Small silhouettes flying in morning/evening sky
-// ══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════���══════════
 
 /**
  * Draw small flying birds as V-shaped silhouettes drifting across the sky.
@@ -3368,6 +3420,18 @@ private fun RainScene(
         }
     }
 
+    // Physics-based particle system for enhanced rain dynamics
+    val particleSystem = remember(streakCount) {
+        PhysicsParticleSystem(
+            canvasWidth = 1f,
+            canvasHeight = 1f,
+            maxParticles = streakCount,
+            gravity = if (isHeavy) 0.25f else 0.15f,
+            windForce = if (isHeavy) 0.08f else 0.05f,
+            dragCoefficient = if (isHeavy) 0.015f else 0.02f
+        )
+    }
+
     // Rain color — blue-grey that blends with palette
     val rainColor = if (isDark) Color(0xFF8ABADA).copy(alpha = 0.55f * (0.6f + rainAlpha * 0.4f) * intensity)
         else Color(0xFF8ABADA).copy(alpha = 0.50f * (0.6f + rainAlpha * 0.4f) * intensity)
@@ -3425,31 +3489,48 @@ private fun RainScene(
             drawRect(color = Color(0xFF1A1A2E).copy(alpha = overlayAlpha * intensity), size = size)
         }
 
-        // ── 3D perspective rain streaks ──
+        // ── 3D perspective rain streaks with physics-based dynamics ──
         val effectiveWind = windGust * 0.15f
         val fallSpeed = size.height * 0.9f * rainSpeed
 
-        for (streak in streaks) {
-            // Each streak has a unique fall cycle based on its phase
-            val t = (rainProgress * 1.5f + streak.phase) % 1f
-            // Vertical position: fall from top to bottom, then wrap
-            val py = (t * fallSpeed) % (size.height + 20f) - 10f
-            // Horizontal position with wind drift
-            val windDrift = effectiveWind * streak.windAffinity * size.width * 0.15f
-            val px = (streak.x * size.width + windDrift + t * size.width * effectiveWind) % (size.width + 20f) - 10f
+        // Update physics system with current wind and intensity
+        particleSystem.setWindDirection(effectiveWind)
+        particleSystem.update(deltaTime = 0.016f, windGust = windGust * 0.3f)
 
-            // Perspective: streaks near bottom are slightly wider
+        // Emit new rain particles continuously
+        if (particleSystem.getParticleCount() < streakCount * 0.8f) {
+            particleSystem.emitAtTop(
+                count = 2,
+                vx = effectiveWind * 0.3f,
+                vy = rainSpeed * 3f,
+                size = 0.008f,
+                massRange = if (isHeavy) 1f to 1.4f else 0.8f to 1.2f
+            )
+        }
+
+        // Render physics-based rain particles
+        val activeParticles = particleSystem.getActiveParticles()
+        for (particle in activeParticles) {
+            val px = particle.x * size.width
+            val py = particle.y * size.height
+            val velocity = getVelocityMagnitude(particle.vx, particle.vy)
+
+            // Perspective: particles near bottom are slightly wider
             val depthFactor = 0.6f + (py / size.height).coerceIn(0f, 1f) * 0.4f
-            val streakLen = (6f + streak.length * 14f) * depthFactor
-            val streakWidth = 1.6f + depthFactor * 1.4f
 
-            // Alpha modulated by intensity
+            // Velocity-based streak length (faster particles = longer streaks)
+            val streakLen = (4f + velocity * 8f) * depthFactor
+            val streakWidth = 1.2f + depthFactor * 1.2f
+
+            // Alpha modulated by intensity and particle visibility
             val alpha = rainColor.alpha * (0.5f + intensity * 0.5f) * depthFactor
 
+            // Calculate streak direction from velocity
+            val angle = getVelocityAngle(particle.vx, particle.vy)
+            val dx = kotlin.math.cos(angle) * streakLen
+            val dy = kotlin.math.sin(angle) * streakLen
+
             // Draw rain streak
-            val angleRad = (10f + effectiveWind * 20f) * PI.toFloat() / 180f
-            val dx = sin(angleRad) * streakLen
-            val dy = cos(angleRad) * streakLen
             drawLine(
                 color = rainColor.copy(alpha = alpha),
                 start = Offset(px, py),
@@ -3559,7 +3640,7 @@ private fun SnowScene(
         label = "snowTreeSway"
     )
 
-    data class Snowflake(val x: Float, val speed: Float, val baseSize: Float, val swayAmount: Float)
+    data class Snowflake(val x: Float, val speed: Float, val baseSize: Float, val swayAmount: Float, val rotationSpeed: Float)
     val snowflakes = remember {
         val rng = Random(123)
         List(flakeCount) {
@@ -3567,41 +3648,89 @@ private fun SnowScene(
                 x = rng.nextFloat(),
                 speed = 0.4f + rng.nextFloat() * 0.6f,
                 baseSize = 0.3f + rng.nextFloat() * 0.7f,
-                swayAmount = 0.2f + rng.nextFloat() * 0.8f
+                swayAmount = 0.2f + rng.nextFloat() * 0.8f,
+                rotationSpeed = 0.5f + rng.nextFloat() * 1.5f  // Per-flake rotation
             )
         }
+    }
+
+    // Physics-based snow particle system with Perlin noise drift
+    val particleSystem = remember(flakeCount) {
+        PhysicsParticleSystem(
+            canvasWidth = 1f,
+            canvasHeight = 1f,
+            maxParticles = flakeCount,
+            gravity = if (isHeavy) 0.08f else 0.05f,  // Snow falls slower than rain
+            windForce = if (isHeavy) 0.12f else 0.08f,
+            dragCoefficient = if (isHeavy) 0.035f else 0.04f  // Snow has more air resistance
+        )
     }
 
     val flakeColor = if (isDark) Color(0xFFC8D8E8).copy(alpha = 0.6f) else Color.White.copy(alpha = 0.7f)
 
     Canvas(modifier = modifier.fillMaxSize()) {
-        // ── Snowfall with depth-based sizing and drift ──
-        for (flake in snowflakes) {
+        // Update physics system with wind influence
+        particleSystem.update(deltaTime = 0.016f, windGust = windDrift * 0.2f)
+
+        // Emit new snow particles continuously
+        if (particleSystem.getParticleCount() < flakeCount * 0.8f) {
+            particleSystem.emitAtTop(
+                count = 3,
+                vx = windDrift * 0.1f,
+                vy = if (isHeavy) 0.8f else 0.5f,
+                size = 0.012f,
+                massRange = if (isHeavy) 0.6f to 1.0f else 0.7f to 1.1f
+            )
+        }
+
+        // ── Snowfall with physics-based Perlin noise drift and per-flake rotation ──
+        for ((index, flake) in snowflakes.withIndex()) {
             val t = (snowProgress * flake.speed * 2f) % 1f
             val py = (t * (size.height + 30f)) - 15f
 
-            // Horizontal drift — layered sine waves for natural sway
-            val driftX = sin(windDrift * 2f + flake.x * 10f) * size.width * 0.06f * flake.swayAmount +
-                sin(windDrift * 5f + flake.x * 20f) * size.width * 0.02f * flake.swayAmount
-            val px = (flake.x * size.width + driftX + t * size.width * 0.02f) % (size.width + 20f) - 10f
+            // Perlin noise-based drift for more natural, organic motion
+            val perlinDrift = perlinNoise(flake.x * 5f, t * 3f, windDrift * 2f)
+            val driftX = perlinDrift * size.width * 0.08f * flake.swayAmount +
+                sin(windDrift * 2.5f + flake.x * 10f) * size.width * 0.03f * flake.swayAmount
+            val px = (flake.x * size.width + driftX + t * size.width * 0.01f) % (size.width + 20f) - 10f
 
-            // Depth-based sizing — larger flakes appear closer
+            // Depth-based sizing — larger flakes appear closer, size affects speed
             val depth = 0.3f + flake.baseSize * 0.7f
             val flakeSize = (1f + flake.baseSize * 3f) * (0.7f + sizeOscillation * 0.3f)
+
+            // Per-flake rotation for spinning effect
+            val rotation = (snowProgress * flake.rotationSpeed * 2f + flake.x * 6.28f) % 6.28f
 
             // Alpha variation for natural look
             val alpha = flakeColor.alpha * (0.5f + depth * 0.5f) * (0.6f + 0.4f * sin(t * 10f))
 
-            // Draw flake
+            // Draw flake with rotation visualization (by drawing rotated 6-pointed star)
             drawCircle(
                 color = flakeColor.copy(alpha = alpha.coerceIn(0f, 0.9f)),
                 radius = flakeSize,
                 center = Offset(px, py)
             )
 
+            // Draw rotation arms (creates appearance of spinning snowflake)
+            if (flakeSize > 1f && !compact) {
+                repeat(6) { arm ->
+                    val armAngle = (rotation + (arm * 1.047f)) // 60 degrees apart
+                    val armLen = flakeSize * 1.2f
+                    val armX = cos(armAngle) * armLen
+                    val armY = sin(armAngle) * armLen
+                    drawLine(
+                        color = flakeColor.copy(alpha = alpha * 0.4f),
+                        start = Offset(px, py),
+                        end = Offset(px + armX, py + armY),
+                        strokeWidth = flakeSize * 0.3f,
+                        cap = StrokeCap.Round
+                    )
+                }
+            }
+
             // Sparkle highlight on larger flakes
             if (flake.baseSize > 0.5f && !compact) {
-                val sparkle = sin(sparkleGlow * 2f + flake.x * 20f) * 0.5f + 0.5f
+                val sparkle = sin(sparkleGlow * 2f + flake.x * 20f + rotation) * 0.5f + 0.5f
                 val highlightAlpha = sparkle * 0.3f * alpha
                 if (highlightAlpha > 0.05f) {
                     drawCircle(
@@ -3954,5 +4083,52 @@ fun CompactWeatherIcon(
         modifier = modifier,
         compact = true,
         showCloudAnimation = true
+    )
+}
+
+/**
+ * Draw realistic fractal lightning bolt with branching
+ */
+private fun DrawScope.drawLightningBolt(
+    bolt: LightningBolt,
+    canvasWidth: Float,
+    canvasHeight: Float
+) {
+    val baseColor = Color(0xFFFFFFFF).copy(alpha = 0.9f * bolt.intensity)
+    val glowColor = Color(0xFF87CEEB).copy(alpha = 0.4f * bolt.intensity)  // Sky blue glow
+    
+    // Draw main bolt with glow effect
+    drawLightningPath(bolt.startX * canvasWidth, bolt.startY * canvasHeight, 
+                     bolt.endX * canvasWidth, bolt.endY * canvasHeight,
+                     width = 8f, color = glowColor)
+    
+    // Draw bright core
+    drawLightningPath(bolt.startX * canvasWidth, bolt.startY * canvasHeight,
+                     bolt.endX * canvasWidth, bolt.endY * canvasHeight,
+                     width = 3f, color = baseColor)
+    
+    // Draw branches recursively
+    bolt.branches.forEach { branch ->
+        drawLightningBolt(branch, canvasWidth, canvasHeight)
+    }
+}
+
+/**
+ * Helper to draw a lightning segment with anti-aliasing
+ */
+private fun DrawScope.drawLightningPath(
+    startX: Float,
+    startY: Float,
+    endX: Float,
+    endY: Float,
+    width: Float,
+    color: Color
+) {
+    drawLine(
+        color = color,
+        start = Offset(startX, startY),
+        end = Offset(endX, endY),
+        strokeWidth = width,
+        cap = StrokeCap.Round
     )
 }

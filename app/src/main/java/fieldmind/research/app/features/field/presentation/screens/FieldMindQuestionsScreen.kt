@@ -114,16 +114,19 @@ fun QuestionsScreen(
         return (ratio * 100).toInt().coerceIn(5, 100)
     }
 
-    // Filter
+    // Filter & Search
     var filterStatus by remember { mutableStateOf("All") }
     var filterCategory by remember { mutableStateOf("All") }
+    var searchQuery by remember { mutableStateOf("") }
     val categories = remember(questions) { listOf("All") + questions.map { it.category }.distinct().sorted() }
     val statuses = listOf("All", "Open", "Answered", "Investigating", "Archived")
 
-    val filtered = remember(questions, filterStatus, filterCategory) {
+    val filtered = remember(questions, filterStatus, filterCategory, searchQuery) {
         questions.filter { q ->
             (filterStatus == "All" || q.status == filterStatus) &&
-            (filterCategory == "All" || q.category == filterCategory)
+            (filterCategory == "All" || q.category == filterCategory) &&
+            (searchQuery.isBlank() || q.questionText.contains(searchQuery, ignoreCase = true) || 
+             q.category.contains(searchQuery, ignoreCase = true))
         }
     }
 
@@ -145,8 +148,32 @@ fun QuestionsScreen(
                 title = "Questions & Hypotheses",
                 subtitle = "All research questions, hypothesis testing workflow, and evidence tracking in one place.",
                 icon = FieldMindIcons.Question,
-                heroColor = FieldMindTheme.colors.question
+                heroColor = FieldMindTheme.colors.question,
+                trailing = {
+                    IconButton(onClick = { searchQuery = if (searchQuery.isEmpty()) "search" else "" }, modifier = Modifier.size(40.dp)) {
+                        Icon(FieldMindIcons.Search, contentDescription = "Search", size = 20.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             )
+        }
+
+        if (searchQuery.isNotEmpty()) {
+            item {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Search questions...") },
+                    leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
+                    trailingIcon = { if (searchQuery.isNotBlank()) IconButton(onClick = { searchQuery = "" }) { Icon(MaterialSymbolIcon("close"), contentDescription = "Clear", size = 18.dp) } },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ),
+                    singleLine = true
+                )
+            }
         }
 
         // ── Stats row ──
@@ -572,7 +599,7 @@ private fun QuestionCardWithHypotheses(
 
                     // ════════════════════════════════════════════════════
                     //  HYPOTHESIS CARDS nested under this question
-                    // ════════════════════════════════════════════════════
+                    // ══════════���═════════════════════════════════════════
                     if (hypotheses.isNotEmpty()) {
                         HorizontalDivider(color = FieldMindTheme.colors.observation.copy(alpha = 0.12f))
 

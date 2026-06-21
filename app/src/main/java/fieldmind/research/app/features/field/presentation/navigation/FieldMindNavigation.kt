@@ -412,16 +412,10 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             color = Color.Transparent,
                             tonalElevation = 0.dp,
                             shadowElevation = 8.dp,
-                            border = androidx.compose.foundation.BorderStroke(
-                                width = 0.6.dp,
-                                color = if (isSystemInDarkTheme())
-                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
-                                else
-                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(66.dp)
+                                .clip(RoundedCornerShape(34.dp))
                                 .hazeChild(
                                     state = hazeState,
                                     style = HazeStyle(
