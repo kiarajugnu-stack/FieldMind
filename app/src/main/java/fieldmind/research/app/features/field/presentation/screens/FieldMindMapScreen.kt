@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
 
 // ══════════════════════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════════════════════
-//  Map Screen — full-screen MapLibre map with offline tiles, drawing tools,
+//  Map Screen — full-screen osmdroid map with offline tiles, drawing tools,
 //  track recording, and geo-fence reminders (PRO FEATURE)
 // ══════════════════════════════════════════════════════════════════════
 
@@ -54,7 +54,7 @@ fun MapFieldScreen(
     var fullScreen by remember { mutableStateOf(false) }
 
     // ── Pro Feature Managers (shared across tabs) ──
-    val tileManager = remember { MaplibreOfflineManager(context) }
+    val tileManager = remember { OsmTileManager(context) }
     val trackRecorder = remember { TrackRecorder(context) }
     val geoFenceReminder = remember { GeoFenceReminder(context) }
 
@@ -65,6 +65,7 @@ fun MapFieldScreen(
     val currentTrack by trackRecorder.currentRecording.collectAsState()
     val savedTracks by trackRecorder.savedTracks.collectAsState()
     val cachedRegions by tileManager.cachedRegions.collectAsState()
+    // cachedRegions type is now List<OsmTileRegion>
     val geofenceRegions by geoFenceReminder.activeRegions.collectAsState()
 
     // Restore saved geofences on first launch
@@ -213,7 +214,7 @@ private fun FullScreenMapView(
     savedOverlays: List<MapOverlay>,
     drawingMode: DrawingMode,
     currentTrack: TrackRecording?,
-    tileManager: MaplibreOfflineManager? = null,
+    tileManager: OsmTileManager? = null,
     onClose: () -> Unit,
     onDrawingModeChanged: (DrawingMode) -> Unit,
     onOverlaysChanged: (List<MapOverlay>) -> Unit,
@@ -224,7 +225,7 @@ private fun FullScreenMapView(
     val colors = FieldMindTheme.colors
 
     Box(Modifier.fillMaxSize()) {
-        MaplibreMapView(
+        OsmMapView(
             points = points,
             savedOverlays = savedOverlays,
             drawingMode = drawingMode,
@@ -319,7 +320,7 @@ private fun FullScreenMapView(
 
         // Attribution
         Text(
-            "© MapLibre | © OpenStreetMap",
+            "© OpenStreetMap contributors",
             modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
@@ -377,7 +378,7 @@ private fun MapViewTab(
     drawingMode: DrawingMode,
     currentTrack: TrackRecording?,
     isRecording: Boolean,
-    tileManager: MaplibreOfflineManager? = null,
+    tileManager: OsmTileManager? = null,
     onFullScreen: () -> Unit,
     onDrawingModeChanged: (DrawingMode) -> Unit,
     onOverlaysChanged: (List<MapOverlay>) -> Unit,
@@ -396,7 +397,7 @@ private fun MapViewTab(
             Modifier
                 .fillMaxWidth()
                 .height(320.dp)
-        ) {                MaplibreMapView(
+        ) {                OsmMapView(
                     points = points,
                     savedOverlays = savedOverlays,
                     drawingMode = drawingMode,
@@ -535,8 +536,8 @@ private fun TrackRecordingCard(
 @Composable
 private fun OfflineTilesTab(
     modifier: Modifier,
-    tileManager: MaplibreOfflineManager,
-    cachedRegions: List<MaplibreTileRegion>
+    tileManager: OsmTileManager,
+    cachedRegions: List<OsmTileRegion>
 ) {
     val scope = rememberCoroutineScope()
     val isDownloading by tileManager.isDownloading.collectAsState()
@@ -605,7 +606,7 @@ private fun OfflineTilesTab(
 @Composable
 private fun DownloadRegionDialog(
     onDismiss: () -> Unit,
-    tileManager: MaplibreOfflineManager
+    tileManager: OsmTileManager
 ) {
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }

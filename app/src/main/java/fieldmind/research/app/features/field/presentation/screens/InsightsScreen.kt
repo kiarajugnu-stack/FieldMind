@@ -404,7 +404,7 @@ fun InsightsScreen(
             if (mapPoints.isNotEmpty()) {
                 item {
                     InsightCard("Field map (${mapPoints.size} points)", FieldMindIcons.Map) {
-                        MaplibreMapView(
+                        OsmMapView(
                             points = mapPoints,
                             showEmptyState = false,
                             modifier = Modifier.fillMaxWidth().height(250.dp)

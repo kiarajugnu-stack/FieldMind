@@ -1519,7 +1519,7 @@ internal fun ObservationLocationCard(latitude: Double, longitude: Double, manual
             }
             if (placeName != null) Text(placeName, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))) {
-                MaplibreMapView(
+                OsmMapView(
                     points = listOf(latitude to longitude),
                     showEmptyState = false,
                     modifier = Modifier.fillMaxWidth().height(200.dp)

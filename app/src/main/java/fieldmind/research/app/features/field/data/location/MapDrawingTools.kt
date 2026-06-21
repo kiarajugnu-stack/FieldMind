@@ -21,8 +21,8 @@ enum class DrawingMode {
 
 /**
  * A persisted geometry overlay on the map.
- * These are rendered by Mapbox annotation managers (PointAnnotationManager,
- * PolylineAnnotationManager, PolygonAnnotationManager) in the Mapbox map view.
+ * These are rendered as osmdroid Marker, Polyline, and Polygon overlays
+ * in the OsmMapView composable.
  */
 sealed class MapOverlay(
     open val id: String = UUID.randomUUID().toString(),

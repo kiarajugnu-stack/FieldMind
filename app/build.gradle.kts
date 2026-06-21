@@ -157,11 +157,14 @@ android {
         }
     }
 
-    // Build workflows release exactly one universal APK per requested build type.
-    // ABI splits stay disabled so CI does not publish per-architecture artifacts.
+    // ABI splits: generate one APK per CPU architecture so each device downloads
+    // only the native code it needs. arm64-v8a covers >95% of modern devices;
+    // armeabi-v7a, x86, x86_64 are kept for older / emulator coverage.
     splits {
         abi {
-            isEnable = false
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
             isUniversalApk = false
         }
     }
@@ -173,8 +176,13 @@ androidComponents {
         variant.outputs.forEach { output ->
             val signatureLabel = if (unsignedApkOnly) "unsigned" else "signed"
             val versionName = android.defaultConfig.versionName.orEmpty().sanitizeForApkFileName()
+            // Include the ABI filter in the filename so each split APK is identifiable
+            val abiLabel = output.filters
+                .find { it.filterType == com.android.build.api.variant.FilterType.ABI }
+                ?.identifier
+                ?: "universal"
             output.outputFileName.set(
-                "FieldMind-$versionName-${variant.name}-$signatureLabel-universal.apk"
+                "FieldMind-$versionName-${variant.name}-$signatureLabel-$abiLabel.apk"
             )
         }
     }
@@ -245,8 +253,8 @@ dependencies {
 //    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 //    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
 
-    // MapLibre Native SDK for offline maps (FOSS, no API key required)
-    implementation(libs.maplibre.gl.android.sdk)
+    // osmdroid for offline maps (OpenStreetMap tiles, no API key required)
+    implementation(libs.osmdroid.android)
 
     // Biometric authentication for privacy lock
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
