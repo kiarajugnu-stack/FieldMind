@@ -92,6 +92,7 @@ fun FieldMindSettingsScreen(
 ) {
     BackHandler(enabled = true) { onBack() }
     var searchQuery by remember { mutableStateOf("") }
+    var isSearchActive by remember { mutableStateOf(false) }
     LazyColumn(
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 40.dp),
@@ -104,7 +105,7 @@ fun FieldMindSettingsScreen(
                 icon = FieldMindIcons.Settings,
                 trailing = {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { searchQuery = if (searchQuery.isEmpty()) "search" else "" }, modifier = Modifier.size(40.dp)) {
+                        IconButton(onClick = { isSearchActive = !isSearchActive; if (!isSearchActive) searchQuery = "" }, modifier = Modifier.size(40.dp)) {
                             Icon(FieldMindIcons.Search, contentDescription = "Search settings", size = 20.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         BackButton(onClick = onBack)
@@ -113,7 +114,7 @@ fun FieldMindSettingsScreen(
             )
         }
 
-        if (searchQuery.isNotEmpty()) {
+        if (isSearchActive) {
             item {
                 TextField(
                     value = searchQuery,
@@ -123,6 +124,7 @@ fun FieldMindSettingsScreen(
                     leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
                     trailingIcon = { if (searchQuery.isNotBlank()) IconButton(onClick = { searchQuery = "" }) { Icon(MaterialSymbolIcon("close"), contentDescription = "Clear", size = 18.dp) } },
                     shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -1175,7 +1177,7 @@ fun UnitsFormatSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 // ═════════��════════════════════════════════════════════════════════════
 //  Weather Settings Page (separate from Capture defaults)
-// ══════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════���════════════════════
 
 @Composable
 fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
