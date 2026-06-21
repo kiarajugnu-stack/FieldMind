@@ -90,6 +90,8 @@ fun ResearchSessionScreen(
     val projects by viewModel.projects.collectAsState()
     val defaultConfidence by viewModel.fieldSettings.defaultConfidence.collectAsState()
     val researchSessions by viewModel.researchSessions.collectAsState()
+    val observations by viewModel.observations.collectAsState()
+    val sessionObservationCrossRefs by viewModel.sessionObservationCrossRefs.collectAsState()
     val activeStoredSession = remember(researchSessions) { researchSessions.firstOrNull { it.status == "Active" } }
 
     // Session state
@@ -125,6 +127,11 @@ fun ResearchSessionScreen(
     var quickPlaceName by remember { mutableStateOf("") }
     var quickWeather by remember { mutableStateOf<WeatherSnapshot?>(null) }
     var captureStatus by remember { mutableStateOf("Ready") }
+    var showLinkObservationsDialog by remember { mutableStateOf(false) }
+    val unlinkedObservations = remember(observations, sessionObservationCrossRefs, activeSessionId) {
+        val linkedObsIds = sessionObservationCrossRefs.filter { it.sessionId == activeSessionId }.map { it.observationId }.toSet()
+        observations.filter { it.id !in linkedObsIds }
+    }
 
     // ── Metadata auto-fetch confirmation ──
     var showMetadataConfirm by remember { mutableStateOf(false) }
@@ -832,6 +839,40 @@ fun ResearchSessionScreen(
                     }
                 }
 
+                // ── Link existing observations ──
+                if (activeSessionId != null) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(28.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(FieldMindIcons.Session, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                                    Text("Link existing observations", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Text("Connect previously captured observations to this session.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Button(
+                                    onClick = {
+                                        showLinkObservationsDialog = true
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.12f),
+                                        contentColor = FieldMindTheme.colors.observation
+                                    )
+                                ) {
+                                    Icon(FieldMindIcons.Add, null, size = 18.dp)
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("Choose observations to link")
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Quick observation form
                 item {
                     Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
@@ -977,6 +1018,22 @@ fun ResearchSessionScreen(
                 multiCaptureMode = true
             )
         }
+    }
+
+    // ── Link Observations Sheet ──
+    val currentSessionId = activeSessionId
+    if (showLinkObservationsDialog && currentSessionId != null) {
+        LinkObservationsSheet(
+            observations = unlinkedObservations,
+            onLink = { ids ->
+                ids.forEach { obsId ->
+                    viewModel.linkObservationToSession(currentSessionId, obsId)
+                }
+                observationCount += ids.size
+                showLinkObservationsDialog = false
+            },
+            onDismiss = { showLinkObservationsDialog = false }
+        )
     }
 }
 
@@ -1138,5 +1195,180 @@ private fun RecordingIndicator(seconds: Int) {
         Text("Recording…", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onErrorContainer)
         Spacer(Modifier.weight(1f))
         Text("%d:%02d".format(seconds / 60, seconds % 60), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Link Observations Sheet — Search & select existing observations to link
+// ══════════════════════════════════════════════════════════════════════
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LinkObservationsSheet(
+    observations: List<ObservationEntity>,
+    onLink: (List<Long>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+
+    val filtered = remember(observations, searchQuery) {
+        if (searchQuery.isBlank()) observations
+        else {
+            val q = searchQuery.lowercase()
+            observations.filter {
+                it.subject.lowercase().contains(q) ||
+                    it.factsOnlyNotes.lowercase().contains(q) ||
+                    it.category.lowercase().contains(q) ||
+                    it.manualLocation.lowercase().contains(q)
+            }
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = { onDismiss() },
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Link observations", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("Select observations to link to this research session.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            // Search
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search observations…") },
+                leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
+                shape = RoundedCornerShape(16.dp),
+                singleLine = true
+            )
+
+            // Selection count
+            if (selectedIds.isNotEmpty()) {
+                Text(
+                    "${selectedIds.size} selected",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            // Observations list
+            if (filtered.isEmpty()) {
+                Box(Modifier.fillMaxWidth().padding(vertical = 40.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        if (searchQuery.isNotBlank()) "No observations match your search."
+                        else "All observations are already linked to this session.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .heightIn(max = 400.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(filtered, key = { it.id }) { obs ->
+                        val isSelected = obs.id in selectedIds
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedIds = if (isSelected) selectedIds - obs.id
+                                    else selectedIds + obs.id
+                                },
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                else
+                                    MaterialTheme.colorScheme.surfaceContainerLow
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Row(
+                                Modifier.fillMaxWidth().padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                // Checkbox indicator
+                                Box(
+                                    Modifier
+                                        .size(24.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(
+                                            if (isSelected) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.surfaceContainerHigh
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isSelected) {
+                                        Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.onPrimary, size = 16.dp)
+                                    }
+                                }
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        obs.subject.ifBlank { "Observation #${obs.id}" },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(
+                                            obs.category,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            obs.date,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Action buttons
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { onDismiss() },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text("Cancel")
+                }
+                Button(
+                    onClick = {
+                        if (selectedIds.isNotEmpty()) {
+                            onLink(selectedIds.toList())
+                        }
+                        onDismiss()
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(14.dp),
+                    enabled = selectedIds.isNotEmpty()
+                ) {
+                    Icon(FieldMindIcons.Session, null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Link (${selectedIds.size})")
+                }
+            }
+        }
     }
 }
