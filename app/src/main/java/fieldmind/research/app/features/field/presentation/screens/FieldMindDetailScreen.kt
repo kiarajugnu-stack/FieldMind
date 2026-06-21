@@ -1803,6 +1803,20 @@ private fun ProjectDetailContent(
             }
         }
     }
+    
+    // Quick-add dialog invocations
+    ProjectQuickAddDialogs(
+        projectId = p.id,
+        showQuestion = showNewQuestion,
+        showObservation = showNewObservation,
+        showSource = showNewSource,
+        showReport = showNewReport,
+        onDismissQuestion = { showNewQuestion = false },
+        onDismissObservation = { showNewObservation = false },
+        onDismissSource = { showNewSource = false },
+        onDismissReport = { showNewReport = false },
+        viewModel = viewModel
+    )
 }
 
 // ── Quick-add dialogs for project tabs ──
@@ -1977,8 +1991,9 @@ private fun SpeciesRegistryBuilder(projectId: Long, viewModel: FieldMindViewMode
 
         if (showForm) {
             Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
-                Column(modifier = Modifier.padding(14.dp).heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(modifier = Modifier.padding(14.dp).heightIn(max = 600.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Add Species to Registry", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = colors.observation)
+                    Text("Fill in common name and taxonomy (scroll for more fields).", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     FieldTextField(commonName, { commonName = it }, "Common Name *", supportingText = "e.g. House Crow")
                     FieldTextField(scientificName, { scientificName = it }, "Scientific Name", supportingText = "e.g. Corvus splendens")
                     Text("Taxonomy", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
