@@ -35,6 +35,13 @@ class PhysicsParticleSystem(
     private var windDirection = 1f  // 1 for right, -1 for left
     private var windIntensity = 0.5f
     private var time = 0f
+    private var windGustIntensity = 0f
+    private var windGustTimer = 0f
+    private var windGustDuration = 2f
+    
+    // Environmental forces
+    private var turbulenceAmount = 0.3f
+    private var thermalUprafts = 0f  // For lighter particles (snow)
     
     // Seeded random for deterministic behavior across recompositions
     private val random = Random(42)
@@ -67,23 +74,51 @@ class PhysicsParticleSystem(
     }
 
     /**
-     * Update all particles with physics simulation
+     * Update all particles with physics simulation including wind gusts and turbulence
      */
     fun update(deltaTime: Float = 0.016f, windGust: Float = 0f) {
         time += deltaTime
 
-        // Update wind properties based on time (sine wave oscillation)
-        windIntensity = 0.5f + 0.3f * kotlin.math.sin(time * 2f)
-        if (windGust > 0) windIntensity += windGust
+        // Update wind gust system
+        if (windGust > 0 && windGustIntensity < windGust) {
+            windGustIntensity = windGust
+            windGustTimer = 0f
+        }
+        
+        // Decay wind gust over time
+        windGustTimer += deltaTime
+        if (windGustTimer > windGustDuration) {
+            windGustIntensity = maxOf(0f, windGustIntensity - deltaTime * 0.5f)
+        }
+
+        // Update wind properties based on time (sine wave oscillation + gusts)
+        windIntensity = 0.5f + 0.3f * kotlin.math.sin(time * 2f) + windGustIntensity
+        windIntensity = windIntensity.coerceIn(0f, 1.2f)  // Cap max wind intensity
+
+        // Thermal uprafts for lighter particles (affects snow more)
+        thermalUprafts = 0.2f * kotlin.math.sin(time * 0.8f + 2f)
 
         particles.forEach { particle ->
             if (particle.alive) {
-                // Apply gravity
+                // Apply gravity (reduced for lighter particles)
                 particle.ay = gravity / particle.mass
 
-                // Apply wind force (direction can change)
+                // Apply wind force (direction can change, includes gusts)
                 val windForceScaled = windForce * windIntensity
                 particle.ax = windDirection * windForceScaled / particle.mass
+
+                // Apply turbulence using layered perlin-like noise
+                val turbulence = perlinNoise(
+                    particle.x * 3f,
+                    particle.y * 2f,
+                    time * 0.5f
+                ) * turbulenceAmount
+                particle.ax += turbulence * 0.1f
+
+                // Apply thermal uprafts to lighter particles (helps snow stay aloft)
+                if (particle.mass < 1f) {
+                    particle.ay -= thermalUprafts * (1f - particle.mass) * 0.05f
+                }
 
                 // Apply air drag (proportional to velocity squared)
                 val speed = sqrt(particle.vx * particle.vx + particle.vy * particle.vy)
@@ -99,7 +134,7 @@ class PhysicsParticleSystem(
                 particle.vy += particle.ay * deltaTime
 
                 // Terminal velocity cap (prevents particles from accelerating infinitely)
-                val maxTerminalVelocity = 8f
+                val maxTerminalVelocity = if (particle.mass > 1f) 8f else 4f  // Heavier particles fall faster
                 val currentSpeed = sqrt(particle.vx * particle.vx + particle.vy * particle.vy)
                 if (currentSpeed > maxTerminalVelocity) {
                     val scale = maxTerminalVelocity / currentSpeed
@@ -145,6 +180,29 @@ class PhysicsParticleSystem(
      */
     fun applyWindGust(intensity: Float) {
         windIntensity = minOf(1f, windIntensity + intensity)
+    }
+
+    /**
+     * Set turbulence amount (affects particle wobble and randomness)
+     */
+    fun setTurbulence(amount: Float) {
+        turbulenceAmount = amount.coerceIn(0f, 1f)
+    }
+
+    /**
+     * Set thermal uprafts (affects lighter particles staying aloft)
+     */
+    fun setThermalUprafts(amount: Float) {
+        thermalUprafts = amount.coerceIn(-0.5f, 0.5f)
+    }
+
+    /**
+     * Apply sudden wind gust with specified intensity and duration
+     */
+    fun triggerWindGust(intensity: Float, duration: Float = 2f) {
+        windGustIntensity = intensity.coerceIn(0f, 1f)
+        windGustDuration = duration
+        windGustTimer = 0f
     }
 
     /**
