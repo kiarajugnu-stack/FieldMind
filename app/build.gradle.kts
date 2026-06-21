@@ -176,11 +176,10 @@ androidComponents {
         variant.outputs.forEach { output ->
             val signatureLabel = if (unsignedApkOnly) "unsigned" else "signed"
             val versionName = android.defaultConfig.versionName.orEmpty().sanitizeForApkFileName()
-            // Include the ABI filter in the filename so each split APK is identifiable
-            val abiLabel = output.filters
-                .find { it.filterType == com.android.build.api.variant.FilterType.ABI }
-                ?.identifier
-                ?: "universal"
+            // Include the ABI filter in the filename so each split APK is identifiable.
+            // When ABI splits are enabled, the first filter's identifier is the ABI name
+            // (e.g. "arm64-v8a"). Fall back to "universal" for unsplit builds.
+            val abiLabel = output.filters.firstOrNull()?.identifier ?: "universal"
             output.outputFileName.set(
                 "FieldMind-$versionName-${variant.name}-$signatureLabel-$abiLabel.apk"
             )
