@@ -260,3 +260,25 @@ Add species, weatherCatalog, researchSessions, tasks to the auto-backup worker's
 | `FieldMindExport.kt` | `archiveJson()` — add missing fields. `parseArchiveJson()` — parse missing fields. Add EvidenceAttachmentEntity array. |
 | `FieldMindViewModel.kt` | `restoreArchiveJson()` — import EvidenceAttachmentEntity from JSON, restore cross-refs |
 | `FieldMindAutoBackupWorker.kt` | Add missing entity types to archiveJson call |
+
+---
+
+## Recently Completed: UI + History Persistence
+
+### Export History Section Refactoring
+- **LazyColumn `items()`** — Replaced `forEach` with `items(exportHistory, key = { it.id })` for proper lazy rendering
+- **`ExportHistoryStore`** — SharedPreferences-backed JSON persistence via Gson (stored as `"fieldmind_export_history"`)
+- **`ExportHistoryItemCard`** — New composable rendering each record with format icon/color, file name, size, date, share + delete buttons
+- **Real share/delete** — Both card click and share button use `FileProvider.getUriForFile()` with proper MIME type detection. Delete removes file + record from store
+
+### Encrypted Export Recording
+- **Fixed** — Export history now tracks the actual `.encrypted` file path and name (not the deleted intermediate `.fieldmind` file)
+- Format recorded as `"Encrypted"` when encryption is active
+
+### Auto-Backup Toggle
+- **Replaced** Surface button with proper Material3 `Switch` + ON/OFF label in the hero card
+
+### File Modified
+| File | Changes |
+|------|---------|
+| `FieldMindBackupExportScreen.kt` | ExportHistorySection refactoring, ExportHistoryStore, ExportHistoryItemCard, encrypted export recording fix, auto-backup toggle switch |

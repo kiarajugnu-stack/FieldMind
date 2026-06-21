@@ -507,16 +507,16 @@ fun BackupAndRestoreScreen(
                                                 }
                                             }
                                         }
-                                        // Record export history (inside IO block so vars are in scope)
-                                        val _exportFile = exportFile
-                                        val _exportDir = exportDir
-                                        val _action = action
+                                        // Record export history — track actual file after encryption
+                                        val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
+                                            File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
+                                        } else exportFile
                                         exportHistoryStore.add(ExportRecord(
-                                            format = format,
+                                            format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
                                             fileName = _exportFile.name,
                                             fileSizeBytes = _exportFile.length(),
                                             exportedAt = System.currentTimeMillis(),
-                                            destination = if (_action == "share") "Shared via intent" else "Saved to folder",
+                                            destination = if (action == "share") "Shared via intent" else "Saved to folder",
                                             entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
                                         ))
                                     }
@@ -1219,31 +1219,26 @@ private fun HeroStatusCard(
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
                     )
                 }
-                // Enable/disable button
-                Surface(
-                    onClick = { settings.setAutoBackupEnabled(!autoBackupEnabled) },
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (autoBackupEnabled) colors.positive.copy(alpha = 0.18f)
-                    else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
+                // Auto-backup toggle as proper Switch
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.semantics { contentDescription = "Toggle auto-backup: ${if (autoBackupEnabled) "enabled" else "disabled"}" }
                 ) {
-                    Row(
-                        Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            if (autoBackupEnabled) FieldMindIcons.Check else FieldMindIcons.Add,
-                            null,
-                            tint = if (autoBackupEnabled) colors.positive else MaterialTheme.colorScheme.onPrimaryContainer,
-                            size = 18.dp
+                    Text(
+                        if (autoBackupEnabled) "ON" else "OFF",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = if (autoBackupEnabled) colors.positive else MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Switch(
+                        checked = autoBackupEnabled,
+                        onCheckedChange = { settings.setAutoBackupEnabled(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = colors.positive,
+                            checkedTrackColor = colors.positive.copy(alpha = 0.3f)
                         )
-                        Text(
-                            if (autoBackupEnabled) "Configure" else "Enable auto-backup",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (autoBackupEnabled) colors.positive else MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
+                    )
                 }
             }
 
