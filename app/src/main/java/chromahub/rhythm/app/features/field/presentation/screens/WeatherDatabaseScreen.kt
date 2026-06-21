@@ -510,7 +510,8 @@ private fun LiveCurrentWeatherCard(
         temperature = weather.temperature,
         sunrise = weather.sunrise,
         sunset = weather.sunset,
-        compact = false,                    showCloudAnimation = showCloudAnimation
+        compact = false,
+        showCloudAnimation = showCloudAnimation
                 )
                 }
             }

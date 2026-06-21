@@ -10,4 +10,11 @@
     
     <!-- External cache directory -->
     <external-cache-path name="external_cache" path="." />
+    
+    <!-- Internal cache directory for export temp files -->
+    <cache-path name="exports" path="exports/" />
+    <cache-path name="reports" path="reports/" />
+    <cache-path name="auto_backup" path="auto_backup/" />
+    <cache-path name="fieldmind_extracted" path="fieldmind_extracted_" />
+    <cache-path name="import_decrypt" path="import_decrypt/" />
 </paths> 

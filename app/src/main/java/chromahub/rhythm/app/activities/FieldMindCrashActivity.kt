@@ -5,8 +5,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ArrowForward
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -28,8 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import kotlin.system.exitProcess
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
@@ -38,7 +34,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
@@ -50,13 +45,15 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.animation.animateContentSize
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.stringResource
 
-class CrashActivity : ComponentActivity() {
+class FieldMindCrashActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,14 +62,14 @@ class CrashActivity : ComponentActivity() {
 
         setContent {
             FieldMindTheme(darkTheme = true, dynamicColor = false) {
-                CrashScreen(crashLog = crashLog)
+                FieldMindCrashScreen(crashLog = crashLog)
             }
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun CrashScreen(crashLog: String?) {
+    fun FieldMindCrashScreen(crashLog: String?) {
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
 
@@ -141,17 +138,18 @@ class CrashActivity : ComponentActivity() {
                                 .padding(bottom = 32.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(imageVector = Icons.Filled.Warning,
-                contentDescription = stringResource(R.string.crash_bug_report),
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(56.dp)
-            )
+                            Icon(
+                                imageVector = Icons.Filled.Warning,
+                                contentDescription = stringResource(R.string.crash_bug_report),
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(56.dp)
+                            )
                         }
                     }
 
                     // Left-aligned texts
                     Text(
-                        text = stringResource(R.string.crashactivity_uh_oh_looks_like), // Comic text
+                        text = stringResource(R.string.crashactivity_uh_oh_looks_like),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Start,
@@ -160,7 +158,7 @@ class CrashActivity : ComponentActivity() {
                     )
 
                     Text(
-                        text = stringResource(R.string.crashactivity_dont_fret_our_app), // Comic text
+                        text = stringResource(R.string.crashactivity_dont_fret_our_app),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Start,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -169,9 +167,9 @@ class CrashActivity : ComponentActivity() {
 
                     // Crash log text field
                     OutlinedTextField(
-                        value = crashLog ?: "No funny business here, just a crash log!", // Comic text
+                        value = crashLog ?: "No crash log available",
                         onValueChange = { /* Read-only */ },
-                        label = { Text(stringResource(R.string.crashactivity_secret_crash_scrolls)) }, // Comic label
+                        label = { Text(stringResource(R.string.crashactivity_secret_crash_scrolls)) },
                         readOnly = true,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -223,7 +221,11 @@ class CrashActivity : ComponentActivity() {
                                 Image(
                                     painter = painterResource(id = R.drawable.ic_launcher_foreground),
                                     contentDescription = stringResource(R.string.updates_rhythm_logo_cd),
-                                    modifier = Modifier.size(80.dp)
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .graphicsLayer {
+                                            alpha = logoGlow
+                                        }
                                 )
                             }
                         }
@@ -257,7 +259,7 @@ class CrashActivity : ComponentActivity() {
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Share button (replaces back button)
+                        // Share button
                         val shareButtonScale = remember { Animatable(1f) }
                         OutlinedButton(
                             onClick = {
@@ -293,7 +295,7 @@ class CrashActivity : ComponentActivity() {
                             Text(stringResource(R.string.crashactivity_share), style = MaterialTheme.typography.labelLarge)
                         }
 
-                        // Restart button (styled like onboarding)
+                        // Restart button
                         val restartButtonScale = remember { Animatable(1f) }
                         Button(
                             onClick = {
@@ -337,7 +339,7 @@ class CrashActivity : ComponentActivity() {
         const val EXTRA_CRASH_LOG = "extra_crash_log"
 
         fun start(context: Context, crashLog: String) {
-            val intent = Intent(context, CrashActivity::class.java).apply {
+            val intent = Intent(context, FieldMindCrashActivity::class.java).apply {
                 putExtra(EXTRA_CRASH_LOG, crashLog)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             }
@@ -347,9 +349,9 @@ class CrashActivity : ComponentActivity() {
 
     @Preview(showBackground = true)
     @Composable
-    fun PreviewCrashScreen() {
+    fun PreviewFieldMindCrashScreen() {
         FieldMindTheme(darkTheme = true, dynamicColor = false) {
-            CrashScreen(crashLog = "Sample crash log details here.\nAnother line of log.")
+            FieldMindCrashScreen(crashLog = "Sample crash log details here.\nAnother line of log.")
         }
     }
 }

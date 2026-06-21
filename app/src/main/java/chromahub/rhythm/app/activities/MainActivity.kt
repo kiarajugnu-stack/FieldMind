@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
+import fieldmind.research.app.features.field.presentation.components.applyScreenCaptureProtection
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindApp
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -30,6 +32,7 @@ class MainActivity : FragmentActivity() {
          * while FieldMind owns the active app surface. The FieldMind shell ignores this extra.
          */
         const val EXTRA_OPEN_PLAYER = "extra_open_player"
+        const val EXTRA_FIELDMIND_DESTINATION = "fieldmind_destination"
 
         /**
          * Legacy request code used by inactive equalizer screens that are no longer reachable
@@ -42,6 +45,7 @@ class MainActivity : FragmentActivity() {
     private val themeViewModel: ThemeViewModel by viewModels()
     private val fieldMindViewModel: FieldMindViewModel by viewModels()
     private lateinit var appSettings: AppSettings
+    private var requestedFieldMindDestination = androidx.compose.runtime.mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -49,6 +53,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         appSettings = AppSettings.getInstance(applicationContext)
         handleSharedSource(intent)
+        requestedFieldMindDestination.value = intent?.getStringExtra(EXTRA_FIELDMIND_DESTINATION)
 
         setContent {
             val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()
@@ -68,27 +73,21 @@ class MainActivity : FragmentActivity() {
                 else -> if (useSystemTheme) isSystemInDarkTheme() else darkMode
             }
 
-            RhythmTheme(
-                darkTheme = isDarkTheme,
-                amoledTheme = amoledTheme && isDarkTheme,
-                dynamicColor = useDynamicColors && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-                customColorScheme = customColorScheme,
-                customFont = customFont,
-                fontSource = fontSource,
-                customFontPath = customFontPath,
-                colorSource = colorSource,
-                extractedAlbumColorsJson = extractedAlbumColors
-            ) {
-                // FieldMind owns the active surface: apply the brand palette (or Material You
-                // when the user opts in) on top of the inherited Rhythm typography/shapes.
-                val fieldDynamicColor by fieldMindViewModel.fieldSettings.dynamicColorEnabled.collectAsState()
-                FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = fieldDynamicColor) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        FieldMindApp(appSettings = appSettings, viewModel = fieldMindViewModel)
-                    }
+            // FieldMind owns the active surface: apply FieldMind's brand palette directly
+            // without wrapping in RhythmTheme to avoid color conflicts
+            val fieldDynamicColor by fieldMindViewModel.fieldSettings.dynamicColorEnabled.collectAsState()
+            val screenCaptureProtection by fieldMindViewModel.fieldSettings.screenCaptureProtectionEnabled.collectAsState()
+
+            LaunchedEffect(screenCaptureProtection) {
+                applyScreenCaptureProtection(window, screenCaptureProtection)
+            }
+
+            FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = fieldDynamicColor) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    FieldMindApp(appSettings = appSettings, viewModel = fieldMindViewModel, requestedDestination = requestedFieldMindDestination.value)
                 }
             }
         }
@@ -98,6 +97,7 @@ class MainActivity : FragmentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleSharedSource(intent)
+        requestedFieldMindDestination.value = intent.getStringExtra(EXTRA_FIELDMIND_DESTINATION)
     }
 
     private fun handleSharedSource(intent: Intent?) {

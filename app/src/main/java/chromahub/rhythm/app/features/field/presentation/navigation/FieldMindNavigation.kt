@@ -42,6 +42,8 @@ import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
+import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
+import androidx.compose.runtime.CompositionLocalProvider
 
 private fun formatElapsed(startedAt: Long): String {
     val ms = System.currentTimeMillis() - startedAt
@@ -89,6 +91,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SettingsLocalModel : FieldMindScreen("field_settings_local_model", "Local Model", FieldMindIcons.Download)
     data object SettingsBackup : FieldMindScreen("field_settings_backup", "Backup & Import", FieldMindIcons.Archive)
     data object SettingsSecurity : FieldMindScreen("field_settings_security", "Security", FieldMindIcons.Lock)
+    data object SettingsScreenVisibility : FieldMindScreen("field_settings_screen_visibility", "Screen Visibility", FieldMindIcons.Visibility)
     data object SettingsAbout : FieldMindScreen("field_settings_about", "About", FieldMindIcons.Info)
     data object SettingsUnits : FieldMindScreen("field_settings_units", "Units", FieldMindIcons.Settings)
     data object SettingsWeather : FieldMindScreen("field_settings_weather", "Weather", FieldMindIcons.Weather)
@@ -118,6 +121,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SpeciesBrowser : FieldMindScreen("field_species_browser", "Species Browser", FieldMindIcons.Nature)
     data object TaxonomicBrowser : FieldMindScreen("field_taxonomic_browser", "Taxonomic Browser", FieldMindIcons.Category)
     data object FieldLog : FieldMindScreen("field_log", "Field Log", FieldMindIcons.List)
+    data object TimerTool : FieldMindScreen("field_timer", "Timer", FieldMindIcons.Timer)
 }
 
 private val bottomTabs = listOf(
@@ -129,7 +133,7 @@ private val bottomTabs = listOf(
 )
 
 @Composable
-fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
+fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel, requestedDestination: String? = null) {
     val onboardingCompleted by appSettings.onboardingCompleted.collectAsState()
     var appUnlocked by remember { mutableStateOf(!viewModel.fieldSettings.privacyLockEnabled.value) }
     val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
@@ -145,8 +149,11 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel) {
             isUnlocked = appUnlocked,
             onUnlock = { appUnlocked = true }
         ) {
-            FieldMindSnackbarProvider { _ ->
-                FieldMindNavigation(viewModel = viewModel, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+            val privacyTyping by viewModel.fieldSettings.privacyTypingEnabled.collectAsState()
+            CompositionLocalProvider(LocalPrivacyTypingEnabled provides privacyTyping) {
+                FieldMindSnackbarProvider { _ ->
+                    FieldMindNavigation(viewModel = viewModel, requestedDestination = requestedDestination, onResetOnboarding = { appSettings.setOnboardingCompleted(false); appUnlocked = false })
+                }
             }
         }
     }
@@ -164,7 +171,7 @@ private fun NavHostController.navigateToDestination(route: String) {
 }
 
 @Composable
-fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> Unit) {
+fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: String? = null, onResetOnboarding: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -200,6 +207,13 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             }
             launchSingleTop = true
             restoreState = true
+        }
+    }
+
+    LaunchedEffect(requestedDestination) {
+        when (requestedDestination) {
+            FieldMindScreen.FieldMode.route, "field_mode" -> navController.navigateToDestination(FieldMindScreen.FieldMode.route)
+            "field_timer" -> navController.navigateToDestination(FieldMindScreen.ResearchSession.route)
         }
     }
 
@@ -258,6 +272,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
             when (tab.route) {
                 FieldMindScreen.Observe.route -> screenVisibility.showCapture
                 FieldMindScreen.Projects.route -> screenVisibility.showProjects
+                FieldMindScreen.FieldMode.route -> true
                 FieldMindScreen.Insights.route -> screenVisibility.showInsights
                 FieldMindScreen.Library.route -> screenVisibility.showLibrary
                 else -> true // Home always visible
@@ -295,63 +310,74 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, onResetOnboarding: () -> 
                 FieldMindNavHost(navController, viewModel, onResetOnboarding, Modifier.weight(1f))
             }
         } else {
-            Scaffold(
-                containerColor = MaterialTheme.colorScheme.background,
-                bottomBar = {
-                    if (!hideChrome) {
-                        // ── True glassmorphic pill-shaped floating bottom nav bar ──
-                        // Frosted-glass effect: semi-transparent surface with visible blur,
-                        // subtle border to define the edge in light themes, generous rounded
-                        // corners, lifted off bottom with safe-area-aware padding.
-                        Box(
+            // ── True floating overlay nav bar ──
+            // We use a raw Box instead of Scaffold so Android never draws a
+            // solid rectangular bottom-bar background behind the pill.
+            // The content fills the full screen edge-to-edge; the pill is
+            // overlaid at the bottom and the NavHost gets matching bottom
+            // padding so content isn't obscured.
+            Box(Modifier.fillMaxSize()) {
+                // Content — fills full screen, padded at bottom to clear pill
+                FieldMindNavHost(
+                    navController = navController,
+                    viewModel = viewModel,
+                    onResetOnboarding = onResetOnboarding,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(
+                            if (!hideChrome)
+                                Modifier.padding(bottom = 88.dp) // pill height + margins
+                            else
+                                Modifier
+                        )
+                )
+
+                // Floating pill — layered above content, no system background
+                if (!hideChrome) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(34.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainer.copy(
+                                alpha = if (isSystemInDarkTheme()) 0.82f else 0.88f
+                            ),
+                            tonalElevation = 4.dp,
+                            shadowElevation = 12.dp,
+                            border = androidx.compose.foundation.BorderStroke(
+                                width = 0.8.dp,
+                                color = if (isSystemInDarkTheme())
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.18f)
+                                else
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.30f)
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp)
-                                .windowInsetsPadding(
-                                    WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-                                )
-                                .navigationBarsPadding()
+                                .height(66.dp)
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(34.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainer.copy(
-                                    alpha = if (isSystemInDarkTheme()) 0.50f else 0.40f
-                                ),
-                                tonalElevation = 3.dp,
-                                shadowElevation = 8.dp,
-                                border = androidx.compose.foundation.BorderStroke(
-                                    width = 0.5.dp,
-                                    color = if (isSystemInDarkTheme())
-                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.08f)
-                                    else
-                                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-                                ),
+                            Row(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(64.dp)
+                                    .fillMaxSize()
+                                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 2.dp, vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    visibleTabs.forEach { screen ->
-                                        val selected = isSelected(screen)
-                                        FloatingNavTabItem(
-                                            screen = screen,
-                                            selected = selected,
-                                            onClick = { haptics.light(); navigateToTab(screen.route) }
-                                        )
-                                    }
+                                visibleTabs.forEach { screen ->
+                                    val selected = isSelected(screen)
+                                    FloatingNavTabItem(
+                                        screen = screen,
+                                        selected = selected,
+                                        onClick = { haptics.light(); navigateToTab(screen.route) }
+                                    )
                                 }
                             }
                         }
                     }
                 }
-            ) { innerPadding ->
-                FieldMindNavHost(navController, viewModel, onResetOnboarding, Modifier.padding(innerPadding))
             }
         }
     }
@@ -421,7 +447,7 @@ private fun FloatingNavTabItem(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.18f * pillAlpha) 
                     else 
                         Color.Transparent,
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(18.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -583,10 +609,10 @@ private fun FieldMindNavHost(
 composable(FieldMindScreen.Hypotheses.route) { QuestionsScreen(viewModel = viewModel, onOpenDetail = openDetail) }
 composable(FieldMindScreen.DataTools.route) { DataToolsHubScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
 composable(FieldMindScreen.Analysis.route) { ProjectsScreen(viewModel = viewModel, startTab = 0, onOpenDetail = openDetail, onNavigate = { navController.navigateToDestination(it.route) }) }
-composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel, startTab = 4, onOpenDetail = openDetail, onNavigate = { navController.navigateToDestination(it.route) }) }
+composable(FieldMindScreen.Reports.route) { FieldMindReportScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Search.route) { ArchiveScreen(viewModel = viewModel, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.MapScreen.route) { MapFieldScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
-        composable(FieldMindScreen.ExportStudio.route) { BackupExportScreen(viewModel = viewModel) }
+        composable(FieldMindScreen.ExportStudio.route) { BackupAndRestoreScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Changelog.route) { FieldMindChangelogScreen(onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.Progress.route) { InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Flashcards.route) { FlashcardSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -605,10 +631,11 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
                 onOpenWeather = { navController.navigateToDestination(FieldMindScreen.SettingsWeather.route) },
                 onOpenAi = { navController.navigateToDestination(FieldMindScreen.SettingsAi.route) },
                 onOpenLocalModel = { navController.navigateToDestination(FieldMindScreen.SettingsLocalModel.route) },
-                onOpenBackup = { navController.navigateToDestination(FieldMindScreen.SettingsBackup.route) },
+                onOpenBackup = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) },
                 onOpenSecurity = { navController.navigateToDestination(FieldMindScreen.SettingsSecurity.route) },
                 onOpenChangelog = { navController.navigateToDestination(FieldMindScreen.Changelog.route) },
                 onOpenUnits = { navController.navigateToDestination(FieldMindScreen.SettingsUnits.route) },
+                onOpenScreenVisibility = { navController.navigateToDestination(FieldMindScreen.SettingsScreenVisibility.route) },
                 onOpenMap = { navController.navigateToDestination(FieldMindScreen.SettingsMap.route) },
                 onOpenDataIntegrity = { navController.navigateToDestination(FieldMindScreen.SettingsDataIntegrity.route) },
                 onOpenDeveloper = { navController.navigateToDestination(FieldMindScreen.SettingsDeveloper.route) },
@@ -623,7 +650,12 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         composable(FieldMindScreen.SettingsAi.route) { AiAssistantSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsLocalModel.route) { LocalModelSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsBackup.route) { BackupImportSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }) }
-        composable(FieldMindScreen.SettingsSecurity.route) { SecuritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsSecurity.route) {
+            SecuritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() })
+        }
+        composable(FieldMindScreen.SettingsScreenVisibility.route) {
+            ScreenVisibilitySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() })
+        }
         composable(FieldMindScreen.SettingsAbout.route) { AboutPage(onBack = { navController.popBackStack() }, onOpenChangelog = { navController.navigateToDestination(FieldMindScreen.Changelog.route) }) }
         composable(FieldMindScreen.SettingsUnits.route) { UnitsFormatSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsWeather.route) { WeatherSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -638,6 +670,7 @@ composable(FieldMindScreen.Reports.route) { ProjectsScreen(viewModel = viewModel
         }
         composable(FieldMindScreen.SettingsSpeciesPacks.route) { SpeciesPackSettingsPage(onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsSpeciesId.route) { SpeciesIdentificationSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsAutoGen.route) { AutoGenerationSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.CounterTool.route) { CounterToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.MeasurementTool.route) { MeasurementToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.WeatherLogTool.route) { WeatherLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -651,7 +684,13 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
         composable(FieldMindScreen.EventLogTool.route) { EventLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SiteLogTool.route) { SiteLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.ComparisonTable.route) { ComparisonTableScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
+        composable(FieldMindScreen.TimerTool.route) { TimerToolScreen(onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onOpenDetail = openDetail,
+                        onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }
+                    ) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L

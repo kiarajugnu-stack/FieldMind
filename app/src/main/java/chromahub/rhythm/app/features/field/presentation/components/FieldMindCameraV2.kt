@@ -66,6 +66,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 
@@ -94,6 +95,7 @@ private const val FLASH_AUTO = ImageCapture.FLASH_MODE_AUTO
  * - **Species field mode**: inline panel after capture with species autocomplete,
  *   category, confidence, notes — "Save" or " Save & Exit"
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FieldMindCameraV2(
     onPhotoCaptured: (uri: String, mimeType: String) -> Unit,
@@ -247,7 +249,7 @@ fun FieldMindCameraV2(
     LaunchedEffect(flashMode) { imageCapture?.flashMode = flashMode }
 
     // ── Capture function ──
-    val doCapture = remember(imageCapture) {
+    val doCapture = remember(imageCapture, onPhotoCaptured) {
         {
             val capture = imageCapture ?: return@remember
             isCapturing = true
@@ -279,7 +281,8 @@ fun FieldMindCameraV2(
                         pendingCaptureUri = uri
                         pendingCaptureMime = "image/jpeg"
                         capturedCount++
-                        showCaptureDialog = true
+                        // Session mode: save directly without category dialog
+                        onPhotoCaptured(uri, "image/jpeg")
                     } else {
                         showSpeciesPanel = true
                     }
@@ -294,7 +297,8 @@ fun FieldMindCameraV2(
                         pendingCaptureUri = uri
                         pendingCaptureMime = "image/jpeg"
                         capturedCount++
-                        showCaptureDialog = true
+                        // Session mode: save directly without category dialog
+                        onPhotoCaptured(uri, "image/jpeg")
                     } else {
                         showSpeciesPanel = true
                     }
@@ -559,6 +563,9 @@ fun FieldMindCameraV2(
                 onSaveContinue = {
                     val uri = capturedUri ?: return@SpeciesFieldPanel
                     val mime = capturedMime ?: "image/jpeg"
+                    // Always call onPhotoCaptured first so all callers get the photo
+                    onPhotoCaptured(uri, mime)
+                    // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
                     onSpeciesCaptured(uri, mime, speciesName, speciesCategory, speciesConfidence.toString(), speciesNotes)
                     // Reset for next capture
                     speciesName = ""
@@ -570,6 +577,9 @@ fun FieldMindCameraV2(
                 onSaveExit = {
                     val uri = capturedUri ?: return@SpeciesFieldPanel
                     val mime = capturedMime ?: "image/jpeg"
+                    // Always call onPhotoCaptured first so all callers get the photo
+                    onPhotoCaptured(uri, mime)
+                    // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
                     onSpeciesCaptured(uri, mime, speciesName, speciesCategory, speciesConfidence.toString(), speciesNotes)
                     showSpeciesPanel = false
                     onDismiss()
@@ -584,96 +594,262 @@ fun FieldMindCameraV2(
             )
         }
 
-        // ── Session post-capture dialog ──
+        // ── Session post-capture dialog (redesigned with categories) ──
         if (showCaptureDialog && multiCaptureMode) {
+            // Post-capture category/confidence state
+            var postCategory by remember { mutableStateOf("Other") }
+            var postConfidence by remember { mutableIntStateOf(80) }
+            var postNotes by remember { mutableStateOf("") }
+            var postSpeciesName by remember { mutableStateOf("") }
+
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(Color.Black.copy(alpha = 0.55f))
                     .clickable(enabled = false) {},
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.BottomCenter
             ) {
-                Card(
-                    shape = RoundedCornerShape(28.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.97f)
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp)
+                Surface(
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.98f),
+                    shadowElevation = 16.dp,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-            Column(
-                Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                        // Photo thumbnail
-                        if (pendingCaptureUri != null) {
-                            Box(
-                                Modifier
-                                    .size(120.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            ) {
-                                AsyncImage(
-                                    model = pendingCaptureUri,
-                                    contentDescription = "Last capture",
-                                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(16.dp)),
-                                    contentScale = ContentScale.Crop
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // ── Header with thumbnail + count ──
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            // Photo thumbnail
+                            if (pendingCaptureUri != null) {
+                                Box(
+                                    Modifier
+                                        .size(64.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                ) {
+                                    AsyncImage(
+                                        model = pendingCaptureUri,
+                                        contentDescription = "Last capture",
+                                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        "Photo $capturedCount",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(99.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer
+                                    ) {
+                                        Text(
+                                            "#$capturedCount",
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                }
+                                Text(
+                                    "Captured at ${SimpleDateFormat("HH:mm", Locale.US).format(Date())}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            }
+                            // Close button (save photo without metadata, then close dialog)
+                            IconButton(onClick = {
+                                val uri = pendingCaptureUri
+                                val mime = pendingCaptureMime
+                                if (uri != null) {
+                                    onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                }
+                                pendingCaptureUri = null
+                                pendingCaptureMime = null
+                                showCaptureDialog = false
+                            }, modifier = Modifier.size(36.dp)) {
+                                Icon(FieldMindIcons.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
                             }
                         }
 
-                        // Text
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
+                        // ── Species name field ──
+                        OutlinedTextField(
+                            value = postSpeciesName,
+                            onValueChange = { postSpeciesName = it },
+                            label = { Text("Species name (optional)") },
+                            placeholder = { Text("e.g. Red-tailed Hawk") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+
+                        // ── Category chips (2 rows) ──
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                "Photo $capturedCount captured",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
+                                "Category",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 4.dp)
                             )
-                            Text(
-                                "Captured at ${SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            val captureCategories = listOf(
+                                "Bird", "Mammal", "Insect", "Plant", "Fungi",
+                                "Reptile", "Amphibian", "Fish", "Mollusk", "Habitat", "Other"
                             )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                captureCategories.forEach { cat ->
+                                    val selected = postCategory == cat
+                                    Surface(
+                                        onClick = { postCategory = cat },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (selected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        border = if (!selected) androidx.compose.foundation.BorderStroke(
+                                            1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                                        ) else null,
+                                        tonalElevation = 0.dp
+                                    ) {
+                                        Row(
+                                            Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            if (selected) {
+                                                Icon(
+                                                    FieldMindIcons.Check, null,
+                                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                                    size = 14.dp
+                                                )
+                                            }
+                                            Text(
+                                                cat,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (selected) MaterialTheme.colorScheme.onPrimary
+                                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
 
-                        // Action buttons
+                        // ── Confidence slider ──
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    "Confidence",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
+                                Text(
+                                    "${postConfidence}%",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Slider(
+                                value = postConfidence.toFloat(),
+                                onValueChange = { postConfidence = it.roundToInt() },
+                                valueRange = 50f..99f,
+                                steps = 4,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("50%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                                Text("99%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                            }
+                        }
+
+                        // ── Notes field ──
+                        OutlinedTextField(
+                            value = postNotes,
+                            onValueChange = { postNotes = it },
+                            label = { Text("Quick notes (optional)") },
+                            placeholder = { Text("Behavior, location details, etc.") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+
+                        // ── Action buttons ──
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         Row(
                             Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Add more - saves and keeps camera open
+                            // Keep Shooting — saves photo (via onPhotoCaptured) + optional metadata (via onSpeciesCaptured), stays in camera
                             OutlinedButton(
                                 onClick = {
                                     val uri = pendingCaptureUri
                                     val mime = pendingCaptureMime
                                     if (uri != null) {
+                                        // ALWAYS call onPhotoCaptured so all callers get the photo
                                         onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                        // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
+                                        onSpeciesCaptured(
+                                            uri, mime ?: "image/jpeg",
+                                            postSpeciesName, postCategory, postConfidence.toString(), postNotes
+                                        )
                                     }
+                                    // Reset dialog for next capture
                                     pendingCaptureUri = null
                                     pendingCaptureMime = null
+                                    postSpeciesName = ""
+                                    postCategory = "Other"
+                                    postConfidence = 80
+                                    postNotes = ""
                                     showCaptureDialog = false
                                 },
                                 modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp)
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                )
                             ) {
-                                Icon(MaterialSymbolIcon("add_a_photo"), null, size = 18.dp)
+                                Icon(FieldMindIcons.Camera, null, size = 18.dp)
                                 Spacer(Modifier.size(6.dp))
-                                Text("Add", maxLines = 1)
+                                Text("Keep shooting", maxLines = 1)
                             }
 
-                            // Save & Exit - saves and closes camera
+                            // Done — saves photo, closes camera
                             Button(
                                 onClick = {
                                     val uri = pendingCaptureUri
                                     val mime = pendingCaptureMime
                                     if (uri != null) {
+                                        // ALWAYS call onPhotoCaptured so all callers get the photo
                                         onPhotoCaptured(uri, mime ?: "image/jpeg")
+                                        // Also call onSpeciesCaptured for callers that want metadata (defaults to no-op)
+                                        onSpeciesCaptured(
+                                            uri, mime ?: "image/jpeg",
+                                            postSpeciesName, postCategory, postConfidence.toString(), postNotes
+                                        )
                                     }
                                     pendingCaptureUri = null
                                     pendingCaptureMime = null
@@ -685,7 +861,7 @@ fun FieldMindCameraV2(
                             ) {
                                 Icon(FieldMindIcons.Archive, null, size = 18.dp)
                                 Spacer(Modifier.size(6.dp))
-                                Text("Save & Exit", maxLines = 1)
+                                Text("Done", maxLines = 1)
                             }
                         }
                     }
@@ -924,6 +1100,7 @@ private fun PillIconButton(
 /**
  * Species field mode inline panel — slides up after capture.
  * Lets the user tag the photo with species details and optionally continue shooting.
+ * Redesigned with polished visual hierarchy, Material icons, and color-coded categories.
  */
 @Composable
 private fun SpeciesFieldPanel(
@@ -944,8 +1121,24 @@ private fun SpeciesFieldPanel(
         "Bird", "Mammal", "Insect", "Plant", "Fungi",
         "Reptile", "Amphibian", "Fish", "Mollusk", "Other"
     )
-    val confidenceLabels = listOf("50%", "60%", "70%", "80%", "90%", "95%", "99%")
     val confidenceValues = listOf(50, 60, 70, 80, 90, 95, 99)
+    val confidenceLabels = mapOf(
+        50 to "Tentative", 60 to "Uncertain", 70 to "Moderate",
+        80 to "Plausible", 90 to "Confident", 95 to "Very confident", 99 to "Certain"
+    )
+    val categoryIcons = mapOf(
+        "Bird" to MaterialSymbolIcon("raven"),
+        "Mammal" to MaterialSymbolIcon("pets"),
+        "Insect" to MaterialSymbolIcon("bug_report"),
+        "Plant" to MaterialSymbolIcon("local_florist"),
+        "Fungi" to MaterialSymbolIcon("psychiatry"),
+        "Reptile" to MaterialSymbolIcon("pets"),
+        "Amphibian" to MaterialSymbolIcon("pets"),
+        "Fish" to MaterialSymbolIcon("water_drop"),
+        "Mollusk" to MaterialSymbolIcon("water_drop"),
+        "Other" to MaterialSymbolIcon("category")
+    )
+    val colors = FieldMindTheme.colors
 
     Box(
         Modifier
@@ -954,54 +1147,89 @@ private fun SpeciesFieldPanel(
             .safeDrawingPadding()
     ) {
         Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.97f),
-            shadowElevation = 16.dp,
+            shape = RoundedCornerShape(32.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.98f),
+            shadowElevation = 24.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                // Header with photo thumbnail
+                // ── Hero header with photo thumbnail ──
                 Row(
                     Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Photo thumbnail
+                    // Photo thumbnail with decorative ring
                     Box(
-                        Modifier.size(56.dp).clip(RoundedCornerShape(14.dp))
+                        Modifier.size(72.dp)
+                            .clip(RoundedCornerShape(20.dp))
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                            .border(
+                                2.dp,
+                                colors.observation.copy(alpha = 0.3f),
+                                RoundedCornerShape(20.dp)
+                            )
                     ) {
                         if (capturedUri != null) {
                             AsyncImage(
                                 model = capturedUri,
                                 contentDescription = "Captured photo",
-                                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(18.dp)),
                                 contentScale = ContentScale.Crop
                             )
+                        } else {
+                            Box(
+                                Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    FieldMindIcons.Camera,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                    size = 28.dp
+                                )
+                            }
                         }
                     }
                     Column(Modifier.weight(1f)) {
                         Text(
                             "Tag species",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.ExtraBold
                         )
                         Text(
-                            "Add details and continue shooting",
+                            "Add details and keep shooting",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    // Dismiss (just save photo without species data)
-                    IconButton(onClick = onDismissPanel, modifier = Modifier.size(36.dp)) {
-                        Icon(FieldMindIcons.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                    // Dismiss button
+                    Surface(
+                        onClick = onDismissPanel,
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        tonalElevation = 0.dp
+                    ) {
+                        Box(
+                            Modifier.size(40.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                FieldMindIcons.Close,
+                                "Dismiss",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                size = 20.dp
+                            )
+                        }
                     }
                 }
 
-                // Species name
+                // ── Species name ──
                 OutlinedTextField(
                     value = speciesName,
                     onValueChange = onSpeciesNameChange,
@@ -1009,37 +1237,76 @@ private fun SpeciesFieldPanel(
                     placeholder = { Text("e.g. Red-tailed Hawk") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    leadingIcon = {
+                        Icon(
+                            FieldMindIcons.Search,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            size = 20.dp
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colors.observation,
+                        cursorColor = colors.observation
+                    )
                 )
 
-                // Category chips
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // ── Category chips with icons ──
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         "Category",
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 2.dp)
                     )
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    // Categories in flow layout
+                    @OptIn(ExperimentalLayoutApi::class)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        categories.chunked(5).forEach { row ->
-                            row.forEach { cat ->
-                                val selected = speciesCategory == cat
-                                Surface(
-                                    onClick = { onSpeciesCategoryChange(cat) },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    tonalElevation = 0.dp
+                        categories.forEach { cat ->
+                            val isSelected = speciesCategory == cat
+                            val accentColor = when (cat) {
+                                "Bird" -> Color(0xFF2E7D32)
+                                "Mammal" -> Color(0xFF6A1B9A)
+                                "Insect" -> Color(0xFFE65100)
+                                "Plant" -> Color(0xFF1B5E20)
+                                "Fungi" -> Color(0xFF4E342E)
+                                "Reptile" -> Color(0xFF558B2F)
+                                "Amphibian" -> Color(0xFF00838F)
+                                "Fish" -> Color(0xFF1565C0)
+                                "Mollusk" -> Color(0xFF795548)
+                                else -> Color(0xFF546E7A)
+                            }
+                            Surface(
+                                onClick = { onSpeciesCategoryChange(cat) },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSelected) accentColor.copy(alpha = 0.14f)
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, accentColor)
+                                else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+                                tonalElevation = 0.dp
+                            ) {
+                                Row(
+                                    Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
+                                    Icon(
+                                        categoryIcons[cat] ?: MaterialSymbolIcon("category"),
+                                        null,
+                                        tint = if (isSelected) accentColor
+                                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        size = 16.dp
+                                    )
                                     Text(
                                         cat,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (selected) MaterialTheme.colorScheme.onPrimary
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) accentColor
                                         else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -1048,66 +1315,113 @@ private fun SpeciesFieldPanel(
                     }
                 }
 
-                // Confidence slider
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // ── Confidence section ──
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(
                         Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            "Confidence",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            "${speciesConfidence}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                "Confidence",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                confidenceLabels[speciesConfidence] ?: "Moderate",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.observation
+                            )
+                            Text(
+                                "$speciesConfidence%",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
+                    // Confidence bubbly slider
                     Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         confidenceValues.forEach { value ->
-                            val selected = speciesConfidence == value
+                            val isSelected = speciesConfidence == value
+                            val selectable = abs(speciesConfidence - value) <= 10 || isSelected
+                            val alpha = when {
+                                isSelected -> 1f
+                                abs(speciesConfidence - value) <= 10 -> 0.6f
+                                else -> 0.3f
+                            }
                             Surface(
                                 onClick = { onSpeciesConfidenceChange(value) },
-                                shape = RoundedCornerShape(10.dp),
-                                color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceContainerHigh,                                 border = if (!isSelected) androidx.compose.foundation.BorderStroke(
+                                     1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                ) else null,
                                 tonalElevation = 0.dp,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text(
-                                    "$value%",
-                                    modifier = Modifier.padding(vertical = 6.dp).fillMaxWidth(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center
-                                )
+                                Column(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    Text(
+                                        "$value",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha),
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(
+                                        "%",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha * 0.6f),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                // Notes
+                // ── Notes field ──
                 OutlinedTextField(
                     value = speciesNotes,
                     onValueChange = onSpeciesNotesChange,
-                    label = { Text("Quick notes (optional)") },
-                    placeholder = { Text("Behavior, habitat, etc.") },
+                    label = { Text("Notes (optional)") },
+                    placeholder = { Text("Behavior, habitat, field marks…") },
                     minLines = 1,
                     maxLines = 2,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colors.observation,
+                        cursorColor = colors.observation
+                    )
                 )
 
-                // Action buttons
+                // ── Action buttons ──
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                )
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -1115,26 +1429,41 @@ private fun SpeciesFieldPanel(
                     OutlinedButton(
                         onClick = onSaveExit,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     ) {
-                        Icon(FieldMindIcons.Archive, null, size = 16.dp)
+                        Icon(
+                            FieldMindIcons.Archive,
+                            null,
+                            size = 18.dp
+                        )
                         Spacer(Modifier.size(6.dp))
                         Text("Save & Exit", maxLines = 1)
                     }
                     Button(
                         onClick = onSaveContinue,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.observation
+                        )
                     ) {
-                        Icon(FieldMindIcons.Camera, null, size = 16.dp)
+                        Icon(
+                            FieldMindIcons.Camera,
+                            null,
+                            size = 18.dp
+                        )
                         Spacer(Modifier.size(6.dp))
-                        Text("Add", maxLines = 1)
+                        Text("Add More", maxLines = 1)
                     }
                 }
             }
         }
     }
 }
+
 
 /**
  * Slide-up pro controls drawer with ISO, EV, WB, and manual focus.

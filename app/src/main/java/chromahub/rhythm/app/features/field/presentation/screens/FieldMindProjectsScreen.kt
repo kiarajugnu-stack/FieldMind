@@ -129,10 +129,16 @@ fun ProjectsScreen(
     val researchSessions by viewModel.researchSessions.collectAsState()
     var tab by remember(startTab) { mutableIntStateOf(startTab.coerceIn(0, 4)) }
     val haptics = rememberFieldMindHaptics()
-    val tabs = listOf("Overview", "Observations", "Hypotheses", "Data", "Reports")
+    val workspaceSubNavTabs = listOf(
+        SubNavTab("Overview", FieldMindIcons.Today),
+        SubNavTab("Observations", FieldMindIcons.Observation),
+        SubNavTab("Hypotheses", FieldMindIcons.Hypothesis),
+        SubNavTab("Data", FieldMindIcons.Data),
+        SubNavTab("Reports", FieldMindIcons.Report)
+    )
 
     fun selectTab(next: Int) {
-        val bounded = next.coerceIn(0, tabs.lastIndex)
+        val bounded = next.coerceIn(0, workspaceSubNavTabs.lastIndex)
         if (bounded != tab) { tab = bounded; haptics.light() }
     }
 
@@ -145,9 +151,12 @@ fun ProjectsScreen(
             heroColor = FieldMindTheme.colors.project,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
-        ScrollableTabRow(selectedTabIndex = tab, edgePadding = 20.dp, containerColor = MaterialTheme.colorScheme.background) {
-            tabs.forEachIndexed { i, label -> Tab(tab == i, { selectTab(i) }, text = { Text(label) }) }
-        }
+        FieldMindSubNavBar(
+            tabs = workspaceSubNavTabs,
+            selectedIndex = tab,
+            onTabSelected = { selectTab(it) },
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
         // Static tab content (no AnimatedContent to avoid infinite-height crash with LazyColumn)
         Box(
             modifier = Modifier.fillMaxSize().pointerInput(tab) {
@@ -355,7 +364,7 @@ private fun ResearchHubOverviewTab(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════��═════
 //  Research Hub Dashboard
 // ══════════════════════════════════════════════════════════════════════
 
@@ -853,13 +862,23 @@ private fun HypothesesTab(
     onOpenDetail: (String, Long) -> Unit,
     onNavigate: ((FieldMindScreen) -> Unit)? = null
 ) {
+    var showNewHypDialog by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = panelPadding(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item { SectionHeader("Hypotheses", "${hypotheses.size} predictions • ${hypotheses.count { it.resultStatus == "Supported" }} supported, ${hypotheses.count { it.resultStatus == "Refuted" }} refuted") }
-        item { AddButton("New hypothesis") { onNavigate?.invoke(FieldMindScreen.NewHypothesis) } }
+        item {
+            AddButton("New hypothesis") {
+                if (onNavigate != null) {
+                    onNavigate?.invoke(FieldMindScreen.NewHypothesis)
+                } else {
+                    showNewHypDialog = true
+                }
+            }
+        }
         if (hypotheses.isEmpty()) item { EmptyState("No hypotheses yet", "Predict what evidence would show, then test it.", icon = FieldMindIcons.Hypothesis) }
         items(hypotheses.sortedByDescending { it.createdAt }) { h ->
             val supportColor = when (h.resultStatus.lowercase()) {
@@ -869,6 +888,10 @@ private fun HypothesesTab(
             }
             EntityCard(h.prediction, "hypothesis", body = h.reasoning.take(120), meta = listOf("${h.confidencePercent}%", h.resultStatus), onClick = { onOpenDetail("hypothesis", h.id) })
         }
+    }
+    // Inline dialog outside LazyColumn
+    if (showNewHypDialog) {
+        NewHypothesisScreen(viewModel = viewModel, onBack = { showNewHypDialog = false })
     }
 }
 
@@ -884,6 +907,8 @@ private fun DataTab(
     onOpenDetail: (String, Long) -> Unit,
     onNavigate: ((FieldMindScreen) -> Unit)? = null
 ) {
+    var showNewDataDialog by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = panelPadding(),
@@ -891,9 +916,21 @@ private fun DataTab(
     ) {
         item { SectionHeader("Data Records", "${data.size} records across ${data.map { it.datasetKind }.distinct().size} datasets") }
         item { TrackingFlowCards() }
-        item { AddButton("Add data record") { onNavigate?.invoke(FieldMindScreen.NewDataRecord) } }
+        item {
+            AddButton("Add data record") {
+                if (onNavigate != null) {
+                    onNavigate?.invoke(FieldMindScreen.NewDataRecord)
+                } else {
+                    showNewDataDialog = true
+                }
+            }
+        }
         if (data.isEmpty()) item { EmptyState("No data records yet", "Measure, count, compare, or log with offline tools.", icon = FieldMindIcons.Data) }
         items(data.sortedByDescending { it.timestamp }) { d -> EntityCard(d.label, "data", body = "${d.value} ${d.unit}", meta = listOf(d.toolType, d.datasetKind), onClick = { onOpenDetail("data", d.id) }) }
+    }
+    // Inline dialog outside LazyColumn
+    if (showNewDataDialog) {
+        NewDataRecordScreen(viewModel = viewModel, onBack = { showNewDataDialog = false })
     }
 }
 
@@ -907,15 +944,29 @@ private fun ReportsTab(
     onOpenDetail: (String, Long) -> Unit,
     onNavigate: ((FieldMindScreen) -> Unit)? = null
 ) {
+    var showNewReportDialog by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = panelPadding(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item { SectionHeader("Reports", "${reports.size} reports • ${reports.count { it.status == "Published" }} published") }
-        item { AddButton("Build report") { onNavigate?.invoke(FieldMindScreen.NewReport) } }
+        item {
+            AddButton("Build report") {
+                if (onNavigate != null) {
+                    onNavigate?.invoke(FieldMindScreen.NewReport)
+                } else {
+                    showNewReportDialog = true
+                }
+            }
+        }
         if (reports.isEmpty()) item { EmptyState("No reports yet", "Write up your findings with background, methods, results, and conclusions.", icon = FieldMindIcons.Report) }
         items(reports.sortedByDescending { it.createdAt }) { r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }) }
+    }
+    // Inline dialog outside LazyColumn
+    if (showNewReportDialog) {
+        NewReportScreen(viewModel = viewModel, onBack = { showNewReportDialog = false })
     }
 }
 

@@ -7,12 +7,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,7 +23,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +30,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import fieldmind.research.app.features.field.data.settings.FieldMindSettings
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
+import fieldmind.research.app.features.field.presentation.components.PrivacyTypingIndicator
+import fieldmind.research.app.features.field.presentation.components.withPrivacyTyping
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 // ══════════════════════════════════════════════════════════════════════
 //  App Lock / Privacy Gate
@@ -55,7 +53,10 @@ fun FieldMindAppLock(
     content: @Composable () -> Unit
 ) {
     val privacyEnabled by settings.privacyLockEnabled.collectAsState()
-    if (!privacyEnabled || isUnlocked) {
+    val appPinEnabled by settings.appPinEnabled.collectAsState()
+    val appPinHash by settings.appPinHash.collectAsState()
+    val hasPin = appPinEnabled && appPinHash.isNotBlank()
+    if ((!privacyEnabled && !hasPin) || isUnlocked) {
         content()
         return
     }
@@ -65,64 +66,70 @@ fun FieldMindAppLock(
     val biometricManager = remember(context) { BiometricManager.from(context) }
     val hasBiometric = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS
     val hasDeviceCredential = keyguard.isDeviceSecure
-    var usePinLock by remember { mutableStateOf(!hasBiometric && !hasDeviceCredential) }
+    var usePinLock by remember { mutableStateOf(false) }
     var pin by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf(false) }
-    var authMode by remember { mutableStateOf("") } // "", "biometric", "pin"
+    var pinAttempts by remember { mutableIntStateOf(0) }
+    var pinLockedUntil by remember { mutableLongStateOf(0L) }
+    val isPinLocked = pinLockedUntil > System.currentTimeMillis()
+    var authAttempted by remember { mutableStateOf(false) }
 
     val unlockLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             onUnlock()
+        } else {
+            // Device auth failed, fall back to PIN if available
+            if (hasPin) usePinLock = true
         }
     }
 
-    // If device credential or biometric is available, try biometric first
-    LaunchedEffect(privacyEnabled) {
-        if (privacyEnabled && !isUnlocked && (hasBiometric || hasDeviceCredential) && authMode.isEmpty()) {
-            if (hasBiometric) {
-                authMode = "biometric"
-                val activity = context as? FragmentActivity
-                if (activity != null) {
-                    val executor = ContextCompat.getMainExecutor(context)
-                    val prompt = BiometricPrompt(activity, executor, object : BiometricPrompt.AuthenticationCallback() {
-                        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                            onUnlock()
-                        }
-                        override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                            authMode = "pin"
-                        }
-                        override fun onAuthenticationFailed() {
-                            pinError = true
-                        }
-                    })
-                    val promptInfo = BiometricPrompt.PromptInfo.Builder()
-                        .setTitle("FieldMind Privacy Lock")
-                        .setSubtitle("Authenticate to access your research data")
-                        .setAllowedAuthenticators(
-                            BiometricManager.Authenticators.BIOMETRIC_WEAK or
-                                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
-                        )
-                        .build()
-                    prompt.authenticate(promptInfo)
+    fun startBiometricAuth() {
+        authAttempted = true
+        usePinLock = false
+        val activity = context as? FragmentActivity
+        if (hasBiometric && activity != null) {
+            val executor = ContextCompat.getMainExecutor(context)
+            val prompt = BiometricPrompt(activity, executor, object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    onUnlock()
                 }
-            } else if (hasDeviceCredential) {
-                authMode = "device"
-                val intent = keyguard.createConfirmDeviceCredentialIntent(
-                    "FieldMind Privacy Lock",
-                    "Authenticate to access your research data"
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    if (hasPin) usePinLock = true
+                }
+                override fun onAuthenticationFailed() {
+                    pinError = true
+                }
+            })
+            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle("FieldMind Privacy Lock")
+                .setSubtitle("Authenticate to access your research data")
+                .setAllowedAuthenticators(
+                    BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                            BiometricManager.Authenticators.DEVICE_CREDENTIAL
                 )
-                if (intent != null) {
-                    unlockLauncher.launch(intent)
-                } else {
-                    usePinLock = true
-                }
+                .build()
+            prompt.authenticate(promptInfo)
+        } else if (hasDeviceCredential) {
+            val intent = keyguard.createConfirmDeviceCredentialIntent(
+                "FieldMind Privacy Lock",
+                "Authenticate to access your research data"
+            )
+            if (intent != null) {
+                unlockLauncher.launch(intent)
+            } else if (hasPin) {
+                usePinLock = true
             }
+        } else if (hasPin) {
+            usePinLock = true
         }
     }
 
-    // In-app PIN fallback when no device/biometric is set
-    val savedPin = remember { context.getSharedPreferences("fieldmind_privacy", Context.MODE_PRIVATE).getString("app_pin", "") ?: "" }
-    val hasPin = savedPin.isNotBlank()
+    // Try biometric/device auth first, then fall back to PIN.
+    LaunchedEffect(privacyEnabled) {
+        if (privacyEnabled && !isUnlocked && !authAttempted) {
+            startBiometricAuth()
+        }
+    }
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
         Card(
@@ -161,11 +168,17 @@ fun FieldMindAppLock(
                             if (it.length <= 6) {
                                 pin = it
                                 pinError = false
-                                if (it.length >= 4 && it == savedPin) {
+                                if (it.length >= 4 && settings.verifyAppPin(it)) {
+                                    pinAttempts = 0
                                     onUnlock()
                                 } else if (it.length >= 4) {
+                                    pinAttempts++
                                     pinError = true
                                     pin = ""
+                                    if (pinAttempts >= 3) {
+                                        pinLockedUntil = System.currentTimeMillis() + 30_000
+                                        pinAttempts = 0
+                                    }
                                 }
                             }
                         },
@@ -173,46 +186,49 @@ fun FieldMindAppLock(
                         label = { Text("PIN") },
                         singleLine = true,
                         isError = pinError,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done).withPrivacyTyping(LocalPrivacyTypingEnabled.current),
                         supportingText = if (pinError) {{ Text("Incorrect PIN. Try again.") }} else null,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
-                        textStyle = MaterialTheme.typography.headlineSmall.copy(textAlign = TextAlign.Center, letterSpacing = 8.sp)
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(textAlign = TextAlign.Center, letterSpacing = 8.sp),
+                        trailingIcon = {
+                            if (LocalPrivacyTypingEnabled.current) {
+                                PrivacyTypingIndicator()
+                            }
+                        }
                     )
                 }
 
-                if (!usePinLock && authMode == "pin") {
-                    // Fallback to PIN if available, or device credential
-                    if (hasDeviceCredential) {
-                        Button(onClick = {
-                            val intent = keyguard.createConfirmDeviceCredentialIntent(
-                                "FieldMind Privacy Lock",
-                                "Authenticate to access your research data"
-                            )
-                            if (intent != null) unlockLauncher.launch(intent) else onUnlock()
-                        }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                            Icon(FieldMindIcons.Lock, null, size = 18.dp)
-                            Spacer(Modifier.size(8.dp))
-                            Text("Use device PIN / pattern")
-                        }
-                    } else {
-                        TextButton(onClick = { usePinLock = true }) {
-                            Text(if (hasPin) "Enter PIN instead" else "Set up PIN lock in Settings")
-                        }
-                    }
+                if (usePinLock && isPinLocked) {
+                    Text(
+                        "Too many attempts. Try again in 30 seconds.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center
+                    )
                 }
 
-                if (!usePinLock && hasDeviceCredential && authMode.isEmpty()) {
-                    Button(onClick = {
-                        val intent = keyguard.createConfirmDeviceCredentialIntent(
-                            "FieldMind Privacy Lock",
-                            "Authenticate to access your research data"
-                        )
-                        if (intent != null) unlockLauncher.launch(intent) else onUnlock()
-                    }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-                        Icon(FieldMindIcons.Lock, null, size = 18.dp)
-                        Spacer(Modifier.size(8.dp))
-                        Text("Unlock with device security")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (hasPin) {
+                        OutlinedButton(
+                            onClick = { usePinLock = true },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(if (usePinLock) "Using PIN" else "Use PIN")
+                        }
+                    }
+                    if (hasBiometric || hasDeviceCredential) {
+                        Button(
+                            onClick = { startBiometricAuth() },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(if (hasBiometric) "Retry biometric" else "Retry device lock")
+                        }
                     }
                 }
             }
