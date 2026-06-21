@@ -1277,6 +1277,20 @@ fun WeatherSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                         )
                     }
 
+                    // ── Open-Meteo response format selector ──
+                    Spacer(Modifier.height(8.dp))
+                    ChoiceItemForm("Response format", listOf("json", "csv", "xlsx"),
+                        try { com.google.gson.JsonParser.parseString(openMeteoConfig).asJsonObject.get("responseFormat")?.asString ?: "json" } catch (_: Exception) { "json" },
+                        FieldMindIcons.File,
+                        ) { newFormat ->
+                            scope.launch {
+                                val existing = try { com.google.gson.JsonParser.parseString(openMeteoConfig).asJsonObject } catch (_: Exception) { com.google.gson.JsonObject() }
+                                if (newFormat == "json") { existing.remove("responseFormat") } else { existing.addProperty("responseFormat", newFormat) }
+                                settings.setOpenMeteoApiConfig(existing.toString())
+                                Toast.makeText(context, "Response format set to ${newFormat.uppercase()}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+
                     // ── Open-Meteo custom config import ──
                     if ("open-meteo" in selectedProviderSet) {
                         Spacer(Modifier.height(8.dp))
