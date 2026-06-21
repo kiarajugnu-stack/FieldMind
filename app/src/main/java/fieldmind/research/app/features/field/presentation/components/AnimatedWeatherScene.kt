@@ -2507,7 +2507,7 @@ private fun DrawScope.drawMoon(
     )
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════���═══
 
 /**
  * Compute the current moon phase as a value from 0.0 to 1.0.
@@ -2541,7 +2541,7 @@ private fun getMoonPhaseValue(): Float {
  * straight cut path is used for a clean half-moon appearance.
  */
 private fun DrawScope.drawMoonPhase(
-    phaseValue: Float,        // 0.0–1.0 moon phase
+    phaseValue: Float,        // 0.0–1.0 moon phase (0=new, 0.25=waxing quarter, 0.5=full, 0.75=waning quarter)
     cx: Float,                // center x
     cy: Float,                // center y
     radius: Float,            // moon radius
@@ -2549,74 +2549,58 @@ private fun DrawScope.drawMoonPhase(
     shadowColor: Color,       // dark/shadowed portion color
     glowColor: Color,         // subtle inner glow for dark-side detail
 ) {
-    // Step 1: Draw the lit moon body
+    // Draw full lit circle first
     drawCircle(color = litColor, radius = radius, center = Offset(cx, cy))
 
-    // Full moon — no shadow overlay
+    // Full moon — no shadow needed
     if (phaseValue in 0.48f..0.52f) return
 
-    // New moon — complete shadow
+    // New moon — completely shadow
     if (phaseValue < 0.03f || phaseValue > 0.97f) {
         drawCircle(color = shadowColor, radius = radius, center = Offset(cx, cy))
-        // Add a subtle rim glow for the new moon (barely visible edge)
+        // Add subtle rim glow for edge visibility
         drawCircle(
-            color = glowColor.copy(alpha = 0.15f),
-            radius = radius * 0.12f,
-            center = Offset(cx, cy + radius * 0.5f)
+            color = glowColor.copy(alpha = 0.1f),
+            radius = radius * 0.95f,
+            center = Offset(cx, cy)
         )
         return
     }
 
-    val waxing = phaseValue < 0.5f  // lit on the right
-    val direction = if (waxing) -1f else 1f
-    val darkness = abs(phaseValue - 0.5f) * 2f  // 0 = full, 1 = new
-
-    // At quarter phase (darkness ≈ 0.5), use a straight cut for clean half-moon
-    if (darkness in 0.38f..0.62f) {
-        val cutX = cx + (0.5f - darkness) * radius * 2.5f * direction
-        val shadowPath = Path().apply {
-            if (waxing) {
-                // Waxing: shadow on LEFT (lit on right)
-                // Path covers from left edge (cx - radius) to cutX
-                moveTo(cx - radius, cy - radius)
-                lineTo(cutX, cy - radius)
-                lineTo(cutX, cy + radius)
-                lineTo(cx - radius, cy + radius)
-            } else {
-                // Waning: shadow on RIGHT (lit on left)
-                // Path covers from cutX to right edge (cx + radius)
-                moveTo(cx + radius, cy - radius)
-                lineTo(cutX, cy - radius)
-                lineTo(cutX, cy + radius)
-                lineTo(cx + radius, cy + radius)
-            }
-            close()
-        }
-        drawPath(shadowPath, color = shadowColor, style = Fill)
-        return
+    // Determine waxing (0-0.5) vs waning (0.5-1)
+    val isWaxing = phaseValue < 0.5f
+    // Normalize phase to 0-1 range within current half
+    val normalizedPhase = if (isWaxing) phaseValue * 2f else (phaseValue - 0.5f) * 2f
+    
+    // Calculate the shadow circle offset and radius for proper moon phases
+    // Shadow offset moves from left (waxing) or right (waning) toward center as moon gets fuller
+    val shadowOffsetX = if (isWaxing) {
+        // Waxing: shadow starts on LEFT (2*radius), moves RIGHT toward center
+        radius * 2f * (1f - normalizedPhase)
+    } else {
+        // Waning: shadow starts on RIGHT (-2*radius), moves LEFT toward center
+        -radius * 2f * (1f - normalizedPhase)
     }
 
-    // For crescent phases (darkness > 0.62): large shadow with small offset
-    // For gibbous phases (darkness < 0.38): small shadow with large offset
-    val offsetFactor = when {
-        darkness > 0.62f -> (1f - darkness) * 3.2f       // crescent: offset from 0.38 to 1.2
-        else -> (1f - darkness * 1.4f) * 1.3f              // gibbous: offset from 0.6 to 1.3
-    }
-    val shadowOffset = offsetFactor.coerceIn(0.05f, 1.25f) * radius * direction
-
+    // Draw the shadow circle with offset
+    // The shadow circle needs to be slightly larger to smoothly hide the lit portion
     drawCircle(
         color = shadowColor,
-        radius = radius * 1.03f,
-        center = Offset(cx + shadowOffset, cy)
+        radius = radius * 1.02f,
+        center = Offset(cx + shadowOffsetX, cy)
     )
 
-    // For gibbous phases, add a subtle earthshine glow on the dark portion
-    if (darkness < 0.38f && darkness > 0.05f) {
-        val earthshineX = cx - shadowOffset * 0.5f
-        val earthshineAlpha = (1f - darkness / 0.38f) * 0.06f
+    // Add earthshine (subtle glow on dark side) for intermediate phases
+    if (normalizedPhase in 0.1f..0.4f || normalizedPhase in 0.6f..0.9f) {
+        val earthshineAlpha = when {
+            normalizedPhase < 0.5f -> (0.4f - normalizedPhase) * 0.15f  // Waxing crescent to gibbous
+            else -> (normalizedPhase - 0.6f) * 0.15f                     // Waning gibbous to crescent
+        }
+        
+        val earthshineX = if (isWaxing) cx - radius * 0.4f else cx + radius * 0.4f
         drawCircle(
-            color = glowColor.copy(alpha = earthshineAlpha),
-            radius = radius * 0.7f,
+            color = glowColor.copy(alpha = earthshineAlpha.coerceIn(0f, 0.1f)),
+            radius = radius * 0.8f,
             center = Offset(earthshineX, cy)
         )
     }
