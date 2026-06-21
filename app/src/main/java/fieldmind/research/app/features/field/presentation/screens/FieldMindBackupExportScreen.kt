@@ -512,7 +512,9 @@ fun BackupAndRestoreScreen(
                                         // Record export history — track actual file after encryption
                                         val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
                                             File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
-                                        } else exportFile
+                                        } else {
+                                            exportFile
+                                        }
                                         exportHistoryStore.add(ExportRecord(
                                             format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
                                             fileName = _exportFile.name,
@@ -748,7 +750,7 @@ fun BackupAndRestoreScreen(
                                         }
                                         // Record backup history (inside IO block so vars are in scope)
                                         val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
-                                            File(backupDir, baseName + ".encrypted")
+                                            File(backupDir, "$baseName.encrypted")
                                         else
                                             fieldmindFile
                                         exportHistoryStore.add(ExportRecord(
@@ -2229,6 +2231,13 @@ private fun BackupTabContent(
                         ) {
                             LinearProgressIndicator(
                                 progress = { strength.score / 5f },
+                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
+                                color = Color(strength.color),
+                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                            )
+                            Text(strength.label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(strength.color))
+                        }
+                    }
                     OutlinedTextField(
                         value = passwordConfirm,
                         onValueChange = onPasswordConfirmChange,
@@ -2245,13 +2254,6 @@ private fun BackupTabContent(
                         },
                         isError = passwordConfirm.isNotEmpty() && !passwordsMatch
                     )
-                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
-                                color = Color(strength.color),
-                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                            )
-                            Text(strength.label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = Color(strength.color))
-                        }
-                    }
                     Spacer(Modifier.height(8.dp))
                     if (passwordConfirm.isNotBlank() || passwordsMatch) {
                         Row(
