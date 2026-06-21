@@ -22,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -456,8 +457,17 @@ private fun LiquidNavRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             visibleTabs.forEachIndexed { index, screen ->
-                val selected = isSelected(screen)
-                val tabWidth = remember { mutableFloatStateOf(0f) }
+                val selected = isSelected(screen)                            val tabWidth = remember { mutableFloatStateOf(0f) }
+                            var isPressed by remember { mutableStateOf(false) }
+
+                            val pressScale by animateFloatAsState(
+                                targetValue = if (isPressed && !selected) 0.92f else 1f,
+                                animationSpec = if (isPressed)
+                                    tween(durationMillis = FieldMindMotion.durationMicro, easing = FastOutSlowInEasing)
+                                else
+                                    FieldMindMotion.expressiveSpring,
+                                label = "tabScale_$index"
+                            )
 
                 Column(
                     modifier = Modifier
@@ -472,8 +482,15 @@ private fun LiquidNavRow(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = { onTabClick(screen) }
+                            onClick = {
+                                isPressed = true
+                                onTabClick(screen)
+                            }
                         )
+                        .graphicsLayer {
+                            scaleX = pressScale
+                            scaleY = pressScale
+                        }
                         .defaultMinSize(minWidth = 60.dp, minHeight = 56.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
@@ -503,6 +520,11 @@ private fun LiquidNavRow(
                             MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
                         maxLines = 1
                     )
+                }
+
+                // Reset press state when selection changes
+                LaunchedEffect(selected) {
+                    if (selected) isPressed = false
                 }
             }
         }
