@@ -514,7 +514,7 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                         if (noteEntity != null) {
                             repository.updateNote(
                                 noteEntity.copy(
-                                    attachmentUris = newLines.joinToString("\n"),
+                                    attachmentUris = newLines.joinToString("\\n"),
                                     id = newId
                                 )
                             )
@@ -549,13 +549,8 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                         val (permUri, _) = copyMediaToPermanentLocation(appContext, media, newId)
                         val sourceEntity = bundle.sources.firstOrNull { it.id == oldId }
                         if (sourceEntity != null) {
-                            repository.updateSourceFile(
-                                sourceEntity.copy(
-                                    fileUri = permUri,
-                                    id = newId
-                                ),
-                                fileUri = permUri
-                            )
+                            // updateSourceFile internally copies the entity with the new fileUri
+                            repository.updateSourceFile(sourceEntity, fileUri = permUri)
                         }
                     }
                 }
