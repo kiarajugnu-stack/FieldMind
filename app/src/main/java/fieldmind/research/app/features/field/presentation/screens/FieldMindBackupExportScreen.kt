@@ -984,7 +984,7 @@ fun BackupAndRestoreScreen(
     if (showConflictDialog) {
         AlertDialog(
             onDismissRequest = { showConflictDialog = false },
-            icon = { Icon(icon = MaterialSymbolIcon("priority_high"), contentDescription = null, size = 32.dp, tint = MaterialTheme.colorScheme.warning) },
+            icon = { Icon(icon = MaterialSymbolIcon("priority_high"), contentDescription = null, size = 32.dp, tint = MaterialTheme.colorScheme.tertiaryContainer) },
             title = { Text("Duplicate records detected") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -994,7 +994,7 @@ fun BackupAndRestoreScreen(
                     )
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.warningContainer.copy(alpha = 0.3f),
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
                         tonalElevation = 0.dp
                     ) {
                         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1788,9 +1788,7 @@ private fun ExportTabContent(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(
                 onClick = { 
-                    val estimate = estimateExportSize(selectedExportFormat, observations.size, notes.size, projects.size, sources.size)
-                    sharePreviewFileSize = estimate
-                    showSharePreview = true
+                    onExport(selectedExportFormat, "share", exportScope)
                 },
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(16.dp),
                 enabled = !isExporting && totalEntities > 0
