@@ -3368,6 +3368,18 @@ private fun RainScene(
         }
     }
 
+    // Physics-based particle system for enhanced rain dynamics
+    val particleSystem = remember(streakCount) {
+        PhysicsParticleSystem(
+            canvasWidth = 1f,
+            canvasHeight = 1f,
+            maxParticles = streakCount,
+            gravity = if (isHeavy) 0.25f else 0.15f,
+            windForce = if (isHeavy) 0.08f else 0.05f,
+            dragCoefficient = if (isHeavy) 0.015f else 0.02f
+        )
+    }
+
     // Rain color — blue-grey that blends with palette
     val rainColor = if (isDark) Color(0xFF8ABADA).copy(alpha = 0.55f * (0.6f + rainAlpha * 0.4f) * intensity)
         else Color(0xFF8ABADA).copy(alpha = 0.50f * (0.6f + rainAlpha * 0.4f) * intensity)
@@ -3425,31 +3437,48 @@ private fun RainScene(
             drawRect(color = Color(0xFF1A1A2E).copy(alpha = overlayAlpha * intensity), size = size)
         }
 
-        // ── 3D perspective rain streaks ──
+        // ── 3D perspective rain streaks with physics-based dynamics ──
         val effectiveWind = windGust * 0.15f
         val fallSpeed = size.height * 0.9f * rainSpeed
 
-        for (streak in streaks) {
-            // Each streak has a unique fall cycle based on its phase
-            val t = (rainProgress * 1.5f + streak.phase) % 1f
-            // Vertical position: fall from top to bottom, then wrap
-            val py = (t * fallSpeed) % (size.height + 20f) - 10f
-            // Horizontal position with wind drift
-            val windDrift = effectiveWind * streak.windAffinity * size.width * 0.15f
-            val px = (streak.x * size.width + windDrift + t * size.width * effectiveWind) % (size.width + 20f) - 10f
+        // Update physics system with current wind and intensity
+        particleSystem.setWindDirection(effectiveWind)
+        particleSystem.update(deltaTime = 0.016f, windGust = windGust * 0.3f)
 
-            // Perspective: streaks near bottom are slightly wider
+        // Emit new rain particles continuously
+        if (particleSystem.getParticleCount() < streakCount * 0.8f) {
+            particleSystem.emitAtTop(
+                count = 2,
+                vx = effectiveWind * 0.3f,
+                vy = rainSpeed * 3f,
+                size = 0.008f,
+                massRange = if (isHeavy) 1f to 1.4f else 0.8f to 1.2f
+            )
+        }
+
+        // Render physics-based rain particles
+        val activeParticles = particleSystem.getActiveParticles()
+        for (particle in activeParticles) {
+            val px = particle.x * size.width
+            val py = particle.y * size.height
+            val velocity = getVelocityMagnitude(particle.vx, particle.vy)
+
+            // Perspective: particles near bottom are slightly wider
             val depthFactor = 0.6f + (py / size.height).coerceIn(0f, 1f) * 0.4f
-            val streakLen = (6f + streak.length * 14f) * depthFactor
-            val streakWidth = 1.6f + depthFactor * 1.4f
 
-            // Alpha modulated by intensity
+            // Velocity-based streak length (faster particles = longer streaks)
+            val streakLen = (4f + velocity * 8f) * depthFactor
+            val streakWidth = 1.2f + depthFactor * 1.2f
+
+            // Alpha modulated by intensity and particle visibility
             val alpha = rainColor.alpha * (0.5f + intensity * 0.5f) * depthFactor
 
+            // Calculate streak direction from velocity
+            val angle = getVelocityAngle(particle.vx, particle.vy)
+            val dx = kotlin.math.cos(angle) * streakLen
+            val dy = kotlin.math.sin(angle) * streakLen
+
             // Draw rain streak
-            val angleRad = (10f + effectiveWind * 20f) * PI.toFloat() / 180f
-            val dx = sin(angleRad) * streakLen
-            val dy = cos(angleRad) * streakLen
             drawLine(
                 color = rainColor.copy(alpha = alpha),
                 start = Offset(px, py),
