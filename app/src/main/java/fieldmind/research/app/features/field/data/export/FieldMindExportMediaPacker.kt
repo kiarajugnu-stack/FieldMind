@@ -43,7 +43,8 @@ object FieldMindExportMediaPacker {
         val mediaCount: Int,
         val totalSizeBytes: Long,
         val checksum: String,
-        val manifest: String
+        val manifest: String,
+        val mediaManifestJson: String = ""
     )
 
     // ── Estimate size before building ──
@@ -188,6 +189,7 @@ object FieldMindExportMediaPacker {
 
         var checksum: String = ""
         var manifest: String = ""
+        var mediaManifestJson: String = ""
 
         ZipOutputStream(FileOutputStream(packageFile)).use { zos ->
 
@@ -230,8 +232,14 @@ object FieldMindExportMediaPacker {
                 }
             }
 
-            // ── 3. Build and write manifest.json ──
-            // Compute checksum of all content written so far (archive + media)
+            // ── 3. Build and write media-manifest.json ──
+            mediaManifestJson = buildMediaManifestJson(mediaEntries)
+            zos.putNextEntry(ZipEntry("media-manifest.json"))
+            val mediaManifestBytes = mediaManifestJson.toByteArray()
+            zos.write(mediaManifestBytes)
+            zos.closeEntry()
+
+            // ── 4. Build and write manifest.json ──
             checksum = digest.digest().joinToString("") { "%02x".format(it) }
             manifest = buildManifestJson(
                 jsonSize = jsonBytes.size.toLong(),
@@ -259,7 +267,8 @@ object FieldMindExportMediaPacker {
             mediaCount = mediaEntries.size,
             totalSizeBytes = finalSize,
             checksum = checksum,
-            manifest = manifest
+            manifest = manifest,
+            mediaManifestJson = mediaManifestJson
         )
     }
 
@@ -321,6 +330,20 @@ object FieldMindExportMediaPacker {
             .ifBlank { "attachment" }
     }
 
+    private fun buildMediaManifestJson(entries: List<MediaEntry>): String {
+        val arr = org.json.JSONArray()
+        entries.forEach { entry ->
+            arr.put(org.json.JSONObject().apply {
+                put("entityType", entry.entityType)
+                put("entityId", entry.entityId)
+                put("fileName", entry.fileName)
+                put("mimeType", entry.mimeType)
+                put("caption", entry.caption)
+            })
+        }
+        return arr.toString()
+    }
+
     private fun resolveFileSize(context: Context, uri: String): Long {
         return try {
             context.contentResolver.openFileDescriptor(Uri.parse(uri), "r")?.use { fd ->
@@ -359,6 +382,11 @@ object FieldMindExportMediaPacker {
             var archiveJson = ""
             var manifest = ""
 
+            // First pass: read archive.json, manifest.json, and all media file entries
+            // Also read media-manifest.json for metadata enrichment
+            val rawMediaEntries = mutableMapOf<String, File>()
+            var mediaManifestJsonStr = ""
+
             javaZip.use { zip ->
                 var entry = zip.nextEntry
                 while (entry != null) {
@@ -372,31 +400,58 @@ object FieldMindExportMediaPacker {
                         entryName == "manifest.json" -> {
                             manifest = String(content, Charsets.UTF_8)
                         }
+                        entryName == "media-manifest.json" -> {
+                            mediaManifestJsonStr = String(content, Charsets.UTF_8)
+                        }
                         entryName.startsWith("media/") -> {
                             // Extract media file to temp dir
                             val targetFile = File(tempDir, entryName)
                             targetFile.parentFile?.mkdirs()
                             targetFile.writeBytes(content)
-
-                            // Parse entity info from path: media/{type}s/{id}/{filename}
-                            val pathParts = entryName.split("/")
-                            if (pathParts.size >= 4) {
-                                val entityType = pathParts[1].removeSuffix("s") // observations -> observation
-                                val entityId = pathParts[2].toLongOrNull() ?: 0L
-                                val fileName = pathParts.drop(3).joinToString("/")
-                                mediaFiles.add(
-                                    MediaEntry(
-                                        entityType = entityType,
-                                        entityId = entityId,
-                                        uri = Uri.fromFile(targetFile).toString(),
-                                        fileName = fileName
-                                    )
-                                )
-                            }
+                            rawMediaEntries[entryName] = targetFile
                         }
                     }
                     zip.closeEntry()
                     entry = zip.nextEntry
+                }
+            }
+
+            // Build a lookup map from media-manifest.json if present
+            val manifestLookup = mutableMapOf<String, Pair<String, String>>() // entryPath -> (mimeType, caption)
+            if (mediaManifestJsonStr.isNotBlank()) {
+                try {
+                    val arr = org.json.JSONArray(mediaManifestJsonStr)
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.getJSONObject(i)
+                        val entityType = obj.optString("entityType", "")
+                        val entityId = obj.optLong("entityId", 0L)
+                        val fileName = obj.optString("fileName", "")
+                        val mimeType = obj.optString("mimeType", "application/octet-stream")
+                        val caption = obj.optString("caption", "")
+                        val entryPath = "media/${entityType}s/${entityId}/${fileName}"
+                        manifestLookup[entryPath] = mimeType to caption
+                    }
+                } catch (_: Exception) { }
+            }
+
+            // Build MediaEntry list from extracted files, enriched with manifest metadata
+            rawMediaEntries.forEach { (entryName, targetFile) ->
+                val pathParts = entryName.split("/")
+                if (pathParts.size >= 4) {
+                    val entityType = pathParts[1].removeSuffix("s") // observations -> observation
+                    val entityId = pathParts[2].toLongOrNull() ?: 0L
+                    val fileName = pathParts.drop(3).joinToString("/")
+                    val (mimeType, caption) = manifestLookup[entryName] ?: ("application/octet-stream" to "")
+                    mediaFiles.add(
+                        MediaEntry(
+                            entityType = entityType,
+                            entityId = entityId,
+                            uri = Uri.fromFile(targetFile).toString(),
+                            fileName = fileName,
+                            mimeType = mimeType,
+                            caption = caption
+                        )
+                    )
                 }
             }
 

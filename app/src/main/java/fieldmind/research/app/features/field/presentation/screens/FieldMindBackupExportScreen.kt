@@ -553,7 +553,10 @@ fun BackupAndRestoreScreen(
                                         importProgress = 0.6f
                                         importStepText = "Restoring records…"
                                         if (raw.isNotBlank()) {
-                                            viewModel.restoreArchiveJson(raw) { result ->
+                                            viewModel.restoreArchiveJson(
+                                                raw,
+                                                mediaFiles = importedPackage?.mediaFiles ?: emptyList()
+                                            ) { result ->
                                                 isImporting = false
                                                 result.onSuccess { restored ->
                                                     importResult = restored
