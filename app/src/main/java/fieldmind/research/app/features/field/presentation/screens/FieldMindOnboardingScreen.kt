@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,9 +16,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.PasswordVisualTransformation
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.foundation.text.PasswordVisualTransformation
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1330,7 +1331,7 @@ private data class ScreenToggle(val title: String, val description: String, val 
 
 // ══════════════════════════════════════════════════════════════════════
 //  Extended Tour — Screen 7: AI & Features
-// ══════════════════════════════════════════════════════════════════════
+// ══════════════════��═══════════════════════════════════════════════════
 
 @Composable
 private fun OnboardingAiFeaturesPage(
