@@ -2,6 +2,7 @@
 agp = "9.2.1"
 kotlin = "2.3.21"
 ksp = "2.3.6"
+backdrop = "0.0.1-alpha02"
 coreKtx = "1.18.0"
 core = "1.18.0"
 splashscreen = "1.2.0"
@@ -96,6 +97,9 @@ androidx-compose-material-icons-core = { group = "androidx.compose.material", na
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "uiUnit" }
 osmdroid-android = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
+
+# KMPLiquidGlass - Glassmorphism effects
+backdrop = { module = "io.github.kashif-mehmood-km:backdrop", version.ref = "backdrop" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
