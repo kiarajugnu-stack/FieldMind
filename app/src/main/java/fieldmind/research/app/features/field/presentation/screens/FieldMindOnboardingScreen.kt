@@ -569,7 +569,7 @@ private fun OnboardingInterestsPage(
                     InterestCategorySection(
                         title = "Zoology",
                         icon = FieldMindIcons.Nature,
-                        accent = Color(0xFF43A047),
+                        accent = FieldMindTheme.colors.observation,
                         options = ZoologySubfield.all().toList(),
                         selectedOptions = interests.zoology.toList(),
                         onToggle = { field ->
@@ -585,7 +585,7 @@ private fun OnboardingInterestsPage(
                     InterestCategorySection(
                         title = "Botany",
                         icon = FieldMindIcons.Nature,
-                        accent = Color(0xFF8BC34A),
+                        accent = FieldMindTheme.colors.data,
                         options = BotanySubfield.all().toList(),
                         selectedOptions = interests.botany.toList(),
                         onToggle = { field ->
@@ -601,9 +601,9 @@ private fun OnboardingInterestsPage(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Other fields", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         val otherFields = listOf(
-                            Triple("Ecology & Environment", FieldMindIcons.Weather, Color(0xFFFB8C00)),
-                            Triple("Astronomy", FieldMindIcons.MoonFull, Color(0xFF7B1FA2)),
-                            Triple("Geology", FieldMindIcons.Rock, Color(0xFF6D4C41))
+                            Triple("Ecology & Environment", FieldMindIcons.Weather, FieldMindTheme.colors.categorical[3]),
+                            Triple("Astronomy", FieldMindIcons.MoonFull, FieldMindTheme.colors.categorical[4]),
+                            Triple("Geology", FieldMindIcons.Rock, FieldMindTheme.colors.categorical[9])
                         )
                         otherFields.forEach { (label, icon, accent) ->
                             val isSelected = when (label) {
@@ -793,9 +793,10 @@ private fun OnboardingPermissionsPage(
                 }
 
                 val permissions = listOf(
-                    PermissionItem("Camera", "Take photos of your observations for visual evidence.", FieldMindIcons.Camera, Color(0xFF5C6BC0), cameraGranted, onRequestCamera),
-                    PermissionItem("Location", "Auto-tag GPS coordinates and fetch live weather for your field site.", FieldMindIcons.Location, Color(0xFF26A69A), locationGranted, onRequestLocation),
-                    PermissionItem("Microphone", "Record audio field notes — ideal for hands-free observation logging.", FieldMindIcons.Mic, Color(0xFFEF5350), audioGranted, onRequestAudio),                        PermissionItem("Notifications", "Optional daily reminders, streak updates, and backup notifications.", FieldMindIcons.Notifications, Color(0xFFFFA726), notificationGranted, onRequestNotification)
+                    PermissionItem("Camera", "Take photos of your observations for visual evidence.", FieldMindIcons.Camera, FieldMindTheme.colors.observation, cameraGranted, onRequestCamera),
+                    PermissionItem("Location", "Auto-tag GPS coordinates and fetch live weather for your field site.", FieldMindIcons.Location, MaterialTheme.colorScheme.primary, locationGranted, onRequestLocation),
+                    PermissionItem("Microphone", "Record audio field notes — ideal for hands-free observation logging.", FieldMindIcons.Mic, FieldMindTheme.colors.question, audioGranted, onRequestAudio),
+                    PermissionItem("Notifications", "Optional daily reminders, streak updates, and backup notifications.", FieldMindIcons.Notifications, FieldMindTheme.colors.warning, notificationGranted, onRequestNotification)
                 )
 
                 permissions.forEach { perm ->
@@ -1223,7 +1224,7 @@ private fun ReviewRow(label: String, value: String, actionLabel: String, onClick
 
 // ══════════════════════════════════════════════════════════════════════
 //  Extended Tour — Screen 6: Screen Visibility
-// ══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════���══════════════════════════════════════
 
 @Composable
 private fun OnboardingScreenVisibilityPage(

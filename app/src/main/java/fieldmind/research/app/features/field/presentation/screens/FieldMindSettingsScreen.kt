@@ -91,6 +91,7 @@ fun FieldMindSettingsScreen(
     onOpenScreenVisibility: (() -> Unit)? = null
 ) {
     BackHandler(enabled = true) { onBack() }
+    var searchQuery by remember { mutableStateOf("") }
     LazyColumn(
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 40.dp),
@@ -102,9 +103,32 @@ fun FieldMindSettingsScreen(
                 subtitle = "Offline-first setup, profile, capture, local AI, backup, and privacy.",
                 icon = FieldMindIcons.Settings,
                 trailing = {
-                    BackButton(onClick = onBack)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { searchQuery = if (searchQuery.isEmpty()) "search" else "" }, modifier = Modifier.size(40.dp)) {
+                            Icon(FieldMindIcons.Search, contentDescription = "Search settings", size = 20.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        BackButton(onClick = onBack)
+                    }
                 }
             )
+        }
+
+        if (searchQuery.isNotEmpty()) {
+            item {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Search settings...") },
+                    leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
+                    trailingIcon = { if (searchQuery.isNotBlank()) IconButton(onClick = { searchQuery = "" }) { Icon(MaterialSymbolIcon("close"), contentDescription = "Clear", size = 18.dp) } },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    )
+                )
+            }
         }
 
         item {
@@ -133,7 +157,7 @@ fun FieldMindSettingsScreen(
 
         // ╔════════════════════════════════════════════╗
         // ║  DATA ENTRY                                ║
-        // ╚════════════════════════════════════════════╝
+        // ╚════════════════════════════��═══════════════╝
         item { SectionHeader("Data entry", "Capture defaults, weather, and species ID") }
         item { SettingsNavCard("Capture defaults", "Categories, confidence, goal, location", FieldMindIcons.Capture, FieldMindTheme.colors.observation) { onOpenCapture?.invoke() } }
         item { SettingsNavCard("Weather", "Auto-weather, temperature unit, refresh, widget display", FieldMindIcons.Weather, FieldMindTheme.colors.info) { onOpenWeather?.invoke() } }
@@ -1933,7 +1957,7 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         }
     }
 
-    // ── Clear preferences confirmation dialog ──
+    // ���─ Clear preferences confirmation dialog ──
     if (showClearConfirmation) {
         AlertDialog(
             onDismissRequest = { showClearConfirmation = false },

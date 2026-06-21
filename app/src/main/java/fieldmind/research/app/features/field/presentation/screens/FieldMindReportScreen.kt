@@ -458,8 +458,17 @@ private fun StatItem(value: String, label: String, color: Color) {
     }
 }
 
+@Composable
 private fun categoryColor(category: String): Color = when (category.lowercase()) {
-    "bird" -> Color(0xFF2E7D32); "plant" -> Color(0xFF1B5E20); "insect" -> Color(0xFFE65100); "mammal" -> Color(0xFF6A1B9A)
-    "weather" -> Color(0xFF1565C0); "geology" -> Color(0xFF795548); "water" -> Color(0xFF00838F); "reading insight" -> Color(0xFFF57F17)
-    "fungi" -> Color(0xFF4E342E); "reptile" -> Color(0xFF558B2F); else -> Color(0xFF546E7A)
+    "bird" -> FieldMindTheme.colors.observation
+    "plant" -> FieldMindTheme.colors.data
+    "insect" -> FieldMindTheme.colors.categorical[7]
+    "mammal" -> FieldMindTheme.colors.categorical[4]
+    "weather" -> FieldMindTheme.colors.question
+    "geology" -> FieldMindTheme.colors.categorical[9]
+    "water" -> FieldMindTheme.colors.categorical[4]
+    "reading insight" -> FieldMindTheme.colors.warning
+    "fungi" -> FieldMindTheme.colors.categorical[5]
+    "reptile" -> FieldMindTheme.colors.observation
+    else -> MaterialTheme.colorScheme.onSurfaceVariant
 }

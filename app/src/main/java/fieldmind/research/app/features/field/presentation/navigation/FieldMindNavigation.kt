@@ -381,7 +381,11 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
             // IMPORTANT: .haze() is ONLY on the NavHost content, NOT the outer
             // Box — this ensures the pill and its shadow/glow layers are never
             // captured into the blur source, preventing visible layer artifacts.
-            Box(Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
                 // Content — fills full screen edge-to-edge (blur source ONLY)
                 FieldMindNavHost(
                     navController = navController,
@@ -398,6 +402,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             .fillMaxWidth()
                             .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp)
+                            .wrapContentHeight(align = Alignment.Bottom)
                     ) {
                         // Glassmorphic nav pill — real backdrop blur via Haze with
                         // GPU liquid-glass displacement, specular highlights, and
@@ -406,7 +411,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
                             shape = RoundedCornerShape(34.dp),
                             color = Color.Transparent,
                             tonalElevation = 0.dp,
-                            shadowElevation = 0.dp,
+                            shadowElevation = 8.dp,
                             border = androidx.compose.foundation.BorderStroke(
                                 width = 0.6.dp,
                                 color = if (isSystemInDarkTheme())

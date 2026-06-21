@@ -86,14 +86,12 @@ data class FormatOption(
 )
 
 private val exportFormats = listOf(
-    FormatOption("JSON", "Structured archive for migration", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF7B1FA2), "data"),
-    FormatOption("CSV", "Tabular data for spreadsheets", FieldMindIcons.Data, androidx.compose.ui.graphics.Color(0xFF1565C0), "data"),
-    FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF558B2F), "document"),
-    FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFFE65100), "document"),
-    FormatOption("PDF", "Portable document format", FieldMindIcons.Report, androidx.compose.ui.graphics.Color(0xFF6A1B9A), "document"),
-    FormatOption("PNG", "Dashboard snapshot image", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF4CAF50), "image"),
-    FormatOption("SVG", "Scalable vector graphic", FieldMindIcons.Graph, androidx.compose.ui.graphics.Color(0xFF00838F), "image"),
-    FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1B5E20), "package")
+    FormatOption("JSON", "Structured archive with media", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1F6B4C), "data"),
+    FormatOption("CSV", "Tabular data for spreadsheets", FieldMindIcons.Data, androidx.compose.ui.graphics.Color(0xFF006D7A), "data"),
+    FormatOption("Markdown", "Readable text for docs & notes", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF2E7D32), "document"),
+    FormatOption("HTML", "Print-ready web layout", FieldMindIcons.Article, androidx.compose.ui.graphics.Color(0xFF1565C0), "document"),
+    FormatOption("PDF", "Portable document format", FieldMindIcons.Report, androidx.compose.ui.graphics.Color(0xFF1F6B4C), "document"),
+    FormatOption(".fieldmind", "Package with images & encryption", FieldMindIcons.Archive, androidx.compose.ui.graphics.Color(0xFF1F6B4C), "package")
 )
 
 data class ExportRecord(
@@ -418,13 +416,58 @@ fun BackupAndRestoreScreen(
                                                 "Markdown" -> exportFile.writeText(
                                                     observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) }
                                                 )
-                                                "JSON" -> exportFile.writeText(json)
-                                                "PDF" -> exportFile.writeBytes(
-                                                    FieldMindExport.simplePdfBytes(
-                                                        "FieldMind Export",
-                                                        observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
-                                                    )
-                                                )
+                                                "JSON" -> {
+                                                    // JSON with embedded media
+                                                    if (!exportExcludeMedia) {
+                                                        val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                            FieldMindExport.ExportMediaBundle.collect(
+                                                                context = context,
+                                                                observations = exportObs,
+                                                                notes = exportNotes,
+                                                                projects = projects,
+                                                                sources = sources
+                                                            )
+                                                        }
+                                                        // TODO: Enhance JSON with media if needed
+                                                    }
+                                                    exportFile.writeText(json)
+                                                }
+                                                "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
+                                                "HTML" -> {
+                                                    if (!exportExcludeMedia) {
+                                                        val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                            FieldMindExport.ExportMediaBundle.collect(
+                                                                context = context,
+                                                                observations = exportObs,
+                                                                notes = exportNotes,
+                                                                projects = projects,
+                                                                sources = sources
+                                                            )
+                                                        }
+                                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes, media = mediaBundle))
+                                                    } else {
+                                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes))
+                                                    }
+                                                }
+                                                "PDF" -> {
+                                                    val bodyText = observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
+                                                    if (!exportExcludeMedia) {
+                                                        val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                                            FieldMindExport.ExportMediaBundle.collect(
+                                                                context = context,
+                                                                observations = exportObs,
+                                                                notes = exportNotes,
+                                                                projects = projects,
+                                                                sources = sources
+                                                            )
+                                                        }
+                                                        val imgBytesArray = mediaBundle.observationImages.values.firstOrNull()
+                                                            ?.firstOrNull()?.second?.let { decodeBase64FromDataUri(it) }
+                                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText, embeddedImageBytes = imgBytesArray))
+                                                    } else {
+                                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText))
+                                                    }
+                                                }
                                                 ".fieldmind", ".zip" -> {
                                                     val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
                                                     if (!exportExcludeMedia) {
@@ -476,6 +519,7 @@ fun BackupAndRestoreScreen(
                                                     "JSON" -> "application/json"
                                                     "CSV" -> "text/csv"
                                                     "Markdown" -> "text/markdown"
+                                                    "HTML" -> "text/html"
                                                     else -> "application/octet-stream"
                                                 }
                                                 try {
@@ -1279,7 +1323,7 @@ private fun HeroStatusCard(
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ══���═══════════════════════════════════════════════════════════════════
 //  Tab Pill Selector
 // ══════════════════════════════════════════════════════════════════════
 
@@ -1619,6 +1663,13 @@ private fun ExportTabContent(
                 enabled = !isExporting && totalEntities > 0 && destinationUri != null
             ) { Icon(FieldMindIcons.Save, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Save") }
         }
+
+        // ── Import hint button ──
+        OutlinedButton(
+            onClick = { onSwitchToImport?.invoke() },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) { Icon(FieldMindIcons.Download, null, size = 18.dp); Spacer(Modifier.width(6.dp)); Text("Import backup") }
     }
 }
 
@@ -2185,7 +2236,7 @@ private fun BackupTabContent(
             }
         }
 
-        // ── Backup options ──
+        // ── Backup options ─��
         Card(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
