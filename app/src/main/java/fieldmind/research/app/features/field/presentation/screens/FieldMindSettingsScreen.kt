@@ -2099,8 +2099,99 @@ private fun SettingsTileGroup(title: String, content: @Composable ColumnScope.()
 // ── Species Tools (merged page) ──
 @Composable
 fun SpeciesToolsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
-    // Combined page: identification settings then links to regional packs.
-    SpeciesIdentificationSettingsPage(viewModel = viewModel, onBack = onBack)
+    val context = LocalContext.current
+    val settings = viewModel.fieldSettings
+    val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
+    val database = remember { SpeciesDatabase(context) }
+    val apiKey by settings.speciesIdApiKey.collectAsState()
+    val offlineFirst by settings.speciesIdOfflineFirst.collectAsState()
+    val modelBaseUrl by settings.speciesModelBaseUrl.collectAsState()
+    val perenualKey by settings.perenualApiKey.collectAsState()
+    var packs by remember { mutableStateOf(database.getRegionalPacks()) }
+    var downloadingId by remember { mutableStateOf<String?>(null) }
+    var downloadProgress by remember { mutableFloatStateOf(0f) }
+    fun refreshPacks() { packs = database.getRegionalPacks() }
+    LaunchedEffect(Unit) { database.setProgressListener { _, d, t -> if (t > 0) downloadProgress = (d.toFloat() / t).coerceIn(0f, 1f) } }
+    DisposableEffect(Unit) { onDispose { database.setProgressListener(null) } }
+    LaunchedEffect(packs) { refreshPacks() }
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item { StandardScreenHeader(title = "Species tools", subtitle = "Identification settings, API keys, and regional model packs", icon = FieldMindIcons.Nature, trailing = { BackButton(onClick = onBack) }) }
+            item {
+                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Nature, null, tint = FieldMindTheme.colors.observation, size = 18.dp)
+                            }
+                            Text("How identification works", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        }
+                        Text("FieldMind uses a pure-Kotlin image analysis engine - color histograms, edge detection, texture analysis, and perceptual hashing - to identify species from photos. No AI, no internet, no server needed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Predictions improve as you confirm IDs. Download regional packs below to expand the built-in ~500 species database.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            item { SectionHeader("Identification", "Offline analysis and cloud API keys") }
+            item { SettingsGroupCard { ToggleItem("Offline-first mode (recommended)", "Use the on-device image analyzer. No internet required. Turn off to allow cloud reference lookups if you add an API key.", offlineFirst, settings::setSpeciesIdOfflineFirst, FieldMindIcons.Nature) } }
+            if (!offlineFirst) {
+                item {
+                    SettingsGroupCard {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Perenual API (plant and botany data)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                            OutlinedTextField(value = perenualKey, onValueChange = settings::setPerenualApiKey, label = { Text("Perenual API key") }, placeholder = { Text("Paste your Perenual API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (perenualKey.isBlank()) "No key saved. Sign up free at perenual.com" else "Perenual key saved locally.") })
+                        }
+                    }
+                }
+                item {
+                    SettingsGroupCard {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Other species API (optional)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            OutlinedTextField(value = apiKey, onValueChange = settings::setSpeciesIdApiKey, label = { Text("Custom API key (optional)") }, placeholder = { Text("Leave blank if using iNaturalist") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (apiKey.isBlank()) "No key - iNaturalist API is free" else "Custom key saved locally.") })
+                        }
+                    }
+                }
+            }
+            item { SectionHeader("Regional packs", "Download and manage species identification packs") }
+            item {
+                SettingsGroupCard {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(value = modelBaseUrl, onValueChange = settings::setSpeciesModelBaseUrl, label = { Text("Pack base URL (advanced)") }, placeholder = { Text("https://...") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (modelBaseUrl.isBlank()) "Default URL" else "Using: $modelBaseUrl") })
+                    }
+                }
+            }
+            items(packs, key = { it.regionId }) { pack ->
+                val isDownloaded = pack.isDownloaded
+                val isDownloading = downloadingId == pack.regionId
+                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = if (isDownloaded) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) { Icon(if (isDownloaded) FieldMindIcons.Check else FieldMindIcons.Download, null, tint = FieldMindTheme.colors.observation, size = 24.dp) }
+                            Column(Modifier.weight(1f)) {
+                                Text(pack.regionName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(pack.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                        if (isDownloading) {
+                            Column { LinearProgressIndicator(progress = { downloadProgress }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)), color = FieldMindTheme.colors.observation)
+                                Text("${(downloadProgress * 100).toInt()}% - Downloading...", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            if (isDownloaded) {
+                                OutlinedButton(onClick = { haptics.light(); scope.launch { database.deletePack(pack.regionId); refreshPacks() } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                                    Icon(FieldMindIcons.Delete, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Delete")
+                                }
+                            } else {
+                                Button(onClick = { haptics.confirm(); downloadingId = pack.regionId; downloadProgress = 0f; scope.launch { runCatching { database.downloadPack(pack.regionId) }; downloadingId = null; refreshPacks() } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                                    Icon(FieldMindIcons.Download, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Download")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 
