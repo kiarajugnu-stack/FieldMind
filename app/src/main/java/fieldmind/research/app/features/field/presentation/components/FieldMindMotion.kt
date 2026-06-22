@@ -5,20 +5,42 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.rememberAnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.debugInspectorInfo
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 /**
  * Material expressive motion specifications for FieldMind.
@@ -148,7 +170,7 @@ object FieldMindMotion {
 
     // ── Shape Morphing ──
 
-    /** Spring for morphing between shapes (e.g., pill ↔ square). */
+    /** Spring for morphing between shapes (e.g., pill → square). */
     val morphSpring = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
         stiffness = Spring.StiffnessMediumLow
@@ -339,4 +361,131 @@ fun Modifier.pressScale(
  */
 fun Modifier.pressCardScale(): Modifier = composed {
     this.pressScale(scaleDown = 0.97f)
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  Swipe-back Gesture Host
+// ──────────────────────────────────────────────────────────────────────
+
+/** Anchor values for the swipe-back gesture. */
+private enum class SwipeBackValue { Hidden, Visible }
+
+/**
+ * Wraps content with a horizontal swipe-back gesture. Users can swipe
+ * from the left edge to navigate back. The content follows the finger
+ * with spring physics, snapping back if released before the threshold or
+ * calling [onBack] if released past the threshold.
+ *
+ * Place this around any screen composable that should support swipe-back
+ * navigation (settings, tools, detail, creation — not bottom-nav tabs).
+ */
+@Composable
+fun SwipeBackHost(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val reduceMotion = FieldMindMotion.isReduceMotion()
+
+    val state = rememberAnchoredDraggableState(
+        initialValue = SwipeBackValue.Hidden,
+        animationSpec = FieldMindMotion.swipeBackSpring,
+        positionalThreshold = { distance -> distance * 0.30f },
+        velocityThreshold = { 500f },
+        confirmValueChange = { true }
+    )
+
+    var contentWidth by remember { mutableFloatStateOf(0f) }
+
+    // Update anchors when content width is measured
+    LaunchedEffect(contentWidth) {
+        if (contentWidth > 0f) {
+            state.updateAnchors(DraggableAnchors {
+                SwipeBackValue.Hidden at 0f
+                SwipeBackValue.Visible at contentWidth
+            })
+        }
+    }
+
+    // Trigger back navigation when swipe completes
+    LaunchedEffect(state.currentValue) {
+        if (state.currentValue == SwipeBackValue.Visible) {
+            onBack()
+            delay(100)
+            state.snapTo(SwipeBackValue.Hidden)
+        }
+    }
+
+    // Scrim alpha — darkens the content behind as swipe progresses
+    val scrimAlpha by animateFloatAsState(
+        targetValue = if (contentWidth > 0f && state.offset > 0f) {
+            (state.offset / contentWidth).coerceIn(0f, 0.35f)
+        } else 0f,
+        animationSpec = tween(150),
+        label = "swipeScrim"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coordinates ->
+                contentWidth = coordinates.size.width.toFloat()
+            }
+    ) {
+        // Scrim overlay
+        if (scrimAlpha > 0.01f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = scrimAlpha))
+            )
+        }
+
+        // Swipeable content with anchored drag
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset {
+                    val offset = state.offset
+                    IntOffset(
+                        x = if (offset.isNaN() || offset < 0f) 0 else offset.roundToInt(),
+                        y = 0
+                    )
+                }
+                .anchoredDraggable(
+                    state = state,
+                    orientation = Orientation.Horizontal,
+                    enabled = !reduceMotion
+                ),
+            contentAlignment = Alignment.TopStart
+        ) {
+            content()
+
+            // Back indicator — appears on left edge during drag
+            val indicatorAlpha by animateFloatAsState(
+                targetValue = if (state.offset > contentWidth * 0.05f) 1f else 0f,
+                animationSpec = tween(200),
+                label = "backIndicator"
+            )
+            if (indicatorAlpha > 0.01f) {
+                Box(
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .align(Alignment.CenterStart)
+                        .size(40.dp)
+                        .graphicsLayer { alpha = indicatorAlpha }
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        FieldMindIcons.Back,
+                        contentDescription = "Swipe back",
+                        size = 22.dp,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
 }
