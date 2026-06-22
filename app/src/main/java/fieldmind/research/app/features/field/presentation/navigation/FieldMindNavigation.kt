@@ -805,7 +805,7 @@ composable(FieldMindScreen.Reports.route) { FieldMindReportScreen(viewModel = vi
             SpeciesDetailScreen(speciesId = speciesId, onBack = { navController.popBackStack() })
         }
         composable(FieldMindScreen.SettingsSpeciesPacks.route) { SpeciesPackSettingsPage(onBack = { navController.popBackStack() }) }
-        composable(FieldMindScreen.SettingsSpeciesId.route) { SpeciesIdentificationSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
+        composable(FieldMindScreen.SettingsSpeciesId.route) { SpeciesToolsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsAutoGen.route) { AutoGenerationSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.CounterTool.route) { CounterToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.MeasurementTool.route) { MeasurementToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }

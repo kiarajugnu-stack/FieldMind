@@ -133,77 +133,55 @@ fun FieldMindSettingsScreen(
             }
         }
 
-        item {
-            SettingsTileGroup("Quick settings") {
-                if (viewModel != null) {
-                    val themeMode by viewModel.fieldSettings.themeMode.collectAsState()
-                    val dynamicColor by viewModel.fieldSettings.dynamicColorEnabled.collectAsState()
-                    ToggleItem("Material You colors", "Use system wallpaper colors that auto-adapt.", dynamicColor, viewModel.fieldSettings::setDynamicColorEnabled, FieldMindIcons.Palette)
-                    ThemeToggle(themeMode, viewModel.fieldSettings::setThemeMode)
-                }
-            }
-        }
+
 
         // ╔════════════════════════════════════════════╗
         // ║  PROFILE                                   ║
         // ╚════════════════════════════════════════════╝
         item { SectionHeader("Profile", "Your research identity and preferences") }
         item { SettingsNavCard("Research profile", "Name, role, and research focus", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenProfile?.invoke() } }
+        item { SettingsNavCard("Screen visibility", "Show/hide navigation tabs and features", FieldMindIcons.Visibility, FieldMindTheme.colors.info) { onOpenScreenVisibility?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
-        // ║  DISPLAY & THEME                           ║
+        // ║  DISPLAY & FORMAT                          ║
         // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Display & theme", "Appearance, units, and format") }
-        item { SettingsNavCard("Appearance", "Theme, dynamic color, and layout", FieldMindIcons.Palette, FieldMindTheme.colors.info) { onOpenAppearance?.invoke() } }
+        item { SectionHeader("Display & format", "Appearance, units, and display preferences") }
+        item { SettingsNavCard("Appearance", "Theme, dynamic color, map, and layout", FieldMindIcons.Palette, FieldMindTheme.colors.info) { onOpenAppearance?.invoke() } }
         item { SettingsNavCard("Units & format", "Temperature, distance, date/time display", FieldMindIcons.Settings, FieldMindTheme.colors.info) { onOpenUnits?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
         // ║  DATA ENTRY                                ║
         // ╚════════════════════════════��═══════════════╝
-        item { SectionHeader("Data entry", "Capture defaults, weather, and species ID") }
+        item { SectionHeader("Data & capture", "Capture defaults, weather, and species tools") }
         item { SettingsNavCard("Capture defaults", "Categories, confidence, goal, location", FieldMindIcons.Capture, FieldMindTheme.colors.observation) { onOpenCapture?.invoke() } }
         item { SettingsNavCard("Weather", "Auto-weather, temperature unit, refresh, widget display", FieldMindIcons.Weather, FieldMindTheme.colors.info) { onOpenWeather?.invoke() } }
-        item { SettingsNavCard("Species identification", "Image analysis, API key, and model URL", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenSpeciesId?.invoke() } }
-        item { SettingsNavCard("Species packs", "Download regional model packs for species ID", FieldMindIcons.Download, FieldMindTheme.colors.observation) { onOpenSpeciesPacks?.invoke() } }
+        item { SettingsNavCard("Species tools", "Image ID, API keys, model packs, and regional catalogs", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenSpeciesId?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
         // ║  TOOLS                                     ║
         // ╚══���═════════════════════════════════════════╝
-        item { SectionHeader("Tools", "Maps, navigation, and automation") }
-        item { SettingsNavCard("Map settings", "Map type, default zoom, location marker", FieldMindIcons.Map, FieldMindTheme.colors.data) { onOpenMap?.invoke() } }
-        item { SettingsNavCard("Screen visibility", "Show/hide navigation tabs", FieldMindIcons.Visibility, FieldMindTheme.colors.info) { onOpenScreenVisibility?.invoke() } }
-        item { SettingsNavCard("Auto generation", "Automatic flashcards & questions from observations", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAutoGen?.invoke() } }
+
 
         // ╔════════════════════════════════════════════╗
         // ║  AI ASSISTANCE                             ║
         // ╚════════════════════════════════════════════╝
-        item { SectionHeader("AI assistance", "On-device and cloud AI settings") }
+        item { SectionHeader("AI & intelligence", "AI assistant, local model, and auto-generation") }
         item { SettingsNavCard("AI assistant", "Gemini, OpenAI, provider settings", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAi?.invoke() } }
-        item { SettingsNavCard("Local model", "On-device study generation", FieldMindIcons.Download, FieldMindTheme.colors.hypothesis) { onOpenLocalModel?.invoke() } }
+        item { SettingsNavCard("Local model", "On-device study generation profiles", FieldMindIcons.Download, FieldMindTheme.colors.hypothesis) { onOpenLocalModel?.invoke() } }
+        item { SettingsNavCard("Auto generation", "Automatic flashcards & questions from observations", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAutoGen?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
-        // ║  DATA & STORAGE                            ║
+        // ║  STORAGE & SECURITY                        ║
         // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Data & storage", "Backup, export, and database health") }
-        item { SettingsNavCard("Backup & Restore", "Export, import, backup with folder picker, encryption", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
-        item { SettingsNavCard("Data integrity", "Orphaned records, database health", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis) { onOpenDataIntegrity?.invoke() } }
+        item { SectionHeader("Storage & security", "Backup, data health, and privacy") }
+        item { SettingsNavCard("Backup & Restore", "Export, import, auto-backup, folder picker, encryption", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
+        item { SettingsNavCard("Security", "App lock, PIN, biometrics, privacy typing, screen protection", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
+        item { SettingsNavCard("Data integrity", "Orphaned records, database health checks", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis) { onOpenDataIntegrity?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
-        // ║  SECURITY & PRIVACY                        ║
+        // ║  ABOUT & ADVANCED                          ║
         // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Security & privacy", "Lock, PIN, and privacy controls") }
-        item { SettingsNavCard("Security", "App lock, PIN lock, privacy typing, auto-lock", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
-
-        // ╔════════════════════════════════════════════╗
-        // ║  ADVANCED                                  ║
-        // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Advanced", "Developer tools and debugging") }
-        item { SettingsNavCard("Developer", "Debug logging, dev tools, version info", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenDeveloper?.invoke() } }
-
-        // ╔════════════════════════════════════════════╗
-        // ║  INFO                                      ║
-        // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Info", "Release notes and app info") }
+        item { SectionHeader("About & advanced", "Developer tools, changelog, and app info") }
         item { SettingsNavCard("What’s new", "FieldMind redesign notes and migration changes", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
 
@@ -279,8 +257,12 @@ fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val settings = viewModel.fieldSettings
     val themeMode by settings.themeMode.collectAsState()
     val dynamicColor by settings.dynamicColorEnabled.collectAsState()
+    val mapType by settings.mapType.collectAsState()
+    val mapShowLocation by settings.mapShowLocation.collectAsState()
 
     SettingsSubPage("Appearance", icon = FieldMindIcons.Palette, onBack = onBack) {
+        // ── Theme section ──
+        item { SectionHeader("Theme", "Control the look and feel of FieldMind") }
         item {
             SettingsGroupCard {
                 ThemeToggle(themeMode, settings::setThemeMode)
@@ -288,11 +270,20 @@ fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 ToggleItem("Material You dynamic color", "Use system wallpaper colors that auto-adapt to light/dark. Off keeps the FieldMind brand palette.", dynamicColor, settings::setDynamicColorEnabled, FieldMindIcons.Palette)
             }
         }
+        // ── Map settings ──
+        item { SectionHeader("Map", "Map type and location display preferences") }
         item {
             SettingsGroupCard {
+                ChoiceItemForm("Default map type", listOf("Standard", "Satellite", "Terrain"), mapType, FieldMindIcons.Map, settings::setMapType)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Show my location", "Display your current position as a marker on the map.", mapShowLocation, settings::setMapShowLocation, FieldMindIcons.Location)
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Theme preview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-                    Text("Changes apply immediately. The FieldMind brand palette uses forest green and warm ochre tones. When dynamic color is enabled, system wallpaper colors override the brand palette.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Map data", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("FieldMind uses OpenStreetMap tiles for map rendering. No map data is sent to any server beyond the tile request.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -2105,6 +2096,13 @@ private fun SettingsTileGroup(title: String, content: @Composable ColumnScope.()
 // ══════════════════════════════════════════════════════════════════════
 //  Species Pack Management Page
 // ════════════════════════════════════════��═════════════════════════════
+// ── Species Tools (merged page) ──
+@Composable
+fun SpeciesToolsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    // Combined page: identification settings then links to regional packs.
+    SpeciesIdentificationSettingsPage(viewModel = viewModel, onBack = onBack)
+}
+
 
 @Composable
 fun SpeciesPackSettingsPage(onBack: () -> Unit) {
