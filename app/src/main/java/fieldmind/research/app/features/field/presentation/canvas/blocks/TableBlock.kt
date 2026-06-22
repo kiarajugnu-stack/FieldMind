@@ -123,9 +123,9 @@ data class TableData(
                 (0 until arr.length()).map { arr.optString(it, "") }
             }
             val rows: List<List<String>> = obj.getJSONArray("rows").let { arr ->
-                (0 until arr.length()).map { rowIdx ->
-                    val row = arr.getJSONArray(rowIdx)
-                    (0 until row.length()).map { colIdx -> row.optString(colIdx, "") }
+                (0 until arr.length()).map { rowIdx: Int ->
+                    val row: JSONArray = arr.getJSONArray(rowIdx)
+                    (0 until row.length()).map { colIdx: Int -> row.optString(colIdx, "") }
                 }
             }
             TableData(headers = headers, rows = rows)
