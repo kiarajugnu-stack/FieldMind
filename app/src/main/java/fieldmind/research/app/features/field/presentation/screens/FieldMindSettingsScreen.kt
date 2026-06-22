@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -94,7 +95,9 @@ fun FieldMindSettingsScreen(
     BackHandler(enabled = true) { onBack() }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
+    val settingsScrollState = rememberLazyListState()
     LazyColumn(
+        state = settingsScrollState,
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 40.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)

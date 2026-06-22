@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -250,8 +251,9 @@ fun HomeScreen(
         }
     }
 
+    val homeScrollState = rememberLazyListState()
     Box(Modifier.fillMaxSize().statusBarsPadding()) {
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        LazyColumn(state = homeScrollState, Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             // ── Hero Section ──
             item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }) }
 
