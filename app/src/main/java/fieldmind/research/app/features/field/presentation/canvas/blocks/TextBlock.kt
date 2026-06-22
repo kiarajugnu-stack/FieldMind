@@ -191,7 +191,7 @@ private class MarkdownVisualTransformation : VisualTransformation {
         applyPairStyle(raw, "`", "`",
             SpanStyle(
                 fontFamily = FontFamily.Monospace,
-                background = Color(0x22000000)
+                background = Color.Black.copy(alpha = 0.13f)
             )) { styles.add(it) }
 
         // # Headings — style the content after the prefix
@@ -210,7 +210,7 @@ private class MarkdownVisualTransformation : VisualTransformation {
         }
 
         return androidx.compose.ui.text.TransformedText(result,
-            androidx.compose.ui.text.input.OffsetMapping.Identity)
+            OffsetMapping.Identity)
     }
 
     /** Find all `open...close` pairs and style the content between them. */
