@@ -6,8 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import fieldmind.research.app.features.field.data.canvas.CanvasBlockDao
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
+import fieldmind.research.app.features.field.data.canvas.DrawingDao
 import fieldmind.research.app.features.field.data.canvas.DrawingEntity
+import fieldmind.research.app.features.field.data.canvas.FigureMetaDao
 import fieldmind.research.app.features.field.data.canvas.FigureMetaEntity
 import fieldmind.research.app.features.field.data.database.dao.FieldMindDao
 import fieldmind.research.app.features.field.data.database.entity.*
