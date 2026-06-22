@@ -72,6 +72,9 @@ fun CanvasMinimap(
     val scaleY = (minimapSize.height - 2 * padding) / bounds.height
     val mapScale = minOf(scaleX, scaleY).coerceAtMost(1f) // cap at 1:1
 
+    // Capture composable values before the Canvas DrawScope (non-composable) lambda
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     Box(
         modifier = modifier
             .width(120.dp)
@@ -153,7 +156,7 @@ fun CanvasMinimap(
 
                 drawRect(
                     color = if (block.id in canvasState.selectedBlockIds)
-                        MaterialTheme.colorScheme.primary
+                        primaryColor
                     else
                         blockColor.copy(alpha = 0.6f),
                     topLeft = Offset(bx, by),

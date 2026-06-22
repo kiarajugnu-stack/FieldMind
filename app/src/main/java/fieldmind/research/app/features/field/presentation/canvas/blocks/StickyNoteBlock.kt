@@ -72,12 +72,12 @@ fun StickyNoteBlock(
     // ── Sticky note colors ──
     val colors = remember {
         listOf(
-            0xFFFFF9C4 to "Yellow",   // default
-            0xFFC8E6C9 to "Green",
-            0xFFF8BBD0 to "Pink",
-            0xFFBBDEFB to "Blue",
-            0xFFFFE0B2 to "Orange",
-            0xFFE1BEE7 to "Purple"
+            0xFFFFF9C4.toInt() to "Yellow",   // default
+            0xFFC8E6C9.toInt() to "Green",
+            0xFFF8BBD0.toInt() to "Pink",
+            0xFFBBDEFB.toInt() to "Blue",
+            0xFFFFE0B2.toInt() to "Orange",
+            0xFFE1BEE7.toInt() to "Purple"
         )
     }
 

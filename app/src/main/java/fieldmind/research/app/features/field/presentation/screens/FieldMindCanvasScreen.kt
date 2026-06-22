@@ -273,6 +273,7 @@ fun CanvasScreen(
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 160.dp)
             )
+        }
         // ── Link-to-Entity dialog ──
         linkDialogBlockId?.let { blockId ->
             LinkToEntityDialog(

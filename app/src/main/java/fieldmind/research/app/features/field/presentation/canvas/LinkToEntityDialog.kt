@@ -394,7 +394,7 @@ private fun EntityListItem(
     dateFormat: SimpleDateFormat,
     onLink: () -> Unit
 ) {
-    val (primaryText, secondaryText, accentColor, icon) = when (entity) {
+    val (primaryText, secondaryText, accentColor) = when (entity) {
         is ObservationEntity -> Triple(
             entity.subject,
             buildString {
@@ -402,14 +402,12 @@ private fun EntityListItem(
                 append(" · ")
                 append(dateFormat.format(Date(entity.timestamp)))
             },
-            tab.accent,
-            MaterialSymbolIcon("visibility")
+            tab.accent
         )
         is NoteEntity -> Triple(
             entity.title.ifBlank { "Untitled note" },
             entity.category,
-            tab.accent,
-            MaterialSymbolIcon("note")
+            tab.accent
         )
         is QuestionEntity -> Triple(
             entity.questionText,
@@ -418,8 +416,7 @@ private fun EntityListItem(
                 append(" · ")
                 append(entity.status)
             },
-            tab.accent,
-            MaterialSymbolIcon("help")
+            tab.accent
         )
         is SourceEntity -> Triple(
             entity.title,
@@ -430,16 +427,22 @@ private fun EntityListItem(
                     append(entity.author)
                 }
             },
-            tab.accent,
-            MaterialSymbolIcon("book")
+            tab.accent
         )
         is ProjectEntity -> Triple(
             entity.title,
             entity.topicType,
-            tab.accent,
-            MaterialSymbolIcon("folder")
+            tab.accent
         )
-        else -> Triple("Unknown", "", tab.accent, MaterialSymbolIcon("help"))
+        else -> Triple("Unknown", "", tab.accent)
+    }
+    val icon = when (entity) {
+        is ObservationEntity -> MaterialSymbolIcon("visibility")
+        is NoteEntity -> MaterialSymbolIcon("note")
+        is QuestionEntity -> MaterialSymbolIcon("help")
+        is SourceEntity -> MaterialSymbolIcon("book")
+        is ProjectEntity -> MaterialSymbolIcon("folder")
+        else -> MaterialSymbolIcon("help")
     }
 
     Card(
