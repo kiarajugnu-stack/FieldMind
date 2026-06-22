@@ -89,6 +89,32 @@ object FieldMindMotion {
         stiffness = Spring.StiffnessLow
     )
 
+    // ── Navigation Springs ──
+
+    /** Navigation: swipe-back gesture feel (low stiffness = slow drag following). */
+    val swipeBackSpring = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,   // 0.5 — subtle overshoot on release
+        stiffness = 300f                                   // Low stiffness = gentle follow
+    )
+
+    /** Navigation: shared element morphing (card content → detail header). */
+    val sharedElementSpring = spring<Float>(
+        dampingRatio = 0.7f,                                // Slightly overdamped for clean morph
+        stiffness = 600f                                    // Medium-fast for responsive feel
+    )
+
+    /** Navigation: axis slide between screens (list→detail). */
+    val slideSpring = spring<Float>(
+        dampingRatio = 0.75f,                               // Slightly bouncy
+        stiffness = 700f                                    // Responsive but visible
+    )
+
+    /** Navigation: fade-through crossfade (hub→settings page). */
+    val fadeThroughSpring = spring<Float>(
+        dampingRatio = Spring.DampingRatioNoBouncy,         // 1.0 — clean, no overshoot
+        stiffness = Spring.StiffnessMediumLow               // ~300 — gentle
+    )
+
     // ── Duration Tokens (ms) ──
 
     /** Micro-interactions: press, hover, tap feedback. */

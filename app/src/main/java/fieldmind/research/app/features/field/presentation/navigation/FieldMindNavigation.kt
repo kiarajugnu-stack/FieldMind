@@ -48,6 +48,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.animation.SharedTransitionLayout
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
@@ -668,6 +669,175 @@ private fun primaryTabDirection(fromRoute: String?, toRoute: String?): Int {
     return if (toIndex > fromIndex) 1 else -1
 }
 
+// ── Route-aware transition system ──
+
+/** Categories for determining transition animations between screens. */
+private enum class RouteCategory { Tab, SettingsHub, SettingsSubPage, Detail, Tool, Creation, Other }
+
+private fun categorizeRoute(route: String): RouteCategory = when (route) {
+    FieldMindScreen.Home.route, FieldMindScreen.Observe.route,
+    FieldMindScreen.Projects.route, FieldMindScreen.Library.route,
+    FieldMindScreen.Insights.route -> RouteCategory.Tab
+    FieldMindScreen.Settings.route -> RouteCategory.SettingsHub
+    FieldMindScreen.MapScreen.route, FieldMindScreen.ExportStudio.route,
+    FieldMindScreen.Reader.route -> RouteCategory.Other
+    else -> when {
+        route.startsWith("field_settings") -> RouteCategory.SettingsSubPage
+        route.startsWith("field_detail/") -> RouteCategory.Detail
+        route.startsWith("field_new_") -> RouteCategory.Creation
+        route in listOf(
+            FieldMindScreen.CounterTool.route, FieldMindScreen.MeasurementTool.route,
+            FieldMindScreen.WeatherLogTool.route, FieldMindScreen.SpeciesTool.route,
+            FieldMindScreen.ChecklistTool.route, FieldMindScreen.EventLogTool.route,
+            FieldMindScreen.SiteLogTool.route, FieldMindScreen.ComparisonTable.route,
+            FieldMindScreen.SpeciesBrowser.route, FieldMindScreen.TaxonomicBrowser.route,
+            FieldMindScreen.FieldLog.route, FieldMindScreen.TimerTool.route,
+            FieldMindScreen.Flashcards.route, FieldMindScreen.ResearchSession.route,
+            FieldMindScreen.WeatherDatabase.route
+        ) -> RouteCategory.Tool
+        else -> RouteCategory.Other
+    }
+}
+
+/** Compute the enter transition animation based on route category pair. */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.routeEnterTransition(): EnterTransition {
+    val fromRoute = initialState.destination.route ?: ""
+    val toRoute = targetState.destination.route ?: ""
+    val fromCat = categorizeRoute(fromRoute)
+    val toCat = categorizeRoute(toRoute)
+    val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+    val fadeSpec = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
+
+    return when {
+        // Tab ↔ Tab: horizontal slide based on index direction
+        fromCat == RouteCategory.Tab && toCat == RouteCategory.Tab -> {
+            val direction = primaryTabDirection(fromRoute, toRoute)
+            if (direction == 0)
+                fadeIn(animationSpec = FieldMindMotion.expressiveFloat) +
+                scaleIn(initialScale = 0.97f, animationSpec = FieldMindMotion.expressiveFloat)
+            else
+                slideInHorizontally(slideSpec) { direction * it / 4 } + fadeIn(fadeSpec)
+        }
+        // Tab → sub-screen (settings, tools, details): slide from right
+        fromCat == RouteCategory.Tab && toCat in listOf(
+            RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
+        ) -> slideInHorizontally(slideSpec) { it / 4 } + fadeIn(fadeSpec)
+        // Settings hub ↔ subpage: fade-through
+        fromCat == RouteCategory.SettingsHub && toCat == RouteCategory.SettingsSubPage ->
+            fadeIn(animationSpec = FieldMindMotion.expressiveFloat)
+        fromCat == RouteCategory.SettingsSubPage && toCat == RouteCategory.SettingsHub ->
+            fadeIn(animationSpec = FieldMindMotion.expressiveFloat)
+        // Sub-screen → back to tab: slide from left
+        toCat == RouteCategory.Tab && fromCat in listOf(
+            RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation, RouteCategory.Other
+        ) -> slideInHorizontally(slideSpec) { -it / 4 } + fadeIn(fadeSpec)
+        // Default: fade + slight scale
+        else -> fadeIn(animationSpec = FieldMindMotion.expressiveFloat) +
+            scaleIn(initialScale = 0.97f, animationSpec = FieldMindMotion.expressiveFloat)
+    }
+}
+
+/** Compute the exit transition animation based on route category pair. */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.routeExitTransition(): ExitTransition {
+    val fromRoute = initialState.destination.route ?: ""
+    val toRoute = targetState.destination.route ?: ""
+    val fromCat = categorizeRoute(fromRoute)
+    val toCat = categorizeRoute(toRoute)
+    val fadeSpec = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
+
+    return when {
+        fromCat == RouteCategory.Tab && toCat == RouteCategory.Tab -> {
+            val direction = primaryTabDirection(fromRoute, toRoute)
+            if (direction == 0) fadeOut(fadeSpec)
+            else {
+                val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+                slideOutHorizontally(slideSpec) { -direction * it / 5 } + fadeOut(fadeSpec)
+            }
+        }
+        fromCat == RouteCategory.Tab && toCat in listOf(
+            RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
+        ) -> {
+            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            slideOutHorizontally(slideSpec) { -it / 5 } + fadeOut(fadeSpec)
+        }
+        fromCat == RouteCategory.SettingsHub && toCat == RouteCategory.SettingsSubPage ->
+            fadeOut(fadeSpec)
+        fromCat == RouteCategory.SettingsSubPage && toCat == RouteCategory.SettingsHub ->
+            fadeOut(fadeSpec)
+        toCat == RouteCategory.Tab && fromCat in listOf(
+            RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation, RouteCategory.Other
+        ) -> {
+            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            slideOutHorizontally(slideSpec) { it / 4 } + fadeOut(fadeSpec)
+        }
+        else -> fadeOut(fadeSpec)
+    }
+}
+
+/** Compute the pop-enter transition (reverse navigation). */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.routePopEnterTransition(): EnterTransition {
+    val fromRoute = initialState.destination.route ?: ""
+    val toRoute = targetState.destination.route ?: ""
+    val fromCat = categorizeRoute(fromRoute)
+    val toCat = categorizeRoute(toRoute)
+    val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+    val fadeSpec = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
+
+    return when {
+        fromCat == RouteCategory.Tab && toCat == RouteCategory.Tab -> {
+            val direction = primaryTabDirection(toRoute, fromRoute)
+            slideInHorizontally(slideSpec) { -direction * it / 5 } + fadeIn(fadeSpec)
+        }
+        // Pop back from sub-screen to tab: slide from left
+        toCat == RouteCategory.Tab && fromCat in listOf(
+            RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
+        ) -> slideInHorizontally(slideSpec) { -it / 5 } + fadeIn(fadeSpec)
+        // Pop back from subpage to settings hub
+        toCat == RouteCategory.SettingsHub && fromCat == RouteCategory.SettingsSubPage ->
+            fadeIn(animationSpec = FieldMindMotion.expressiveFloat)
+        // Pop back from settings subpage to another settings subpage?
+        else -> slideInHorizontally(slideSpec) { -it / 5 } + fadeIn(fadeSpec)
+    }
+}
+
+/** Compute the pop-exit transition (reverse navigation). */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.routePopExitTransition(): ExitTransition {
+    val fromRoute = initialState.destination.route ?: ""
+    val toRoute = targetState.destination.route ?: ""
+    val fromCat = categorizeRoute(fromRoute)
+    val toCat = categorizeRoute(toRoute)
+    val fadeSpec = tween<Float>(FieldMindMotion.durationMicro, easing = FastOutSlowInEasing)
+
+    return when {
+        fromCat == RouteCategory.Tab && toCat == RouteCategory.Tab -> {
+            val direction = primaryTabDirection(toRoute, fromRoute)
+            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            slideOutHorizontally(slideSpec) { direction * it / 4 } + fadeOut(fadeSpec)
+        }
+        // Pop back: tab exits to the right
+        fromCat == RouteCategory.Tab && toCat in listOf(
+            RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
+            RouteCategory.Tool, RouteCategory.Detail
+        ) -> {
+            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            slideOutHorizontally(slideSpec) { it / 4 } + fadeOut(fadeSpec)
+        }
+        toCat == RouteCategory.Tab && fromCat in listOf(
+            RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
+        ) -> {
+            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
+            slideOutHorizontally(slideSpec) { it / 4 } + fadeOut(fadeSpec)
+        }
+        else -> fadeOut(fadeSpec)
+    }
+}
+
 @Composable
 private fun FieldMindNavHost(
     navController: NavHostController,
@@ -682,57 +852,16 @@ private fun FieldMindNavHost(
         navController.navigateToDestination(FieldMindScreen.Reader.route)
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = FieldMindScreen.Home.route,
-        modifier = modifier,
-        enterTransition = {
-            val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
-            val slideAnim = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
-            val fadeAnim = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
-            if (direction == 0) {
-                fadeIn(animationSpec = FieldMindMotion.expressiveFloat) +
-                scaleIn(initialScale = 0.97f, animationSpec = FieldMindMotion.expressiveFloat)
-            } else {
-                slideInHorizontally(slideAnim) { direction * it / 4 } +
-                fadeIn(fadeAnim)
-            }
-        },
-        exitTransition = {
-            val direction = primaryTabDirection(initialState.destination.route, targetState.destination.route)
-            val fadeAnim = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
-            if (direction == 0) {
-                fadeOut(fadeAnim)
-            } else {
-                slideOutHorizontally(tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)) { -direction * it / 5 } +
-                fadeOut(fadeAnim)
-            }
-        },
-        popEnterTransition = {
-            val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
-            val fadeSpec = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
-            if (direction == 0) {
-                slideInHorizontally(animationSpec = slideSpec, initialOffsetX = { -it / 5 }) +
-                fadeIn(animationSpec = fadeSpec)
-            } else {
-                slideInHorizontally(animationSpec = slideSpec, initialOffsetX = { direction * it / 5 }) +
-                fadeIn(animationSpec = fadeSpec)
-            }
-        },
-        popExitTransition = {
-            val direction = primaryTabDirection(targetState.destination.route, initialState.destination.route)
-            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
-            val fadeSpec = tween<Float>(FieldMindMotion.durationMicro, easing = FastOutSlowInEasing)
-            if (direction == 0) {
-                slideOutHorizontally(animationSpec = slideSpec, targetOffsetX = { it / 4 }) +
-                fadeOut(animationSpec = fadeSpec)
-            } else {
-                slideOutHorizontally(animationSpec = slideSpec, targetOffsetX = { -direction * it / 4 }) +
-                fadeOut(animationSpec = fadeSpec)
-            }
-        }
-    ) {
+    SharedTransitionLayout {
+        NavHost(
+            navController = navController,
+            startDestination = FieldMindScreen.Home.route,
+            modifier = modifier,
+            enterTransition = { routeEnterTransition() },
+            exitTransition = { routeExitTransition() },
+            popEnterTransition = { routePopEnterTransition() },
+            popExitTransition = { routePopExitTransition() }
+        ) {
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
         composable(FieldMindScreen.Projects.route) { ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }, onNavigate = { navController.navigateToDestination(it.route) }) }
@@ -832,5 +961,6 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
             DetailScreen(kind = kind, id = id, viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail, onOpenReader = openReader)
         }
+    }
     }
 }
