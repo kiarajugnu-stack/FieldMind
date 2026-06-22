@@ -102,7 +102,8 @@ fun HomeScreen(
     onOpenSettings: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit,
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
-    onOpenReader: (String, String) -> Unit = { _, _ -> }
+    onOpenReader: (String, String) -> Unit = { _, _ -> },
+    onOpenCanvas: () -> Unit = {}
 ) {
     // ── Interest-aware configuration (must be early for defaultCategory) ──
     val userInterests by viewModel.fieldSettings.userInterests.collectAsState()
@@ -254,7 +255,7 @@ fun HomeScreen(
     val homeScrollState = rememberLazyListState()
     Box(Modifier.fillMaxSize().statusBarsPadding()) {            LazyColumn(state = homeScrollState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             // ── Hero Section ──
-            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }) }
+            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }, onOpenCanvas = onOpenCanvas) }
 
             // ── Research Session CTA ──
             item { ResearchSessionCtaCard(
@@ -727,7 +728,8 @@ private fun HomeHeroSection(
     onOpenSettings: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit,
     onCapture: () -> Unit = {},
-    onNewNote: () -> Unit = {}
+    onNewNote: () -> Unit = {},
+    onOpenCanvas: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
     Surface(
@@ -818,6 +820,17 @@ private fun HomeHeroSection(
                     accent = colors.flashcard,
                     modifier = Modifier.weight(1f)
                 ) { onNavigate(FieldMindScreen.TimerTool) }
+            }
+
+            // ── Row 3: Canvas ──
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HeroActionChip(
+                    icon = MaterialSymbolIcon("dashboard_customize"),
+                    label = "Canvas",
+                    accent = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f)
+                ) { onOpenCanvas() }
+                Spacer(Modifier.weight(1f))
             }
         }
     }
