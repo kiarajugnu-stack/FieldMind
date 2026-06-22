@@ -37,22 +37,82 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-/** Maximum bitmap dimension (px) to prevent OOM on large PDF pages. */
 private const val MAX_PAGE_DIMENSION = 4096
 
-/** Scale factor when rendering to cap resolution. */
-private const val RENDER_SCALE = 1.5f
+/**
+ * Attempts to open a PdfRenderer from a content://, file://, or http(s):// URI.
+ * Returns the renderer or null if the PDF could not be opened.
+ */
+private fun openPdfRenderer(context: Context, uriStr: String): PdfRenderer? {
+    val uri = Uri.parse(uriStr)
+    return when (uri.scheme) {
+        "content" -> {
+            val fd = context.contentResolver.openFileDescriptor(uri, "r")
+            fd?.let { PdfRenderer(it) }
+        }
+        "file" -> {
+            val file = File(uri.path ?: return null)
+            if (!file.exists()) return null
+            val fd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+            PdfRenderer(fd)
+        }
+        "http", "https" -> {
+            val tempFile = File(context.cacheDir, "pdf_remote_${System.nanoTime()}.pdf")
+            try {
+                val stream = java.net.URL(uriStr).openStream()
+                tempFile.outputStream().use { output ->
+                    stream.use { input -> input.copyTo(output) }
+                }
+                val fd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                PdfRenderer(fd)
+            } catch (e: Exception) {
+                tempFile.delete()
+                null
+            }
+        }
+        else -> {
+            try {
+                val file = File(uriStr)
+                if (file.exists()) {
+                    val fd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+                    PdfRenderer(fd)
+                } else {
+                    val fd = context.contentResolver.openFileDescriptor(uri, "r")
+                    fd?.let { PdfRenderer(it) }
+                }
+            } catch (_: Exception) { null }
+        }
+    }
+}
 
 /**
- * Opens a full-screen Dialog that renders a PDF document page by page
- * using Android's built-in [PdfRenderer].
- *
- * Handles content:// and file:// URIs. On error, shows a helpful message
- * with an "Open externally" fallback that launches the system PDF viewer.
- *
- * @param uri         The content://, file://, or http(s):// URI of the PDF.
- * @param title       Optional display title for the header.
- * @param onDismiss   Called when the user closes the viewer.
+ * Opens the PDF in the system's default PDF viewer via an Intent.
+ */
+private fun openPdfExternally(context: Context, uriStr: String) {
+    try {
+        val uri = Uri.parse(uriStr)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        } else {
+            val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
+                data = uri
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(fallbackIntent)
+        }
+    } catch (_: Exception) { }
+}
+
+/**
+ * Full-screen Dialog that renders a PDF document page by page using PdfRenderer.
+ * Handles content://, file://, and http(s):// URIs.
+ * On error, shows an "Open externally" fallback button.
  */
 @Composable
 fun PdfViewerDialog(
@@ -62,29 +122,25 @@ fun PdfViewerDialog(
 ) {
     val context = LocalContext.current
 
-    // ── Renderer state ──
     var renderer by remember { mutableStateOf<PdfRenderer?>(null) }
     var totalPages by remember { mutableIntStateOf(0) }
     var loadError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var isOpening by remember { mutableStateOf(true) }
 
-    // ── Page state ──
     var currentPage by remember { mutableIntStateOf(0) }
     var scale by remember { mutableFloatStateOf(1f) }
     var panX by remember { mutableFloatStateOf(0f) }
     var panY by remember { mutableFloatStateOf(0f) }
 
-    // ── Open the renderer off the main thread ──
     LaunchedEffect(uri) {
-        val result = withContext(Dispatchers.IO) {
+        val r: PdfRenderer? = withContext(Dispatchers.IO) {
             try {
                 openPdfRenderer(context, uri)
             } catch (e: Exception) {
-                null to e.message ?: "Unknown error"
+                null
             }
         }
-        val (r, err) = result
         if (r != null) {
             renderer = r
             totalPages = r.pageCount
@@ -97,25 +153,21 @@ fun PdfViewerDialog(
             renderer = null
             totalPages = 0
             loadError = true
-            errorMessage = err
+            errorMessage = "Could not open file. It may be inaccessible or corrupted."
             isOpening = false
         }
     }
 
-    // ── Cleanup renderer on dispose ──
     DisposableEffect(renderer) {
         onDispose {
             renderer?.close()
         }
     }
 
-    // ── Current page bitmap, rendered off main thread ──
     var pageBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var isRendering by remember { mutableStateOf(false) }
     var renderError by remember { mutableStateOf(false) }
     var renderRetryTrigger by remember { mutableIntStateOf(0) }
-
-    // Track previous bitmap so we can recycle it after the new one is rendered
     var previousBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
     LaunchedEffect(renderer, currentPage, renderRetryTrigger) {
@@ -129,16 +181,13 @@ fun PdfViewerDialog(
                 renderer?.let { r ->
                     if (currentPage in 0 until r.pageCount) {
                         val page = r.openPage(currentPage)
-                        // Scale down if page is extremely large to prevent OOM
                         val renderWidth = page.width.coerceAtMost(MAX_PAGE_DIMENSION)
                         val renderHeight = (page.height.toFloat() * (renderWidth.toFloat() / page.width.toFloat())).toInt()
                             .coerceAtMost(MAX_PAGE_DIMENSION)
-
                         val bm = android.graphics.Bitmap.createBitmap(
                             renderWidth, renderHeight,
                             android.graphics.Bitmap.Config.ARGB_8888
                         )
-                        // Draw white background first to prevent transparent/black rendering
                         android.graphics.Canvas(bm).apply { drawColor(android.graphics.Color.WHITE) }
                         page.render(bm, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                         page.close()
@@ -150,7 +199,6 @@ fun PdfViewerDialog(
             }
         }
 
-        // Recycle previous bitmap now that new one is ready
         previousBitmap?.recycle()
         previousBitmap = bitmap
 
@@ -158,7 +206,6 @@ fun PdfViewerDialog(
         isRendering = false
         if (bitmap == null) renderError = true
 
-        // Reset zoom on page change
         scale = 1f
         panX = 0f
         panY = 0f
@@ -177,7 +224,6 @@ fun PdfViewerDialog(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // ── Top toolbar ──
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f),
@@ -192,115 +238,43 @@ fun PdfViewerDialog(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         IconButton(onClick = onDismiss) {
-                            Icon(
-                                MaterialSymbolIcon("close"),
-                                contentDescription = "Close",
-                                tint = androidx.compose.ui.graphics.Color.White,
-                                size = 24.dp
-                            )
+                            Icon(MaterialSymbolIcon("close"), "Close", tint = androidx.compose.ui.graphics.Color.White, size = 24.dp)
                         }
-
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                title,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = androidx.compose.ui.graphics.Color.White,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1
-                            )
+                            Text(title, style = MaterialTheme.typography.titleSmall, color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.SemiBold, maxLines = 1)
                             if (totalPages > 0 && !loadError) {
-                                Text(
-                                    "Page ${currentPage + 1} of $totalPages",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f)
-                                )
+                                Text("Page ${currentPage + 1} of $totalPages", style = MaterialTheme.typography.labelSmall, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
                             }
                         }
-
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            IconButton(
-                                onClick = { scale = (scale - 0.25f).coerceAtLeast(0.5f); panX = 0f; panY = 0f },
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Text("−", color = androidx.compose.ui.graphics.Color.White)
+                            IconButton(onClick = { scale = (scale - 0.25f).coerceAtLeast(0.5f); panX = 0f; panY = 0f }, modifier = Modifier.size(36.dp)) {
+                                Text("\u2212", color = androidx.compose.ui.graphics.Color.White)
                             }
-                            Text(
-                                "${(scale * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = androidx.compose.ui.graphics.Color.White,
-                                modifier = Modifier.align(Alignment.CenterVertically)
-                            )
-                            IconButton(
-                                onClick = { scale = (scale + 0.25f).coerceAtMost(3f) },
-                                modifier = Modifier.size(36.dp)
-                            ) {
+                            Text("${(scale * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.align(Alignment.CenterVertically))
+                            IconButton(onClick = { scale = (scale + 0.25f).coerceAtMost(3f) }, modifier = Modifier.size(36.dp)) {
                                 Text("+", color = androidx.compose.ui.graphics.Color.White)
                             }
                         }
                     }
                 }
 
-                // ── Page content area ──
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
                     when {
                         isOpening -> {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                CircularProgressIndicator(
-                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f),
-                                    modifier = Modifier.size(32.dp),
-                                    strokeWidth = 3.dp
-                                )
-                                Text(
-                                    "Opening PDF…",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f)
-                                )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                CircularProgressIndicator(color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f), modifier = Modifier.size(32.dp), strokeWidth = 3.dp)
+                                Text("Opening PDF\u2026", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
                             }
                         }
                         loadError -> {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Icon(
-                                    MaterialSymbolIcon("description_off"),
-                                    contentDescription = null,
-                                    tint = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f),
-                                    size = 56.dp
-                                )
-                                Text(
-                                    "Could not open PDF",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = androidx.compose.ui.graphics.Color.White,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    if (errorMessage.isNotBlank()) errorMessage
-                                    else "The file may be corrupted, inaccessible, or in an unsupported format.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f),
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(horizontal = 32.dp)
-                                )
-                                // ── Open in system viewer fallback ──
-                                Button(
-                                    onClick = {
-                                        openPdfExternally(context, uri)
-                                        onDismiss()
-                                    },
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary
-                                    )
-                                ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Icon(MaterialSymbolIcon("description_off"), null, tint = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f), size = 56.dp)
+                                Text("Could not open PDF", style = MaterialTheme.typography.titleMedium, color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.SemiBold)
+                                Text(if (errorMessage.isNotBlank()) errorMessage else "The file may be corrupted, inaccessible, or in an unsupported format.", style = MaterialTheme.typography.bodySmall, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f), textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 32.dp))
+                                Button(onClick = { openPdfExternally(context, uri); onDismiss() }, shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) {
                                     Icon(MaterialSymbolIcon("open_in_new"), null, size = 18.dp)
                                     Spacer(Modifier.size(6.dp))
                                     Text("Open in system viewer")
@@ -308,54 +282,21 @@ fun PdfViewerDialog(
                             }
                         }
                         isRendering -> {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                CircularProgressIndicator(
-                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f),
-                                    modifier = Modifier.size(32.dp),
-                                    strokeWidth = 3.dp
-                                )
-                                Text(
-                                    "Rendering page ${currentPage + 1}…",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f)
-                                )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                CircularProgressIndicator(color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f), modifier = Modifier.size(32.dp), strokeWidth = 3.dp)
+                                Text("Rendering page ${currentPage + 1}\u2026", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
                             }
                         }
                         renderError -> {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Icon(
-                                    MaterialSymbolIcon("page_off"),
-                                    contentDescription = null,
-                                    tint = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f),
-                                    size = 48.dp
-                                )
-                                Text(
-                                    "Failed to render this page",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f)
-                                )
-                                OutlinedButton(
-                                    onClick = {
-                                        renderError = false
-                                        renderRetryTrigger++
-                                    },
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = androidx.compose.ui.graphics.Color.White
-                                    )
-                                ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Icon(MaterialSymbolIcon("page_off"), null, tint = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.5f), size = 48.dp)
+                                Text("Failed to render this page", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f))
+                                OutlinedButton(onClick = { renderError = false; renderRetryTrigger++ }, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = androidx.compose.ui.graphics.Color.White)) {
                                     Text("Retry")
                                 }
                             }
                         }
                         pageBitmap != null -> {
-                            // Wrap in a scrollable column so the page can be scrolled when zoomed
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -373,15 +314,9 @@ fun PdfViewerDialog(
                                 Image(
                                     painter = BitmapPainter(pageBitmap!!.asImageBitmap()),
                                     contentDescription = "PDF page ${currentPage + 1}",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(8.dp)
-                                        .graphicsLayer {
-                                            scaleX = scale
-                                            scaleY = scale
-                                            translationX = panX
-                                            translationY = panY
-                                        },
+                                    modifier = Modifier.fillMaxWidth().padding(8.dp).graphicsLayer {
+                                        scaleX = scale; scaleY = scale; translationX = panX; translationY = panY
+                                    },
                                     contentScale = ContentScale.Fit
                                 )
                             }
@@ -389,161 +324,27 @@ fun PdfViewerDialog(
                     }
                 }
 
-                // ── Bottom page navigation bar ──
-                AnimatedVisibility(
-                    visible = totalPages > 0 && !loadError,
-                    enter = fadeIn(),
-                    exit = fadeOut()
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f),
-                        tonalElevation = 0.dp
-                    ) {
+                AnimatedVisibility(visible = totalPages > 0 && !loadError, enter = fadeIn(), exit = fadeOut()) {
+                    Surface(modifier = Modifier.fillMaxWidth(), color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f), tonalElevation = 0.dp) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .navigationBarsPadding(),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).navigationBarsPadding(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            OutlinedButton(
-                                onClick = { currentPage = (currentPage - 1).coerceAtLeast(0) },
-                                enabled = currentPage > 0 && !isRendering,
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = androidx.compose.ui.graphics.Color.White
-                                )
-                            ) {
-                                Icon(MaterialSymbolIcon("chevron_left"), null, size = 18.dp)
-                                Spacer(Modifier.size(4.dp))
-                                Text("Previous")
+                            OutlinedButton(onClick = { currentPage = (currentPage - 1).coerceAtLeast(0) }, enabled = currentPage > 0 && !isRendering, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = androidx.compose.ui.graphics.Color.White)) {
+                                Icon(MaterialSymbolIcon("chevron_left"), null, size = 18.dp); Spacer(Modifier.size(4.dp)); Text("Previous")
                             }
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    "${currentPage + 1}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = androidx.compose.ui.graphics.Color.White
-                                )
-                                Text(
-                                    "/ $totalPages",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f)
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("${currentPage + 1}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color.White)
+                                Text("/ $totalPages", style = MaterialTheme.typography.bodySmall, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
                             }
-
-                            OutlinedButton(
-                                onClick = { currentPage = (currentPage + 1).coerceAtMost(totalPages - 1) },
-                                enabled = currentPage < totalPages - 1 && !isRendering,
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = androidx.compose.ui.graphics.Color.White
-                                )
-                            ) {
-                                Text("Next")
-                                Spacer(Modifier.size(4.dp))
-                                Icon(MaterialSymbolIcon("chevron_right"), null, size = 18.dp)
+                            OutlinedButton(onClick = { currentPage = (currentPage + 1).coerceAtMost(totalPages - 1) }, enabled = currentPage < totalPages - 1 && !isRendering, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = androidx.compose.ui.graphics.Color.White)) {
+                                Text("Next"); Spacer(Modifier.size(4.dp)); Icon(MaterialSymbolIcon("chevron_right"), null, size = 18.dp)
                             }
                         }
                     }
                 }
             }
         }
-    }
-}
-
-// ──────────────────────────────────────────────────────────────────────
-//  Private helpers
-// ──────────────────────────────────────────────────────────────────────
-
-/**
- * Opens a [PdfRenderer] from a content://, file://, or HTTP(S) URI.
- *
- * - **content://** → uses [android.content.ContentResolver.openFileDescriptor]
- * - **file://**    → uses [File] directly
- * - **http(s)://** → downloads to a temp file first (requires INTERNET)
- *
- * Returns the renderer or null if the PDF could not be opened.
- */
-private fun openPdfRenderer(context: Context, uriStr: String): PdfRenderer? {
-    val uri = Uri.parse(uriStr)
-
-    return when (uri.scheme) {
-        "content" -> {
-            val fd = context.contentResolver.openFileDescriptor(uri, "r")
-            fd?.let { PdfRenderer(it) }
-        }
-        "file" -> {
-            val file = File(uri.path ?: return null)
-            if (!file.exists()) return null
-            val fd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
-            PdfRenderer(fd)
-        }
-        "http", "https" -> {
-            // For remote URLs, download to temp file first
-            val tempFile = File(context.cacheDir, "pdf_remote_${System.nanoTime()}.pdf")
-            try {
-                val stream = java.net.URL(uriStr).openStream()
-                tempFile.outputStream().use { output ->
-                    stream.use { input -> input.copyTo(output) }
-                }
-                val fd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                PdfRenderer(fd).also { _ ->
-                    // Renderer opened successfully — schedule temp file cleanup
-                    tempFile.deleteOnExit()
-                }
-            } catch (e: Exception) {
-                tempFile.delete()
-                null
-            }
-        }
-        else -> {
-            // Try as file path directly
-            try {
-                val file = File(uriStr)
-                if (file.exists()) {
-                    val fd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
-                    PdfRenderer(fd)
-                } else {
-                    // Last attempt: try content resolver
-                    val fd = context.contentResolver.openFileDescriptor(uri, "r")
-                    fd?.let { PdfRenderer(it) }
-                }
-            } catch (_: Exception) { null }
-        }
-    }
-}
-
-/**
- * Opens the PDF in the system's default PDF viewer via an [Intent].
- */
-private fun openPdfExternally(context: Context, uriStr: String) {
-    try {
-        val uri = Uri.parse(uriStr)
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/pdf")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        // Verify there's an app to handle this
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
-        } else {
-            // Fallback: just open the URI without specifying MIME type
-            val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
-                data = uri
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(fallbackIntent)
-        }
-    } catch (_: Exception) {
-        // Silently fail — user can still see the error in the PDF viewer
     }
 }
