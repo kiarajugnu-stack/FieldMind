@@ -1,11 +1,12 @@
 package fieldmind.research.app.features.field.presentation.canvas
 
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.SubcomposeLayout
@@ -37,6 +38,9 @@ import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
  * @param onBlockMoveBackward called when the move-backward (decrease z-index) action is triggered
  * @param onBlockCopy called when the copy action is triggered
  * @param onBlockLinkToEntity called when the link-to-entity action is triggered
+ * @param showMinimap whether the minimap widget is visible
+ * @param onToggleMinimap called when the minimap visibility should be toggled
+ * @param viewportSize the current viewport size in screen pixels (needed by minimap)
  */
 @Composable
 fun InfiniteCanvas(
@@ -52,7 +56,10 @@ fun InfiniteCanvas(
     onBlockMoveForward: ((Long) -> Unit)? = null,
     onBlockMoveBackward: ((Long) -> Unit)? = null,
     onBlockCopy: ((Long) -> Unit)? = null,
-    onBlockLinkToEntity: ((Long) -> Unit)? = null
+    onBlockLinkToEntity: ((Long) -> Unit)? = null,
+    showMinimap: Boolean = true,
+    onToggleMinimap: (() -> Unit)? = null,
+    viewportSize: Size = Size(0f, 0f)
 ) {
     // Convert selected blocks to BlockRect for GPU highlight rendering
     val selectedBlockRects = remember(blocks, canvasState.selectedBlockIds) {
@@ -176,6 +183,18 @@ fun InfiniteCanvas(
             canvasState = canvasState,
             blocks = blocks,
             modifier = Modifier.fillMaxSize()
+        )
+
+        // Layer 5: CanvasMinimap (floating widget, bottom-right)
+        CanvasMinimap(
+            blocks = blocks,
+            canvasState = canvasState,
+            viewportWidth = viewportSize.width,
+            viewportHeight = viewportSize.height,
+            show = showMinimap,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(12.dp)
         )
     }
 }
