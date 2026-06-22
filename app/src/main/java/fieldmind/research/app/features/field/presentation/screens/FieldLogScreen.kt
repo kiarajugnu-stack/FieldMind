@@ -154,6 +154,8 @@ fun FieldLogScreen(
         }
     }
 
+    var isRefreshing by remember { mutableStateOf(false) }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -181,14 +183,26 @@ fun FieldLogScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 32.dp)
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                scope.launch {
+                    // Simulate refresh — in production this would re-fetch data
+                    kotlinx.coroutines.delay(600)
+                    isRefreshing = false
+                }
+            },
+            modifier = Modifier.fillMaxSize()
         ) {
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 32.dp)
+            ) {
             // ── Quick stats ──
             item { ObservationStatsDashboard(observations) }
 
@@ -520,23 +534,22 @@ fun FieldLogScreen(
                 )
             }
         }
+        } // end PullToRefreshBox
     }
 
     // ── Advanced Filter Sheet ──
-    if (showFilterSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showFilterSheet = false },
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-        ) {
-            AdvancedFilterSheetContent(
-                filterState = filterState,
-                onFilterChange = { filterState = it },
-                onDismiss = { showFilterSheet = false },
-                onReset = { filterState = ObservationFilterState() },
-                projects = emptyList()
+    FluidBottomSheet(
+        visible = showFilterSheet,
+        onDismiss = { showFilterSheet = false }
+    ) {
+        AdvancedFilterSheetContent(
+            filterState = filterState,
+            onFilterChange = { filterState = it },
+            onDismiss = { showFilterSheet = false },
+            onReset = { filterState = ObservationFilterState() },
+            projects = emptyList()
         )
     }
-}
 
 /** Filter state for the Field Log screen. */
 data class ObservationFilterState(

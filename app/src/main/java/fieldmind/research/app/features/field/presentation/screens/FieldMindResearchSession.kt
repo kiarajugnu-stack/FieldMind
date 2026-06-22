@@ -1225,9 +1225,9 @@ private fun LinkObservationsSheet(
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = { onDismiss() },
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    FluidBottomSheet(
+        visible = true,
+        onDismiss = { onDismiss() }
     ) {
         Column(
             Modifier
