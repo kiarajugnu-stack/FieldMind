@@ -7,6 +7,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -175,12 +176,15 @@ fun TaxonomicBrowserScreen(
         currentLevel = targetLevel
     }
 
+    val taxonListState = rememberLazyListState()
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.background,
-                shadowElevation = 0.dp
+                shadowElevation = 0.dp,
+                modifier = Modifier.statusBarsPadding()
             ) {
                 Column(Modifier.fillMaxWidth()) {
                     // Header row
@@ -286,6 +290,7 @@ fun TaxonomicBrowserScreen(
                 }
             } else {
                 LazyColumn(
+                    state = taxonListState,
                     Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -317,6 +322,7 @@ fun TaxonomicBrowserScreen(
                 }
             } else {
                 LazyColumn(
+                    state = taxonListState,
                     Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)

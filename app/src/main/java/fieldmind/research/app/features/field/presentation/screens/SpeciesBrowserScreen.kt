@@ -7,6 +7,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -100,6 +101,7 @@ fun SpeciesBrowserScreen(
         "Kingdom (A-Z)",
         "Category (A-Z)"
     )
+    val speciesListState = rememberLazyListState()
     var selectedSort by rememberSaveable { mutableStateOf(sortOptions[0]) }
     var showSortDropdown by remember { mutableStateOf(false) }
 
@@ -169,7 +171,8 @@ fun SpeciesBrowserScreen(
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.background,
-                shadowElevation = 0.dp
+                shadowElevation = 0.dp,
+                modifier = Modifier.statusBarsPadding()
             ) {
                 Column(Modifier.fillMaxWidth()) {
                     // ── Species Browser Header (expanded) ──
@@ -330,6 +333,7 @@ fun SpeciesBrowserScreen(
             }
         } else {
             LazyColumn(
+                state = speciesListState,
                 Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
