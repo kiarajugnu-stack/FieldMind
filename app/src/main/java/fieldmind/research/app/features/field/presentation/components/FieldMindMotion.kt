@@ -314,6 +314,111 @@ fun Modifier.pressCardScale(): Modifier = composed {
     this.pressScale(scaleDown = 0.97f)
 }
 
+// -- Tab Swipe Host -- switch between adjacent tabs with horizontal swipe --
+
+/**
+ * Wraps content with a horizontal swipe gesture that triggers tab switching.
+ * Unlike [SwipeBackHost] which only activates from the left edge, this detects
+ * swipes anywhere on the content area (like iOS springboard).
+ *
+ * Swipe left → calls [onSwipeForward] (next tab)
+ * Swipe right → calls [onSwipeBack] (previous tab)
+ *
+ * Shows visual feedback (offset, scale, gradient scrim) during the swipe.
+ */
+@Composable
+fun TabSwipeHost(
+    onSwipeBack: () -> Unit,
+    onSwipeForward: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val reduceMotion = FieldMindMotion.isReduceMotion()
+    val scope = rememberCoroutineScope()
+
+    var tabOffsetX by remember { mutableFloatStateOf(0f) }
+    var contentWidth by remember { mutableFloatStateOf(1f) }
+
+    val animatedOffsetX by animateFloatAsState(
+        targetValue = tabOffsetX,
+        animationSpec = FieldMindMotion.swipeBackSpring,
+        label = "tabSwipeX"
+    )
+
+    val progress = abs(animatedOffsetX / contentWidth).coerceIn(0f, 1f)
+    val scrimAlpha = progress * 0.25f
+    val scale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coords ->
+                contentWidth = coords.size.width.toFloat().coerceAtLeast(1f)
+            }
+    ) {
+        // Gradient scrim on the side opposite the swipe direction
+        if (progress > 0.01f) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(
+                    if (animatedOffsetX > 0) {
+                        Brush.horizontalGradient(
+                            colors = listOf(Color.Black.copy(alpha = scrimAlpha * 0.9f), Color.Black.copy(alpha = scrimAlpha * 0.4f), Color.Transparent),
+                            startX = 0f, endX = contentWidth * 0.5f
+                        )
+                    } else {
+                        Brush.horizontalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = scrimAlpha * 0.4f), Color.Black.copy(alpha = scrimAlpha * 0.9f)),
+                            startX = contentWidth * 0.5f, endX = contentWidth
+                        )
+                    }
+                )
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    translationX = animatedOffsetX
+                    scaleX = scale
+                    scaleY = scale
+                    clip = true
+                }
+                .then(
+                    if (!reduceMotion) {
+                        Modifier.pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = { /* swipe anywhere */ },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    tabOffsetX = (tabOffsetX + dragAmount.x).coerceIn(-contentWidth * 0.4f, contentWidth * 0.4f)
+                                },
+                                onDragEnd = {
+                                    val threshold = contentWidth * 0.20f
+                                    if (tabOffsetX > threshold) {
+                                        scope.launch { tabOffsetX = contentWidth; onSwipeBack() }
+                                    } else if (tabOffsetX < -threshold) {
+                                        scope.launch { tabOffsetX = -contentWidth; onSwipeForward() }
+                                    } else {
+                                        tabOffsetX = 0f
+                                    }
+                                },
+                                onDragCancel = {
+                                    tabOffsetX = 0f
+                                }
+                            )
+                        }
+                    } else {
+                        Modifier
+                    }
+                ),
+            contentAlignment = Alignment.TopStart
+        ) {
+            content()
+        }
+    }
+}
+
 // -- Swipe-back Gesture Host -- iOS-style with predictive peek --
 
 private enum class SwipeDirection { Horizontal, Vertical }
