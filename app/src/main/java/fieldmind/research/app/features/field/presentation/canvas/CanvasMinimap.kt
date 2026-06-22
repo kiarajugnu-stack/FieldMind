@@ -96,15 +96,20 @@ fun CanvasMinimap(
                         canvasState.setPan(newPanX, newPanY)
                     }
                 }
-                .pointerInput(blocks) {
+                .pointerInput(blocks, mapScale) {
                     detectDragGestures { change, dragAmount ->
                         change.consume()
-                        // Convert drag delta from minimap space to canvas space
-                        val canvasDx = dragAmount.x / mapScale
-                        val canvasDy = dragAmount.y / mapScale
-                        // Adjust pan by the canvas-space delta at current zoom
-                        // Positive drag = move the camera in the same direction
-                        canvasState.applyPan(canvasDx * canvasState.zoom, canvasDy * canvasState.zoom)
+                        // Convert drag delta from minimap space to canvas space, then to pan delta.
+                        // The viewport indicator on the minimap should follow the finger:
+                        // dragging right (positive dx) means the viewport shows content to the right,
+                        // which in canvas coordinates means canvasLeft increases → panX decreases.
+                        //   canvasLeft = (0 - panX) / zoom  →  ΔpanX = -ΔcanvasLeft * zoom
+                        //   ΔcanvasLeft = dragAmount.x / mapScale
+                        //   ∴ ΔpanX = -dragAmount.x * zoom / mapScale
+                        canvasState.applyPan(
+                            -dragAmount.x * canvasState.zoom / mapScale,
+                            -dragAmount.y * canvasState.zoom / mapScale
+                        )
                     }
                 }
         ) {
