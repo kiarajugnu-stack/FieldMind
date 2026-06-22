@@ -370,6 +370,7 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .pressScale(scaleDown = 0.97f)
                                 .clickable {
                                     expandedCategories = if (isExpanded) expandedCategories - type
                                     else expandedCategories + type
@@ -456,7 +457,7 @@ private fun SourceCardWithCitations(
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // Main content row
             Row(
-                Modifier.fillMaxWidth().clickable(onClick = onClick),
+                Modifier.fillMaxWidth().pressScale(scaleDown = 0.97f).clickable(onClick = onClick),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Box(
@@ -554,7 +555,7 @@ private fun SourceCardWithCitations(
             // Preview if link available
             if (source.link.isNotBlank()) {
                 Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = 10.dp, vertical = 6.dp),
+                    Modifier.fillMaxWidth().pressScale(scaleDown = 0.97f).clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
@@ -1081,7 +1082,7 @@ private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, on
         item {
             Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(Modifier.fillMaxWidth().clickable { categoriesExpanded = !categoriesExpanded }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth().pressScale(scaleDown = 0.97f).clickable { categoriesExpanded = !categoriesExpanded }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Icon(icon = FieldMindIcons.Category, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
                         Text("Categories", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                         InfoChip(selectedCategory)
@@ -1614,13 +1615,13 @@ private fun LearnCategoryCard(category: LearnCategory, onOpenResource: (LearnRes
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .clickable { expanded = !expanded }
-                    .padding(vertical = 2.dp),
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pressScale(scaleDown = 0.97f)
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable { expanded = !expanded }
+                        .padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -1651,6 +1652,7 @@ private fun LearnCategoryCard(category: LearnCategory, onOpenResource: (LearnRes
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .pressScale(scaleDown = 0.97f)
                                             .clip(RoundedCornerShape(14.dp))
                                             .clickable { onOpenResource(resource) }
                                             .padding(10.dp),
