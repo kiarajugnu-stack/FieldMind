@@ -137,6 +137,9 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object TaxonomicBrowser : FieldMindScreen("field_taxonomic_browser", "Taxonomic Browser", FieldMindIcons.Category)
     data object FieldLog : FieldMindScreen("field_log", "Field Log", FieldMindIcons.List)
     data object TimerTool : FieldMindScreen("field_timer", "Timer", FieldMindIcons.Timer)
+
+    // ── Canvas note editor ──
+    data object Canvas : FieldMindScreen("field_canvas/{noteId}", "Canvas", MaterialSymbolIcon("dashboard_customize"))
 }
 
 private val bottomTabs = listOf(
@@ -821,6 +824,17 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
         composable(FieldMindScreen.SiteLogTool.route) { SiteLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.ComparisonTable.route) { ComparisonTableScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.TimerTool.route) { TimerToolScreen(onBack = { navController.popBackStack() }) }
+        composable("field_canvas/{noteId}") { entry ->
+            val noteId = entry.arguments?.getString("noteId")?.toLongOrNull() ?: 0L
+            CanvasScreen(
+                noteId = noteId,
+                fieldViewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onLinkToEntity = { blockId ->
+                    // Future: open entity picker for linking
+                }
+            )
+        }
         composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() },
