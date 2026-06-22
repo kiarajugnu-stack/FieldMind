@@ -844,7 +844,16 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
-            DetailScreen(kind = kind, id = id, viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail, onOpenReader = openReader)
+            DetailScreen(
+                kind = kind, id = id,
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onOpenDetail = openDetail,
+                onOpenReader = openReader,
+                onOpenCanvas = { noteId ->
+                    navController.navigateToDestination("field_canvas/$noteId")
+                }
+            )
         }
     }
 }
