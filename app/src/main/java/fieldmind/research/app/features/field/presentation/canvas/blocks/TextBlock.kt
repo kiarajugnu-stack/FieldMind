@@ -20,7 +20,6 @@ import fieldmind.research.app.features.field.presentation.components.rememberFie
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.TransformedText
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -209,7 +208,7 @@ private class MarkdownVisualTransformation : VisualTransformation {
             }
         }
 
-        return TransformedText(result,
+        return androidx.compose.ui.text.TransformedText(result,
             OffsetMapping.Identity)
     }
 

@@ -119,10 +119,10 @@ data class TableData(
         /** Parse from JSON string. Returns null on failure. */
         fun fromJson(jsonString: String): TableData? = try {
             val obj = JSONObject(jsonString)
-            val headers = obj.getJSONArray("headers").let { arr ->
+            val headers: List<String> = obj.getJSONArray("headers").let { arr ->
                 (0 until arr.length()).map { arr.optString(it, "") }
             }
-            val rows = obj.getJSONArray("rows").let { arr ->
+            val rows: List<List<String>> = obj.getJSONArray("rows").let { arr ->
                 (0 until arr.length()).map { rowIdx ->
                     val row = arr.getJSONArray(rowIdx)
                     (0 until row.length()).map { colIdx -> row.optString(colIdx, "") }

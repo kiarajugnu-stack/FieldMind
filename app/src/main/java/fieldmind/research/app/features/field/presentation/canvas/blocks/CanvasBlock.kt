@@ -113,35 +113,37 @@ fun CanvasBlock(
                 }
             }
     ) {
-        // Block content
-        content()
+        Box(Modifier.fillMaxSize()) {
+            // Block content fills the entire area
+            content()
 
-        // Link badge (top-right corner, shown when block is linked to an entity)
-        if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (4f / canvasState.zoom).dp, y = (4f / canvasState.zoom).dp)
-                    .size((16f / canvasState.zoom).coerceAtLeast(12f).dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    MaterialSymbolIcon("link"),
-                    "Linked to ${block.linkedEntityType}",
-                    size = (10f / canvasState.zoom).coerceAtLeast(6f).dp,
-                    tint = MaterialTheme.colorScheme.onPrimary
+            // Link badge (top-right corner, shown when block is linked to an entity)
+            if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = (4f / canvasState.zoom).dp, y = (4f / canvasState.zoom).dp)
+                        .size((16f / canvasState.zoom).coerceAtLeast(12f).dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        MaterialSymbolIcon("link"),
+                        "Linked to ${block.linkedEntityType}",
+                        size = (10f / canvasState.zoom).coerceAtLeast(6f).dp,
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+
+            // Resize handle (bottom-right corner)
+            if (isSelected) {
+                ResizeHandle(
+                    onResize = { dx, dy -> onResized(block.width + dx, block.height + dy) },
+                    canvasState = canvasState
                 )
             }
-        }
-
-        // Resize handle (bottom-right corner)
-        if (isSelected) {
-            ResizeHandle(
-                onResize = { dx, dy -> onResized(block.width + dx, block.height + dy) },
-                canvasState = canvasState
-            )
         }
     }
 }

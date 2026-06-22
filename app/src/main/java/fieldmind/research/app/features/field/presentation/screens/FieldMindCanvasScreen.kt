@@ -165,7 +165,7 @@ fun CanvasScreen(
                     canvasState = canvasViewModel.canvasState,
                     blocks = blocks,
                     modifier = Modifier.fillMaxSize(),
-                    blockContent = { block, isSelected ->
+                    blockContent = { block: CanvasBlockEntity, isSelected: Boolean ->
                         CanvasBlockContent(
                             block = block,
                             isSelected = isSelected,
