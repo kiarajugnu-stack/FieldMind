@@ -677,9 +677,8 @@ private fun FieldMindNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = FieldMindScreen.Home.route,
-        modifier = modifier,
-        route = null
+        startDestination = "field_today",
+        modifier = modifier
     ) {
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
