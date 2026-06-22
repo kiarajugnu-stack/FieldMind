@@ -182,6 +182,9 @@ class FieldMindSettings private constructor(context: Context) {
     private val _autoBackupInterval = MutableStateFlow(prefs.getString(KEY_AUTO_BACKUP_INTERVAL, "Weekly") ?: "Weekly")
     val autoBackupInterval: StateFlow<String> = _autoBackupInterval.asStateFlow()
 
+    private val _autoBackupRetention = MutableStateFlow(prefs.getString(KEY_AUTO_BACKUP_RETENTION, "Keep all") ?: "Keep all")
+    val autoBackupRetention: StateFlow<String> = _autoBackupRetention.asStateFlow()
+
     private val _backupFolderUri = MutableStateFlow(prefs.getString(KEY_BACKUP_FOLDER_URI, "") ?: "")
     val backupFolderUri: StateFlow<String> = _backupFolderUri.asStateFlow()
 
@@ -382,6 +385,7 @@ class FieldMindSettings private constructor(context: Context) {
         _autoBackupInterval.value = value
         FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
     }
+    fun setAutoBackupRetention(value: String) = edit(KEY_AUTO_BACKUP_RETENTION, value) { _autoBackupRetention.value = value }
     fun setBackupFolderUri(value: String) = edit(KEY_BACKUP_FOLDER_URI, value) { _backupFolderUri.value = value }
     fun setAutoWeatherEnabled(value: Boolean) = edit(KEY_AUTO_WEATHER, value) { _autoWeatherEnabled.value = value }
     fun setAutoFlashcardsEnabled(value: Boolean) = edit(KEY_AUTO_FLASHCARDS, value) { _autoFlashcardsEnabled.value = value }
@@ -534,6 +538,7 @@ class FieldMindSettings private constructor(context: Context) {
         _localModelUseForStudy.value = true
         _autoBackupEnabled.value = false
         _autoBackupInterval.value = "Weekly"
+        _autoBackupRetention.value = "Keep all"
         _backupFolderUri.value = ""
         _autoWeatherEnabled.value = false
         _autoFlashcardsEnabled.value = false
@@ -632,6 +637,7 @@ class FieldMindSettings private constructor(context: Context) {
         put(KEY_LOCAL_MODEL_USE_STUDY, _localModelUseForStudy.value)
         put(KEY_AUTO_BACKUP_ENABLED, _autoBackupEnabled.value)
         put(KEY_AUTO_BACKUP_INTERVAL, _autoBackupInterval.value)
+        put(KEY_AUTO_BACKUP_RETENTION, _autoBackupRetention.value)
         put(KEY_BACKUP_FOLDER_URI, _backupFolderUri.value)
         put(KEY_AUTO_WEATHER, _autoWeatherEnabled.value)
         put(KEY_AUTO_FLASHCARDS, _autoFlashcardsEnabled.value)
@@ -727,6 +733,7 @@ class FieldMindSettings private constructor(context: Context) {
         applyBoolean(KEY_LOCAL_MODEL_USE_STUDY, true)
         applyBoolean(KEY_AUTO_BACKUP_ENABLED)
         applyString(KEY_AUTO_BACKUP_INTERVAL)
+        applyString(KEY_AUTO_BACKUP_RETENTION)
         applyString(KEY_BACKUP_FOLDER_URI)
         applyBoolean(KEY_AUTO_WEATHER)
         applyBoolean(KEY_AUTO_FLASHCARDS)
@@ -826,6 +833,7 @@ class FieldMindSettings private constructor(context: Context) {
         _localModelUseForStudy.value = prefs.getBoolean(KEY_LOCAL_MODEL_USE_STUDY, true)
         _autoBackupEnabled.value = prefs.getBoolean(KEY_AUTO_BACKUP_ENABLED, false)
         _autoBackupInterval.value = prefs.getString(KEY_AUTO_BACKUP_INTERVAL, "Weekly") ?: "Weekly"
+        _autoBackupRetention.value = prefs.getString(KEY_AUTO_BACKUP_RETENTION, "Keep all") ?: "Keep all"
         _backupFolderUri.value = prefs.getString(KEY_BACKUP_FOLDER_URI, "") ?: ""
         _autoWeatherEnabled.value = prefs.getBoolean(KEY_AUTO_WEATHER, false)
         _autoFlashcardsEnabled.value = prefs.getBoolean(KEY_AUTO_FLASHCARDS, false)
@@ -919,6 +927,7 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_LOCAL_MODEL_USE_STUDY = "local_model_use_study"
         private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
         private const val KEY_AUTO_BACKUP_INTERVAL = "auto_backup_interval"
+        private const val KEY_AUTO_BACKUP_RETENTION = "auto_backup_retention"
         private const val KEY_BACKUP_FOLDER_URI = "backup_folder_uri"
         private const val KEY_AUTO_WEATHER = "auto_weather"
         private const val KEY_AUTO_FLASHCARDS = "auto_flashcards"
