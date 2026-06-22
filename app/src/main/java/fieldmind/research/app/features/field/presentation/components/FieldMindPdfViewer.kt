@@ -113,11 +113,12 @@ fun PdfViewerDialog(
     var pageBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var isRendering by remember { mutableStateOf(false) }
     var renderError by remember { mutableStateOf(false) }
+    var renderRetryTrigger by remember { mutableIntStateOf(0) }
 
     // Track previous bitmap so we can recycle it after the new one is rendered
     var previousBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
-    LaunchedEffect(renderer, currentPage) {
+    LaunchedEffect(renderer, currentPage, renderRetryTrigger) {
         if (renderer == null || totalPages == 0) return@LaunchedEffect
 
         isRendering = true
@@ -137,15 +138,8 @@ fun PdfViewerDialog(
                             renderWidth, renderHeight,
                             android.graphics.Bitmap.Config.ARGB_8888
                         )
-                        // Render with a white background to prevent transparency/black issues
-                        val canvas = android.graphics.Canvas(bm)
-                        canvas.drawColor(android.graphics.Color.WHITE)
-                        canvas.setMatrix(android.graphics.Matrix().apply {
-                            setScale(
-                                renderWidth.toFloat() / page.width.toFloat(),
-                                renderHeight.toFloat() / page.height.toFloat()
-                            )
-                        })
+                        // Draw white background first to prevent transparent/black rendering
+                        android.graphics.Canvas(bm).apply { drawColor(android.graphics.Color.WHITE) }
                         page.render(bm, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                         page.close()
                         bm
@@ -347,7 +341,10 @@ fun PdfViewerDialog(
                                     color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f)
                                 )
                                 OutlinedButton(
-                                    onClick = { renderError = false; isRendering = true },
+                                    onClick = {
+                                        renderError = false
+                                        renderRetryTrigger++
+                                    },
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(
                                         contentColor = androidx.compose.ui.graphics.Color.White
@@ -497,7 +494,10 @@ private fun openPdfRenderer(context: Context, uriStr: String): PdfRenderer? {
                     stream.use { input -> input.copyTo(output) }
                 }
                 val fd = ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY)
-                PdfRenderer(fd)
+                PdfRenderer(fd).also { _ ->
+                    // Renderer opened successfully — schedule temp file cleanup
+                    tempFile.deleteOnExit()
+                }
             } catch (e: Exception) {
                 tempFile.delete()
                 null
