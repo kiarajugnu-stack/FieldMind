@@ -781,21 +781,25 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.routePopEnterTrans
     val toRoute = targetState.destination.route ?: ""
     val fromCat = categorizeRoute(fromRoute)
     val toCat = categorizeRoute(toRoute)
-    val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
-    val fadeSpec = tween<Float>(FieldMindMotion.durationSubtle, easing = FastOutSlowInEasing)
+    val slideSpec = FieldMindMotion.slideOffsetSpring
+    val fadeSpec = FieldMindMotion.expressiveFloat
 
     return when {
         fromCat == RouteCategory.Tab && toCat == RouteCategory.Tab -> {
             val direction = primaryTabDirection(toRoute, fromRoute)
-            slideInHorizontally(slideSpec) { -direction * it / 5 } + fadeIn(fadeSpec)
+            // Full-width slide from the opposite side
+            slideInHorizontally(slideSpec) { -direction * it } + fadeIn(animationSpec = fadeSpec)
         }
         toCat == RouteCategory.Tab && fromCat in listOf(
             RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
             RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
-        ) -> slideInHorizontally(slideSpec) { -it / 5 } + fadeIn(fadeSpec)
+        ) -> {
+            // Previous screen (tab) slides in from the left at full width — iOS predictive peek
+            slideInHorizontally(slideSpec) { -it } + fadeIn(animationSpec = fadeSpec)
+        }
         toCat == RouteCategory.SettingsHub && fromCat == RouteCategory.SettingsSubPage ->
-            fadeIn(animationSpec = FieldMindMotion.expressiveFloat)
-        else -> slideInHorizontally(slideSpec) { -it / 5 } + fadeIn(fadeSpec)
+            fadeIn(animationSpec = fadeSpec)
+        else -> slideInHorizontally(slideSpec) { -it } + fadeIn(animationSpec = fadeSpec)
     }
 }
 
@@ -804,29 +808,30 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.routePopExitTransi
     val toRoute = targetState.destination.route ?: ""
     val fromCat = categorizeRoute(fromRoute)
     val toCat = categorizeRoute(toRoute)
-    val fadeSpec = tween<Float>(FieldMindMotion.durationMicro, easing = FastOutSlowInEasing)
+    val slideSpec = FieldMindMotion.slideOffsetSpring
+    val fadeSpec = FieldMindMotion.expressiveFloat
 
     return when {
         fromCat == RouteCategory.Tab && toCat == RouteCategory.Tab -> {
             val direction = primaryTabDirection(toRoute, fromRoute)
-            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
-            slideOutHorizontally(slideSpec) { direction * it / 4 } + fadeOut(fadeSpec)
+            // Full-width slide out in the direction of the pop
+            slideOutHorizontally(slideSpec) { direction * it } + fadeOut(animationSpec = fadeSpec)
         }
         fromCat == RouteCategory.Tab && toCat in listOf(
             RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
             RouteCategory.Tool, RouteCategory.Detail
         ) -> {
-            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
-            slideOutHorizontally(slideSpec) { it / 4 } + fadeOut(fadeSpec)
+            // Current screen (tab) slides out to the right at full width
+            slideOutHorizontally(slideSpec) { it } + fadeOut(animationSpec = fadeSpec)
         }
         toCat == RouteCategory.Tab && fromCat in listOf(
             RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
             RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
         ) -> {
-            val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
-            slideOutHorizontally(slideSpec) { it / 4 } + fadeOut(fadeSpec)
+            // Current screen (sub-screen) slides out to the right at full width — iOS predictive
+            slideOutHorizontally(slideSpec) { it } + fadeOut(animationSpec = fadeSpec)
         }
-        else -> fadeOut(fadeSpec)
+        else -> fadeOut(animationSpec = fadeSpec)
     }
 }
 

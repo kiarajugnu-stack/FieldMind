@@ -5,8 +5,9 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -26,8 +27,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -35,9 +41,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -135,6 +143,14 @@ object FieldMindMotion {
         stiffness = Spring.StiffnessMediumLow               // ~300 — gentle
     )
 
+    // ── Navigation Spring for IntOffset (used in slide transitions) ──
+
+    /** Spring spec for IntOffset-based slide transitions (pop gestures). */
+    val slideOffsetSpring = spring<IntOffset>(
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessMedium
+    )
+
     // ── Duration Tokens (ms) ──
 
     /** Micro-interactions: press, hover, tap feedback. */
@@ -187,6 +203,26 @@ object FieldMindMotion {
 
     /** Scale press tween (120ms). */
     val pressScaleTween = tween<Float>(durationMillis = durationMicro)
+
+    // ── Swipe-back Constants ──
+
+    /** Edge zone width for detecting horizontal swipe-back gestures (dp). */
+    const val swipeEdgeWidthDp = 30f
+
+    /** Edge zone height for detecting vertical swipe-dismiss gestures (dp). */
+    const val swipeEdgeHeightDp = 30f
+
+    /** Fraction of screen width/height required to commit the back gesture. */
+    const val swipeThreshold = 0.30f
+
+    /** Max scale-down factor applied during swipe (1.0 = no scale). */
+    const val swipeScaleFactor = 0.92f
+
+    /** Max scrim alpha during swipe. */
+    const val swipeScrimAlpha = 0.35f
+
+    /** Shadow elevation (dp) at full swipe progress. */
+    const val swipeShadowElevationDp = 24f
 
     // ── Utility ──
 
@@ -362,17 +398,27 @@ fun Modifier.pressCardScale(): Modifier = composed {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-//  Swipe-back Gesture Host
+//  Swipe-back Gesture Host — iOS-style with predictive peek
 // ──────────────────────────────────────────────────────────────────────
 
 /**
- * Wraps content with a horizontal swipe-back gesture. Users can swipe
- * from the left edge to navigate back. The content follows the finger
- * with spring physics, snapping back if released before the threshold or
- * calling [onBack] if released past the threshold.
+ * Direction of a swipe-back gesture.
+ */
+private enum class SwipeDirection { Horizontal, Vertical }
+
+/**
+ * Wraps content with iOS-style swipe-back and swipe-down gestures.
  *
- * Uses [detectHorizontalDragGestures] for gesture detection with
- * [animateFloatAsState] for smooth spring-back animation.
+ * **Horizontal swipe** (from left edge) — the content follows the finger,
+ * scales down slightly, and reveals a gradient scrim + shadow edge behind
+ * it, mimicking the iOS back-swipe preview effect.
+ *
+ * **Vertical swipe** (from top edge) — the content slides down with
+ * similar effects, useful for dismissing modal-style screens.
+ *
+ * On release past 30% threshold → calls [onBack] (which triggers the
+ * NavHost's popExitTransition/popEnterTransition, rendering both screens).
+ * On release before threshold → springs back to position.
  *
  * Place this around any screen composable that should support swipe-back
  * navigation (settings, tools, detail, creation — not bottom-nav tabs).
@@ -386,64 +432,201 @@ fun SwipeBackHost(
     val reduceMotion = FieldMindMotion.isReduceMotion()
     val scope = rememberCoroutineScope()
 
-    var offsetX by remember { mutableFloatStateOf(0f) }
-    var contentWidth by remember { mutableFloatStateOf(0f) }
+    // Track which swipe direction is active
+    var activeDirection by remember { mutableStateOf<SwipeDirection?>(null) }
 
-    // Animate offset with spring when released
+    // Raw offsets driven by the gesture (immediate, no animation)
+    var rawOffsetX by remember { mutableFloatStateOf(0f) }
+    var rawOffsetY by remember { mutableFloatStateOf(0f) }
+
+    // Target offsets that animate with spring physics
+    var targetOffsetX by remember { mutableFloatStateOf(0f) }
+    var targetOffsetY by remember { mutableFloatStateOf(0f) }
+
+    // Layout size
+    var contentWidth by remember { mutableFloatStateOf(1f) }
+    var contentHeight by remember { mutableFloatStateOf(1f) }
+
+    // Animate toward target with spring
     val animatedOffsetX by animateFloatAsState(
-        targetValue = offsetX,
+        targetValue = targetOffsetX,
         animationSpec = FieldMindMotion.swipeBackSpring,
-        label = "swipeOffset",
-        finishedListener = {
-            // Reset to 0 after completion (happens when snapped back or released)
-        }
+        label = "swipeX"
+    )
+    val animatedOffsetY by animateFloatAsState(
+        targetValue = targetOffsetY,
+        animationSpec = FieldMindMotion.swipeBackSpring,
+        label = "swipeY"
     )
 
-    // Scrim alpha — darkens the content behind as swipe progresses
-    val scrimAlpha = if (contentWidth > 0f && offsetX > 0f) {
-        (offsetX / contentWidth).coerceIn(0f, 0.35f)
-    } else 0f
+    // Progress (0..1) — used for scrim, scale, shadow
+    val maxExtent = when (activeDirection) {
+        SwipeDirection.Horizontal -> contentWidth
+        SwipeDirection.Vertical -> contentHeight
+        null -> 1f
+    }
+    val currentOffset = when (activeDirection) {
+        SwipeDirection.Horizontal -> animatedOffsetX
+        SwipeDirection.Vertical -> animatedOffsetY
+        null -> 0f
+    }
+    val progress = (currentOffset / maxExtent).coerceIn(0f, 1f)
+
+    // Derived visual values
+    val scrimAlpha = progress * FieldMindMotion.swipeScrimAlpha
+    val contentScale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
+    val shadowElevation = progress * FieldMindMotion.swipeShadowElevationDp
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .onGloballyPositioned { coordinates ->
-                contentWidth = coordinates.size.width.toFloat()
+            .onGloballyPositioned { coords ->
+                contentWidth = coords.size.width.toFloat().coerceAtLeast(1f)
+                contentHeight = coords.size.height.toFloat().coerceAtLeast(1f)
             }
     ) {
-        // Scrim overlay — shown behind the content as it slides
-        if (scrimAlpha > 0.01f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = scrimAlpha))
-            )
+        // ── Previous screen preview (depth scrim + shadow gradient) ──
+        if (progress > 0.01f) {
+            // Gradient scrim — reveals a peek of the screen behind
+            when (activeDirection) {
+                SwipeDirection.Horizontal -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = scrimAlpha * 0.9f),
+                                        Color.Black.copy(alpha = scrimAlpha * 0.4f),
+                                        Color.Transparent
+                                    ),
+                                    startX = 0f,
+                                    endX = contentWidth * 0.5f
+                                )
+                            )
+                    )
+                }
+                SwipeDirection.Vertical -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = scrimAlpha * 0.9f),
+                                        Color.Black.copy(alpha = scrimAlpha * 0.4f),
+                                        Color.Transparent
+                                    ),
+                                    startY = 0f,
+                                    endY = contentHeight * 0.5f
+                                )
+                            )
+                    )
+                }
+                null -> {}
+            }
         }
 
-        // Swipeable content with drag gesture
+        // ── Swipeable content ──
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .offset { IntOffset(x = animatedOffsetX.roundToInt(), y = 0) }
+                .graphicsLayer {
+                    val offsetX = animatedOffsetX.roundToInt()
+                    val offsetY = animatedOffsetY.roundToInt()
+
+                    translationX = offsetX.toFloat()
+                    translationY = offsetY.toFloat()
+                    scaleX = contentScale
+                    scaleY = contentScale
+                    shadowElevation = shadowElevation
+                    transformOrigin = TransformOrigin(if (offsetX > 0) 0f else 0.5f, if (offsetY > 0) 0f else 0.5f)
+
+                    // Clip to prevent content bleeding outside during scale
+                    clip = true
+                    shape = RoundedCornerShape(
+                        topStart = 0.dp,
+                        topEnd = 0.dp,
+                        bottomEnd = if (offsetX > 0) (12f * progress).dp else 0.dp,
+                        bottomStart = if (offsetX > 0) (12f * progress).dp else 0.dp
+                    )
+                }
                 .then(
                     if (!reduceMotion) {
                         Modifier.pointerInput(Unit) {
-                            detectHorizontalDragGestures(
+                            // Use detectDragGestures for both horizontal and vertical
+                            detectDragGestures(
+                                onDragStart = { startPos ->
+                                    // Determine direction based on where the drag starts
+                                    val startXDp = startPos.x
+                                    val startYDp = startPos.y
+                                    if (startXDp <= FieldMindMotion.swipeEdgeWidthDp) {
+                                        activeDirection = SwipeDirection.Horizontal
+                                    } else if (startYDp <= FieldMindMotion.swipeEdgeHeightDp) {
+                                        activeDirection = SwipeDirection.Vertical
+                                    }
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+
+                                    when (activeDirection) {
+                                        SwipeDirection.Horizontal -> {
+                                            // Only allow rightward drag
+                                            targetOffsetX = (targetOffsetX + dragAmount.x).coerceAtLeast(0f)
+                                            targetOffsetY = 0f
+                                        }
+                                        SwipeDirection.Vertical -> {
+                                            // Only allow downward drag
+                                            targetOffsetY = (targetOffsetY + dragAmount.y).coerceAtLeast(0f)
+                                            targetOffsetX = 0f
+                                        }
+                                        null -> {
+                                            // Try to determine direction from the drag delta itself
+                                            val dx = dragAmount.x
+                                            val dy = dragAmount.y
+                                            if (abs(dx) > abs(dy) && dx > 0) {
+                                                activeDirection = SwipeDirection.Horizontal
+                                                targetOffsetX = (targetOffsetX + dx).coerceAtLeast(0f)
+                                            } else if (abs(dy) > abs(dx) && dy > 0) {
+                                                activeDirection = SwipeDirection.Vertical
+                                                targetOffsetY = (targetOffsetY + dy).coerceAtLeast(0f)
+                                            }
+                                        }
+                                    }
+                                },
                                 onDragEnd = {
-                                    // If past 30% threshold, trigger back navigation
-                                    if (offsetX > contentWidth * 0.30f) {
+                                    val maxVal = when (activeDirection) {
+                                        SwipeDirection.Horizontal -> contentWidth
+                                        SwipeDirection.Vertical -> contentHeight
+                                        null -> Float.MAX_VALUE
+                                    }
+                                    val currentVal = when (activeDirection) {
+                                        SwipeDirection.Horizontal -> targetOffsetX
+                                        SwipeDirection.Vertical -> targetOffsetY
+                                        null -> 0f
+                                    }
+
+                                    if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
+                                        // Commit the back gesture — animate to full extent
                                         scope.launch {
-                                            // Animate to full width then call back
-                                            offsetX = contentWidth
+                                            when (activeDirection) {
+                                                SwipeDirection.Horizontal -> targetOffsetX = contentWidth
+                                                SwipeDirection.Vertical -> targetOffsetY = contentHeight
+                                                null -> {}
+                                            }
                                             onBack()
                                         }
                                     } else {
-                                        // Snap back
-                                        offsetX = 0f
+                                        // Snap back to origin
+                                        activeDirection = null
+                                        targetOffsetX = 0f
+                                        targetOffsetY = 0f
                                     }
                                 },
-                                onHorizontalDrag = { _, dragAmount ->
-                                    offsetX = (offsetX + dragAmount).coerceAtLeast(0f)
+                                onDragCancel = {
+                                    activeDirection = null
+                                    targetOffsetX = 0f
+                                    targetOffsetY = 0f
                                 }
                             )
                         }
@@ -455,8 +638,8 @@ fun SwipeBackHost(
         ) {
             content()
 
-            // Back indicator — appears on left edge during drag
-            if (offsetX > contentWidth * 0.05f) {
+            // ── Back arrow indicator — appears on left edge during horizontal swipe ──
+            if (activeDirection == SwipeDirection.Horizontal && currentOffset > contentWidth * 0.05f) {
                 Box(
                     modifier = Modifier
                         .padding(start = 4.dp)
@@ -471,6 +654,28 @@ fun SwipeBackHost(
                     Icon(
                         icon = FieldMindIcons.Back,
                         contentDescription = "Swipe back",
+                        size = 22.dp,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // ── Down arrow indicator — appears at top edge during vertical swipe ──
+            if (activeDirection == SwipeDirection.Vertical && currentOffset > contentHeight * 0.05f) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .align(Alignment.TopCenter)
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        icon = FieldMindIcons.Back, // reuse back arrow for now (rotate later if desired)
+                        contentDescription = "Swipe down to dismiss",
                         size = 22.dp,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
