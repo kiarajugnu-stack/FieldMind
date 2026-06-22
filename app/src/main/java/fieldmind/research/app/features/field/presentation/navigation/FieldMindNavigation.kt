@@ -670,7 +670,7 @@ private fun FieldMindNavHost(
 ) {
     var readerTarget by remember { mutableStateOf("" to "") }
     val openDetail: (String, Long) -> Unit = { kind, id -> navController.navigateToDestination("field_detail/$kind/$id") }
-    val openReader: (String, String) -> Unit = { url, title ->
+    val openReader: (String, String) -> Unit = { url: String, title: String ->
         readerTarget = url to title
         navController.navigateToDestination(FieldMindScreen.Reader.route)
     }
