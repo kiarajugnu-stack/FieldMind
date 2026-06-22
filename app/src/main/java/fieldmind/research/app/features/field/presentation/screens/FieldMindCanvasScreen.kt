@@ -35,6 +35,7 @@ import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 import fieldmind.research.app.features.field.data.database.entity.NoteEntity
 import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
 import fieldmind.research.app.features.field.presentation.canvas.*
+import fieldmind.research.app.features.field.presentation.canvas.LinkToEntityDialog
 import fieldmind.research.app.features.field.presentation.canvas.blocks.*
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
@@ -57,14 +58,12 @@ import org.json.JSONObject
  * @param noteId the ID of the note to edit
  * @param fieldViewModel the app-level ViewModel (for note title + entity linking)
  * @param onBack called to navigate back
- * @param onLinkToEntity called to open an entity picker for linking a block
  */
 @Composable
 fun CanvasScreen(
     noteId: Long,
     fieldViewModel: FieldMindViewModel,
-    onBack: () -> Unit,
-    onLinkToEntity: ((Long) -> Unit)? = null
+    onBack: () -> Unit
 ) {
     val canvasViewModel: CanvasViewModel = viewModel()
     val haptics = rememberFieldMindHaptics()
@@ -96,6 +95,9 @@ fun CanvasScreen(
             canvasViewModel.selectBlock(id)
         }
     }
+
+    // ── Link-to-entity dialog state ──
+    var linkDialogBlockId by remember { mutableStateOf<Long?>(null) }
 
     // ── Add-block menu state ──
     var showAddMenu by remember { mutableStateOf(false) }
@@ -189,7 +191,7 @@ fun CanvasScreen(
                         }
                     },
                     onBlockLinkToEntity = { id ->
-                        onLinkToEntity?.invoke(id)
+                        linkDialogBlockId = id
                     },
                     showMinimap = true,
                     viewportSize = viewportSize
@@ -247,6 +249,14 @@ fun CanvasScreen(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 160.dp)
+            )
+        // ── Link-to-Entity dialog ──
+        linkDialogBlockId?.let { blockId ->
+            LinkToEntityDialog(
+                blockId = blockId,
+                viewModel = fieldViewModel,
+                canvasViewModel = canvasViewModel,
+                onDismiss = { linkDialogBlockId = null }
             )
         }
     }

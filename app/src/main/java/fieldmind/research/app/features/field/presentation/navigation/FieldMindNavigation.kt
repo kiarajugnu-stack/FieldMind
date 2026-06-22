@@ -829,10 +829,7 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
             CanvasScreen(
                 noteId = noteId,
                 fieldViewModel = viewModel,
-                onBack = { navController.popBackStack() },
-                onLinkToEntity = { blockId ->
-                    // Future: open entity picker for linking
-                }
+                onBack = { navController.popBackStack() }
             )
         }
         composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(

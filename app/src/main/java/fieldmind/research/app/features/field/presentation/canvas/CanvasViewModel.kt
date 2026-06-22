@@ -322,6 +322,23 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     // ═══════════════════════════════════════════════════════════════
+    //  Entity linking
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Link a canvas block to a (remote) entity such as an Observation, Note,
+     * Question, Source, or Project.
+     *
+     * The [entityType] is stored as a string label (e.g. "observation", "note",
+     * "question", "source", "project") for cross-reference queries.
+     */
+    fun linkBlockToEntity(blockId: Long, entityType: String, entityId: Long) {
+        viewModelScope.launch {
+            repository.linkBlockToEntity(blockId, entityType, entityId)
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     //  Canvas view persistence
     // ═══════════════════════════════════════════════════════════════
 
