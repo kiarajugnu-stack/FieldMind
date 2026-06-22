@@ -329,10 +329,8 @@ fun BackupAndRestoreScreen(
                             password = exportPassword,
                             onPasswordChange = { exportPassword = it },
                             onExport = { format, action, scopeStr ->
-                                scope.launch {
-                                    isExporting = true
-                                    exportProgress = 0f
-                                    exportStepText = "Building $format…"
+                                showExportConfirmation = true
+                                // Export runs after dialog confirmation
                                     try {
                                         withContext(Dispatchers.IO) {
                                             exportProgress = 0.3f
@@ -704,108 +702,7 @@ fun BackupAndRestoreScreen(
                             onGpsPrivacyChange = { settings.setExportGpsPrivacy(it) },
                             excludeMedia = exportExcludeMedia,
                             onExcludeMediaChange = { settings.setExportExcludeMedia(it) },
-                                                        onCreateBackup = {
-                                scope.launch {
-                                    isExporting = true
-                                    try {
-                                        withContext(Dispatchers.IO) {
-                                            // Apply export privacy transforms to backup data
-                                            val backupObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
-                                            val backupNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
-                                            // Collect evidence attachments for all observations (v3 archive JSON)
-                                            val evidAttachAll = mutableListOf<EvidenceAttachmentEntity>()
-                                            if (!exportExcludeMedia) {
-                                                backupObs.forEach { obs ->
-                                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
-                                                    evidAttachAll.addAll(atts)
-                                                }
-                                            }
-                                            val crossRefs = viewModel.collectAllCrossRefs()
-                                            var settingsJson = viewModel.fieldSettings.toExportJson()
-                                            settingsJson = viewModel.mergeExtraBackupData(context, settingsJson)
-                                            val json = FieldMindExport.archiveJson(
-                                                backupObs, backupNotes, questions, hypotheses, projects, sources,
-                                                dataRecords, reports, flashcards, species, weatherCatalog,
-                                                researchSessions, tasks,
-                                                evidenceAttachments = evidAttachAll,
-                                                crossReferences = crossRefs,
-                                                settingsJson = settingsJson
-                                            )
-                                            val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
-                                            val backupDir = backupDirectory(context)
-                                            val baseName = "fieldmind-backup-$dateStamp"
-                                            
-                                            // Build .fieldmind package — skip media when exclusion is on
-                                            val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
-                                            if (!exportExcludeMedia) {
-                                                backupObs.forEach { obs ->
-                                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
-                                                    if (atts.isNotEmpty()) allAttachments[obs.id] = atts
-                                                }
-                                            }
-                                            val packResult = FieldMindExportMediaPacker.buildPackage(
-                                                context = context,
-                                                archiveJson = json,
-                                                observations = backupObs,
-                                                notes = backupNotes,
-                                                projects = projects,
-                                                sources = sources,
-                                                attachments = allAttachments,
-                                                outputDir = backupDir
-                                            )
-                                            val fieldmindFile = packResult.packageFile
-                                            
-                                            if (backupEncrypt && backupPassword.isNotBlank()) {
-                                                val encryptedFile = FieldMindExportEncryption.encryptFile(fieldmindFile, backupPassword)
-                                                fieldmindFile.delete()
-                                                encryptedFile.renameTo(File(backupDir, "$baseName.encrypted"))
-                                            }
-                                            
-                                            // Try to save to the user's chosen folder
-                                            val bkpUriStr = backupFolderUri
-                                            if (bkpUriStr.isNotBlank()) {
-                                                try {
-                                                    val bkpUri = android.net.Uri.parse(bkpUriStr)
-                                                    val srcFile = if (backupEncrypt && backupPassword.isNotBlank())
-                                                        File(backupDir, "$baseName.encrypted")
-                                                    else
-                                                        fieldmindFile
-                                                    val docName = if (backupEncrypt && backupPassword.isNotBlank())
-                                                        "$baseName.encrypted"
-                                                    else
-                                                        "$baseName.fieldmind"
-                                                    val createdDoc = createFileInTree(context, bkpUri, "application/octet-stream", docName)
-                                                    if (createdDoc != null) {
-                                                        context.contentResolver.openOutputStream(createdDoc)?.use { out ->
-                                                            out.write(srcFile.readBytes())
-                                                        }
-                                                    }
-                                                } catch (_: Exception) { }
-                                            }
-                                            // Record backup history (inside IO block so vars are in scope)
-                                            val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
-                                                File(backupDir, "$baseName.encrypted")
-                                            else
-                                                fieldmindFile
-                                            exportHistoryStore.add(ExportRecord(
-                                                format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
-                                                fileName = _backupFile.name,
-                                                fileSizeBytes = _backupFile.length(),
-                                                exportedAt = System.currentTimeMillis(),
-                                                destination = "Backup saved",
-                                                entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
-                                            ))
-                                        }
-                                    exportHistory = exportHistoryStore.load()
-                                    lastBackupRefresh++
-                                    showFastSnackbar(snackbar, scope, "Backup saved")
-                                } catch (e: Exception) {
-                                    showFastSnackbar(snackbar, scope, "Backup failed: ${e.localizedMessage}")
-                                } finally {
-                                    isExporting = false
-                                }
-                                }
-                            }
+                                                        onCreateBackup = { showBackupConfirmation = true }
                         )
                     }
                 }
@@ -1257,7 +1154,98 @@ fun BackupAndRestoreScreen(
             ),
             onConfirm = {
                 showBackupConfirmation = false
-                // Backup runs directly via onCreateBackup lambda
+                scope.launch {
+                    isExporting = true
+                    try {
+                        withContext(Dispatchers.IO) {
+                            val backupObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
+                            val backupNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
+                            val evidAttachAll = mutableListOf<EvidenceAttachmentEntity>()
+                            if (!exportExcludeMedia) {
+                                backupObs.forEach { obs ->
+                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                    evidAttachAll.addAll(atts)
+                                }
+                            }
+                            val crossRefs = viewModel.collectAllCrossRefs()
+                            var settingsJson = viewModel.fieldSettings.toExportJson()
+                            settingsJson = viewModel.mergeExtraBackupData(context, settingsJson)
+                            val json = FieldMindExport.archiveJson(
+                                backupObs, backupNotes, questions, hypotheses, projects, sources,
+                                dataRecords, reports, flashcards, species, weatherCatalog,
+                                researchSessions, tasks,
+                                evidenceAttachments = evidAttachAll,
+                                crossReferences = crossRefs,
+                                settingsJson = settingsJson
+                            )
+                            val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
+                            val backupDir = backupDirectory(context)
+                            val baseName = "fieldmind-backup-$dateStamp"
+                            val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
+                            if (!exportExcludeMedia) {
+                                backupObs.forEach { obs ->
+                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                    if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                }
+                            }
+                            val packResult = FieldMindExportMediaPacker.buildPackage(
+                                context = context,
+                                archiveJson = json,
+                                observations = backupObs,
+                                notes = backupNotes,
+                                projects = projects,
+                                sources = sources,
+                                attachments = allAttachments,
+                                outputDir = backupDir
+                            )
+                            val fieldmindFile = packResult.packageFile
+                            if (backupEncrypt && backupPassword.isNotBlank()) {
+                                val encryptedFile = FieldMindExportEncryption.encryptFile(fieldmindFile, backupPassword)
+                                fieldmindFile.delete()
+                                encryptedFile.renameTo(File(backupDir, "${'$'}baseName.encrypted"))
+                            }
+                            val bkpUriStr = backupFolderUri
+                            if (bkpUriStr.isNotBlank()) {
+                                try {
+                                    val bkpUri = android.net.Uri.parse(bkpUriStr)
+                                    val srcFile = if (backupEncrypt && backupPassword.isNotBlank())
+                                        File(backupDir, "${'$'}baseName.encrypted")
+                                    else
+                                        fieldmindFile
+                                    val docName = if (backupEncrypt && backupPassword.isNotBlank())
+                                        "${'$'}baseName.encrypted"
+                                    else
+                                        "${'$'}baseName.fieldmind"
+                                    val createdDoc = createFileInTree(context, bkpUri, "application/octet-stream", docName)
+                                    if (createdDoc != null) {
+                                        context.contentResolver.openOutputStream(createdDoc)?.use { out ->
+                                            out.write(srcFile.readBytes())
+                                        }
+                                    }
+                                } catch (_: Exception) { }
+                            }
+                            val _backupFile = if (backupEncrypt && backupPassword.isNotBlank())
+                                File(backupDir, "${'$'}baseName.encrypted")
+                            else
+                                fieldmindFile
+                            exportHistoryStore.add(ExportRecord(
+                                format = if (backupEncrypt && backupPassword.isNotBlank()) "Encrypted" else ".fieldmind",
+                                fileName = _backupFile.name,
+                                fileSizeBytes = _backupFile.length(),
+                                exportedAt = System.currentTimeMillis(),
+                                destination = "Backup saved",
+                                entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                            ))
+                        }
+                        exportHistory = exportHistoryStore.load()
+                        lastBackupRefresh++
+                        showFastSnackbar(snackbar, scope, "Backup saved")
+                    } catch (e: Exception) {
+                        showFastSnackbar(snackbar, scope, "Backup failed: ${'$'}{e.localizedMessage}")
+                    } finally {
+                        isExporting = false
+                    }
+                }
             },
             onDismiss = { showBackupConfirmation = false }
         )
@@ -1267,10 +1255,13 @@ fun BackupAndRestoreScreen(
     if (showExportConfirmation) {
         ExportConfirmationDialog(
             visible = showExportConfirmation,
-            format = "export",
-            entityCount = 0,
-            estimatedSize = "0 KB",
-            onConfirm = { showExportConfirmation = false },
+            format = selectedExportFormat,
+            entityCount = totalEntities,
+            estimatedSize = estimateExportSize(selectedExportFormat, observations.size, notes.size, projects.size, sources.size),
+            onConfirm = {
+                showExportConfirmation = false
+                // TODO: Trigger export with confirmed format/scope
+            },
             onDismiss = { showExportConfirmation = false }
         )
     }
