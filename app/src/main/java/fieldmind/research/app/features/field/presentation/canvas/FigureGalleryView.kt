@@ -37,21 +37,13 @@ fun extractGalleryItems(blocks: List<CanvasBlockEntity>): List<FigureGalleryItem
     return blocks
         .filter { it.type in listOf("image", "figure", "pdf") }
         .map { block ->
-            val uri: String
-            val caption: String
-            if (block.contentJson.isNotBlank()) {
+            val blockJson = if (block.contentJson.isNotBlank()) {
                 try {
-                    val obj = JSONObject(block.contentJson)
-                    uri = obj.optString("uri", "")
-                    caption = obj.optString("caption", "")
-                } catch (_: Exception) {
-                    uri = ""
-                    caption = ""
-                }
-            } else {
-                uri = ""
-                caption = ""
-            }
+                    JSONObject(block.contentJson)
+                } catch (_: Exception) { null }
+            } else null
+            val uri = blockJson?.optString("uri", "") ?: ""
+            val caption = blockJson?.optString("caption", "") ?: ""
             FigureGalleryItem(
                 block = block,
                 thumbnailUri = uri,

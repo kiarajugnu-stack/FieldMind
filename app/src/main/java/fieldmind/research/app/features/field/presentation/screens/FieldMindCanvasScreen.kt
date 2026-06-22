@@ -142,7 +142,8 @@ fun CanvasScreen(
             }
     ) {
         Column(Modifier.fillMaxSize()) {
-            // ── Top bar ──                CanvasTopBar(
+            // ── Top bar ──
+            CanvasTopBar(
                     note = note,
                     isSaving = isSaving,
                     canUndo = canUndo,
