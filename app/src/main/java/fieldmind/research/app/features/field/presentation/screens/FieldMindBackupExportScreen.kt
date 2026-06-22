@@ -158,6 +158,9 @@ fun BackupAndRestoreScreen(
     var passwordsMatch by remember { mutableStateOf(true) }
     var showBackupConfirmation by remember { mutableStateOf(false) }
     var showExportConfirmation by remember { mutableStateOf(false) }
+    var pendingExportFormat by remember { mutableStateOf("") }
+    var pendingExportAction by remember { mutableStateOf("") }
+    var pendingExportScope by remember { mutableStateOf("") }
 
     // Format state for export
     var showShareDialog by remember { mutableStateOf(false) }
@@ -329,217 +332,10 @@ fun BackupAndRestoreScreen(
                             password = exportPassword,
                             onPasswordChange = { exportPassword = it },
                             onExport = { format, action, scopeStr ->
+                                pendingExportFormat = format
+                                pendingExportAction = action
+                                pendingExportScope = scopeStr
                                 showExportConfirmation = true
-                                // Export runs after dialog confirmation
-                                    try {
-                                        withContext(Dispatchers.IO) {
-                                            exportProgress = 0.3f
-                                            // Apply export privacy transforms before building the archive
-                                            val exportObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
-                                            val exportNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
-                                            // Collect evidence attachments for all observations (v3 archive JSON)
-                                            val evidAttachAll = mutableListOf<EvidenceAttachmentEntity>()
-                                            if (!exportExcludeMedia) {
-                                                exportObs.forEach { obs ->
-                                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
-                                                    evidAttachAll.addAll(atts)
-                                                }
-                                            }
-                                            // Collect cross-references and settings for v3 archive
-                                            val crossRefs = viewModel.collectAllCrossRefs()
-                                            var settingsJson = viewModel.fieldSettings.toExportJson()
-                                            // Include PhashDatabase and GeoFenceRegions in settings
-                                            settingsJson = viewModel.mergeExtraBackupData(context, settingsJson)
-                                            val json = FieldMindExport.archiveJson(
-                                                observations = exportObs, notes = exportNotes,
-                                                questions = questions, hypotheses = hypotheses,
-                                                projects = projects, sources = sources,
-                                                dataRecords = dataRecords, reports = reports,
-                                                flashcards = flashcards,
-                                                species = species,
-                                                weatherCatalog = weatherCatalog,
-                                                researchSessions = researchSessions,
-                                                tasks = tasks,
-                                                evidenceAttachments = evidAttachAll,
-                                                crossReferences = crossRefs,
-                                                settingsJson = settingsJson
-                                            )
-                                            val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
-                                            val ext = when (format) {
-                                                "Markdown" -> "md"
-                                                ".fieldmind" -> "fieldmind"
-                                                ".zip" -> "zip"
-                                                else -> format.lowercase().removePrefix(".")
-                                            }
-                                            val fileName = "fieldmind-export-$dateStamp.$ext"
-                                            val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
-                                            val exportFile = File(exportDir, fileName)
-
-                                            exportProgress = 0.5f
-                                            when (format) {
-                                                "Markdown" -> exportFile.writeText(
-                                                    observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) }
-                                                )
-                                                "JSON" -> {
-                                                    // JSON with embedded media
-                                                    if (!exportExcludeMedia) {
-                                                        val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                                            FieldMindExport.ExportMediaBundle.collect(
-                                                                context = context,
-                                                                observations = exportObs,
-                                                                notes = exportNotes,
-                                                                projects = projects,
-                                                                sources = sources
-                                                            )
-                                                        }
-                                                        // TODO: Enhance JSON with media if needed
-                                                    }
-                                                    exportFile.writeText(json)
-                                                }
-                                                "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
-                                                "HTML" -> {
-                                                    if (!exportExcludeMedia) {
-                                                        val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                                            FieldMindExport.ExportMediaBundle.collect(
-                                                                context = context,
-                                                                observations = exportObs,
-                                                                notes = exportNotes,
-                                                                projects = projects,
-                                                                sources = sources
-                                                            )
-                                                        }
-                                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes, media = mediaBundle))
-                                                    } else {
-                                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes))
-                                                    }
-                                                }
-                                                "PDF" -> {
-                                                    val bodyText = observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
-                                                    if (!exportExcludeMedia) {
-                                                        val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                                                            FieldMindExport.ExportMediaBundle.collect(
-                                                                context = context,
-                                                                observations = exportObs,
-                                                                notes = exportNotes,
-                                                                projects = projects,
-                                                                sources = sources
-                                                            )
-                                                        }
-                                                        val imgBytesArray = mediaBundle.observationImages.values.firstOrNull()
-                                                            ?.firstOrNull()?.second?.let { decodeBase64FromDataUri(it) }
-                                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText, embeddedImageBytes = imgBytesArray))
-                                                    } else {
-                                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText))
-                                                    }
-                                                }
-                                                ".fieldmind", ".zip" -> {
-                                                    val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
-                                                    if (!exportExcludeMedia) {
-                                                        exportObs.forEach { obs ->
-                                                            val atts = viewModel.attachmentsForObservation(obs.id).first()
-                                                            if (atts.isNotEmpty()) allAttachments[obs.id] = atts
-                                                        }
-                                                    }
-                                                    val result = FieldMindExportMediaPacker.buildPackage(
-                                                        context = context, archiveJson = json,
-                                                        observations = exportObs, notes = exportNotes, projects = projects, sources = sources,
-                                                        attachments = allAttachments, outputDir = exportDir
-                                                    )
-                                                    result.packageFile.copyTo(exportFile, overwrite = true)
-                                                    // Apply encryption if enabled
-                                                    if (exportEncrypt && exportPassword.isNotBlank()) {
-                                                        val encryptedFile = FieldMindExportEncryption.encryptFile(exportFile, exportPassword)
-                                                        exportFile.delete()
-                                                        val encryptedName = exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted")
-                                                        encryptedFile.renameTo(File(exportFile.parentFile, encryptedName))
-                                                    }
-                                                }
-                                            }
-
-                                            exportProgress = 0.8f
-                                            if (action == "share") {
-                                                val shareUri = FileProvider.getUriForFile(
-                                                    context,
-                                                    "${context.packageName}.provider",
-                                                    exportFile
-                                                )
-                                                val mimeType = if (format == "PDF") "application/pdf" else "text/markdown"
-                                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                                    type = mimeType
-                                                    putExtra(Intent.EXTRA_STREAM, shareUri)
-                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                                }
-                                                context.startActivity(Intent.createChooser(shareIntent, "Share FieldMind Export"))
-                                            } else {
-                                                val destUri = exportDestinationUri
-                                                if (destUri == null) {
-                                                    throw java.io.IOException("Please select a destination folder first")
-                                                }
-                                                val mimeType = when (format) {
-                                                    "PDF" -> "application/pdf"
-                                                    ".fieldmind" -> "application/octet-stream"
-                                                    ".zip" -> "application/zip"
-                                                    "JSON" -> "application/json"
-                                                    "CSV" -> "text/csv"
-                                                    "Markdown" -> "text/markdown"
-                                                    "HTML" -> "text/html"
-                                                    else -> "application/octet-stream"
-                                                }
-                                                try {
-                                                    val createdDoc = createFileInTree(context, destUri, mimeType, fileName)
-                                                    if (createdDoc != null) {
-                                                        val outStream = context.contentResolver.openOutputStream(createdDoc)
-                                                        if (outStream != null) {
-                                                            outStream.use { out ->
-                                                                out.write(exportFile.readBytes())
-                                                            }
-                                                            // Verify the file was actually written
-                                                            val fileSizeCursor = context.contentResolver.query(createdDoc, null, null, null, null)
-                                                            var verified = false
-                                                            fileSizeCursor?.use { cursor ->
-                                                                if (cursor.moveToFirst()) {
-                                                                    val sizeIndex = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
-                                                                    if (sizeIndex >= 0 && cursor.getLong(sizeIndex) > 0) verified = true
-                                                                }
-                                                            }
-                                                            if (!verified) {
-                                                                throw java.io.IOException("File created but could not verify content was written")
-                                                            }
-                                                        } else {
-                                                            throw java.io.IOException("Could not open output stream - check folder permissions")
-                                                        }
-                                                    } else {
-                                                        throw java.io.IOException("Could not create document in the selected folder. Ensure the folder has write permission and is not read-only.")
-                                                    }
-                                                } catch (e: Exception) {
-                                                    throw java.io.IOException("Save failed: ${e.localizedMessage}")
-                                                }
-                                            }
-                                            // Record export history — track actual file after encryption
-                                            val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
-                                                File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
-                                            } else {
-                                                exportFile
-                                            }
-                                            exportHistoryStore.add(ExportRecord(
-                                                format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
-                                                fileName = _exportFile.name,
-                                                fileSizeBytes = _exportFile.length(),
-                                                exportedAt = System.currentTimeMillis(),
-                                                destination = if (action == "share") "Shared via intent" else "Saved to folder",
-                                                entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
-                                            ))
-                                        }
-                                    exportHistory = exportHistoryStore.load()
-                                    showFastSnackbar(snackbar, scope, "Export complete")
-                                } catch (e: Exception) {
-                                    showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
-                                } finally {
-                                    isExporting = false
-                                    exportProgress = 0f
-                                }
-                                }
                             },
                             onChooseFolder = { backupFolderPickerLauncher.launch(null) },
                             destinationUri = exportDestinationUri,
@@ -1263,7 +1059,212 @@ fun BackupAndRestoreScreen(
             estimatedSize = estimatedSize,
             onConfirm = {
                 showExportConfirmation = false
-                // Export will be triggered via the onExport callback from ExportTabContent
+                scope.launch {
+                    isExporting = true
+                    exportProgress = 0f
+                    exportStepText = "Building $pendingExportFormat…"
+                    try {
+                        withContext(Dispatchers.IO) {
+                            val format = pendingExportFormat
+                            val action = pendingExportAction
+                            exportProgress = 0.3f
+                            val exportObs = FieldMindExport.applyGpsPrivacy(observations, exportGpsPrivacy)
+                            val exportNotes = if (exportExcludeMedia) FieldMindExport.applyMediaExclusion(notes) else notes
+                            val evidAttachAll = mutableListOf<EvidenceAttachmentEntity>()
+                            if (!exportExcludeMedia) {
+                                exportObs.forEach { obs ->
+                                    val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                    evidAttachAll.addAll(atts)
+                                }
+                            }
+                            val crossRefs = viewModel.collectAllCrossRefs()
+                            var settingsJson = viewModel.fieldSettings.toExportJson()
+                            settingsJson = viewModel.mergeExtraBackupData(context, settingsJson)
+                            val json = FieldMindExport.archiveJson(
+                                observations = exportObs, notes = exportNotes,
+                                questions = questions, hypotheses = hypotheses,
+                                projects = projects, sources = sources,
+                                dataRecords = dataRecords, reports = reports,
+                                flashcards = flashcards,
+                                species = species,
+                                weatherCatalog = weatherCatalog,
+                                researchSessions = researchSessions,
+                                tasks = tasks,
+                                evidenceAttachments = evidAttachAll,
+                                crossReferences = crossRefs,
+                                settingsJson = settingsJson
+                            )
+                            val dateStamp = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault()).format(Date())
+                            val ext = when (format) {
+                                "Markdown" -> "md"
+                                ".fieldmind" -> "fieldmind"
+                                ".zip" -> "zip"
+                                else -> format.lowercase().removePrefix(".")
+                            }
+                            val fileName = "fieldmind-export-$dateStamp.$ext"
+                            val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
+                            val exportFile = File(exportDir, fileName)
+
+                            exportProgress = 0.5f
+                            when (format) {
+                                "Markdown" -> exportFile.writeText(
+                                    observations.joinToString("\n\n---\n\n") { FieldMindExport.singleObservationMarkdown(it) }
+                                )
+                                "JSON" -> {
+                                    if (!exportExcludeMedia) {
+                                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            FieldMindExport.ExportMediaBundle.collect(
+                                                context = context,
+                                                observations = exportObs,
+                                                notes = exportNotes,
+                                                projects = projects,
+                                                sources = sources
+                                            )
+                                        }
+                                    }
+                                    exportFile.writeText(json)
+                                }
+                                "CSV" -> exportFile.writeText(FieldMindExport.observationsCsv(observations))
+                                "HTML" -> {
+                                    if (!exportExcludeMedia) {
+                                        val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            FieldMindExport.ExportMediaBundle.collect(
+                                                context = context,
+                                                observations = exportObs,
+                                                notes = exportNotes,
+                                                projects = projects,
+                                                sources = sources
+                                            )
+                                        }
+                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes, media = mediaBundle))
+                                    } else {
+                                        exportFile.writeText(FieldMindExport.pdfReadyHtml(projects, observations, sources, reports, notes = notes))
+                                    }
+                                }
+                                "PDF" -> {
+                                    val bodyText = observations.joinToString("\n") { FieldMindExport.singleObservationMarkdown(it) }
+                                    if (!exportExcludeMedia) {
+                                        val mediaBundle = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                            FieldMindExport.ExportMediaBundle.collect(
+                                                context = context,
+                                                observations = exportObs,
+                                                notes = exportNotes,
+                                                projects = projects,
+                                                sources = sources
+                                            )
+                                        }
+                                        val imgBytesArray = mediaBundle.observationImages.values.firstOrNull()
+                                            ?.firstOrNull()?.second?.let { decodeBase64FromDataUri(it) }
+                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText, embeddedImageBytes = imgBytesArray))
+                                    } else {
+                                        exportFile.writeBytes(FieldMindExport.simplePdfBytes("FieldMind Export", bodyText))
+                                    }
+                                }
+                                ".fieldmind", ".zip" -> {
+                                    val allAttachments = mutableMapOf<Long, List<EvidenceAttachmentEntity>>()
+                                    if (!exportExcludeMedia) {
+                                        exportObs.forEach { obs ->
+                                            val atts = viewModel.attachmentsForObservation(obs.id).first()
+                                            if (atts.isNotEmpty()) allAttachments[obs.id] = atts
+                                        }
+                                    }
+                                    val result = FieldMindExportMediaPacker.buildPackage(
+                                        context = context, archiveJson = json,
+                                        observations = exportObs, notes = exportNotes, projects = projects, sources = sources,
+                                        attachments = allAttachments, outputDir = exportDir
+                                    )
+                                    result.packageFile.copyTo(exportFile, overwrite = true)
+                                    if (exportEncrypt && exportPassword.isNotBlank()) {
+                                        val encryptedFile = FieldMindExportEncryption.encryptFile(exportFile, exportPassword)
+                                        exportFile.delete()
+                                        val encryptedName = exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted")
+                                        encryptedFile.renameTo(File(exportFile.parentFile, encryptedName))
+                                    }
+                                }
+                            }
+
+                            exportProgress = 0.8f
+                            if (action == "share") {
+                                val shareUri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.provider",
+                                    exportFile
+                                )
+                                val mimeType = if (format == "PDF") "application/pdf" else "text/markdown"
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = mimeType
+                                    putExtra(Intent.EXTRA_STREAM, shareUri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share FieldMind Export"))
+                            } else {
+                                val destUri = exportDestinationUri
+                                if (destUri == null) {
+                                    throw java.io.IOException("Please select a destination folder first")
+                                }
+                                val mimeType = when (format) {
+                                    "PDF" -> "application/pdf"
+                                    ".fieldmind" -> "application/octet-stream"
+                                    ".zip" -> "application/zip"
+                                    "JSON" -> "application/json"
+                                    "CSV" -> "text/csv"
+                                    "Markdown" -> "text/markdown"
+                                    "HTML" -> "text/html"
+                                    else -> "application/octet-stream"
+                                }
+                                try {
+                                    val createdDoc = createFileInTree(context, destUri, mimeType, fileName)
+                                    if (createdDoc != null) {
+                                        val outStream = context.contentResolver.openOutputStream(createdDoc)
+                                        if (outStream != null) {
+                                            outStream.use { out ->
+                                                out.write(exportFile.readBytes())
+                                            }
+                                            val fileSizeCursor = context.contentResolver.query(createdDoc, null, null, null, null)
+                                            var verified = false
+                                            fileSizeCursor?.use { cursor ->
+                                                if (cursor.moveToFirst()) {
+                                                    val sizeIndex = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
+                                                    if (sizeIndex >= 0 && cursor.getLong(sizeIndex) > 0) verified = true
+                                                }
+                                            }
+                                            if (!verified) {
+                                                throw java.io.IOException("File created but could not verify content was written")
+                                            }
+                                        } else {
+                                            throw java.io.IOException("Could not open output stream - check folder permissions")
+                                        }
+                                    } else {
+                                        throw java.io.IOException("Could not create document in the selected folder")
+                                    }
+                                } catch (e: Exception) {
+                                    throw java.io.IOException("Save failed: ${e.localizedMessage}")
+                                }
+                            }
+                            val _exportFile = if (exportEncrypt && exportPassword.isNotBlank() && format in listOf(".fieldmind", ".zip")) {
+                                File(exportDir, exportFile.name.replace(".fieldmind", ".encrypted").replace(".zip", ".encrypted"))
+                            } else {
+                                exportFile
+                            }
+                            exportHistoryStore.add(ExportRecord(
+                                format = if (exportEncrypt && exportPassword.isNotBlank()) "Encrypted" else format,
+                                fileName = _exportFile.name,
+                                fileSizeBytes = _exportFile.length(),
+                                exportedAt = System.currentTimeMillis(),
+                                destination = if (action == "share") "Shared via intent" else "Saved to folder",
+                                entityCounts = mapOf("Observations" to observations.size, "Notes" to notes.size, "Projects" to projects.size)
+                            ))
+                        }
+                        exportHistory = exportHistoryStore.load()
+                        showFastSnackbar(snackbar, scope, "Export complete")
+                    } catch (e: Exception) {
+                        showFastSnackbar(snackbar, scope, "Export failed: ${e.localizedMessage}")
+                    } finally {
+                        isExporting = false
+                        exportProgress = 0f
+                    }
+                }
             },
             onDismiss = { showExportConfirmation = false }
         )

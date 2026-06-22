@@ -25,15 +25,17 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 /**
  * Unified collapsible "Privacy & encryption" card used in both Export and Backup tabs.
  *
- * Layout:
- *   ▶ Privacy & encryption  (collapsible header)
- *   ───────────────────────────────
- *    GPS: Exact / Approx / Remove
- *    Exclude media: [switch]
- *   ─── (divider) ─────────────────
- *    Encrypt export/backup: [switch]
- *    [password field]
- *    [████████░░] Strong
+ * Layout matches the user's spec:
+ * ┌───────────────────────────────┐
+ * │  ▶ Privacy & encryption       │  ← Collapsible
+ * ├───────────────────────────────┤
+ * │  GPS: [Exact] [Approx] [Rem]  │
+ * │  Exclude media: [switch]      │
+ * ├───────────────────────────────┤
+ * │  Encrypt export: [switch]     │
+ * │  [password field]             │
+ * │  [████████░░] Strong          │
+ * └───────────────────────────────┘
  *
  * In backup mode (isBackup=true), also shows a password confirmation field.
  */
@@ -66,51 +68,46 @@ fun ExportPrivacyOptionsCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-            // ── Collapsible header ──
+            // ── Collapsible header: ▶ Privacy & encryption ──
             Row(
                 Modifier.fillMaxWidth().clickable { expanded = !expanded },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    FieldMindIcons.Lock,
+                    MaterialSymbolIcon(if (expanded) "expand_more" else "play_arrow"),
                     null,
                     tint = MaterialTheme.colorScheme.primary,
                     size = 20.dp
                 )
+                Spacer(Modifier.width(8.dp))
                 Text(
                     "Privacy & encryption",
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyLarge
                 )
-                // Active indicators
+                // Active indicator badge (when collapsed)
                 if (!expanded) {
-                    val activeCount = listOfNotNull(
-                        if (gpsPrivacy != "Exact") "GPS" else null,
-                        if (excludeMedia) "No media" else null,
-                        if (encrypt) "Encrypt" else null
-                    )
-                    if (activeCount.isNotEmpty()) {
+                    val activeItems = buildList {
+                        if (gpsPrivacy != "Exact") add("GPS")
+                        if (excludeMedia) add("No media")
+                        if (encrypt) add("Encrypted")
+                    }
+                    if (activeItems.isNotEmpty()) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                            color = colors.data.copy(alpha = 0.15f)
                         ) {
                             Text(
-                                activeCount.joinToString(", "),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                activeItems.joinToString(", "),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = colors.data
                             )
                         }
                     }
                 }
-                Icon(
-                    if (expanded) FieldMindIcons.ExpandLess else FieldMindIcons.ExpandMore,
-                    null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    size = 22.dp
-                )
             }
 
             // ── Expanded content ──
@@ -119,150 +116,125 @@ fun ExportPrivacyOptionsCard(
                 enter = expandVertically(),
                 exit = shrinkVertically()
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Spacer(Modifier.height(4.dp))
 
-                    // ── GPS precision ──
-                    Text(
-                        "GPS precision in export",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        gpsModes.forEach { (mode, label, desc) ->
-                            val selected = gpsPrivacy == mode
-                            Surface(
-                                onClick = { onGpsPrivacyChange(mode) },
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                                        else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
-                                modifier = Modifier.weight(1f)
+                    // ── GPS: Exact / Approx / Remove ──
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                "GPS:",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.width(36.dp)
+                            )
+                            Row(
+                                Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Column(
-                                    Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(1.dp)
-                                ) {
-                                    Text(
-                                        label,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
-                                                else MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        desc,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1
-                                    )
+                                gpsModes.forEach { (mode, label, _) ->
+                                    val selected = gpsPrivacy == mode
+                                    Surface(
+                                        onClick = { onGpsPrivacyChange(mode) },
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = if (selected) colors.data.copy(alpha = 0.14f)
+                                                else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        border = if (selected) BorderStroke(1.2.dp, colors.data) else null,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            label,
+                                            modifier = Modifier.fillMaxWidth().padding(vertical = 7.dp),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (selected) colors.data
+                                                    else MaterialTheme.colorScheme.onSurface,
+                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    // ── Exclude media toggle ──
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            FieldMindIcons.Camera,
-                            null,
-                            tint = if (excludeMedia) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
-                            size = 18.dp
-                        )
-                        Text(
-                            "Exclude media attachments",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Switch(checked = !excludeMedia, onCheckedChange = { onExcludeMediaChange(!it) })
+                        // ── Exclude media ──
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Spacer(Modifier.width(36.dp))
+                            Icon(
+                                MaterialSymbolIcon(if (excludeMedia) "no_photography" else "photo_camera"),
+                                null,
+                                tint = if (excludeMedia) MaterialTheme.colorScheme.onSurfaceVariant else colors.data,
+                                size = 18.dp
+                            )
+                            Text(
+                                "Exclude media",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Switch(
+                                checked = !excludeMedia,
+                                onCheckedChange = { onExcludeMediaChange(!it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = colors.data,
+                                    checkedTrackColor = colors.data.copy(alpha = 0.3f)
+                                )
+                            )
+                        }
                     }
 
                     // ── Divider ──
                     HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
 
                     // ── Encrypt toggle ──
                     Row(
                         Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        Spacer(Modifier.width(36.dp))
                         Icon(
-                            FieldMindIcons.Lock,
+                            MaterialSymbolIcon("lock"),
                             null,
                             tint = if (encrypt) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                             size = 18.dp
                         )
                         Text(
                             if (isBackup) "Encrypt backup" else "Encrypt export",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.weight(1f)
                         )
-                        Switch(checked = encrypt, onCheckedChange = onEncryptChange)
+                        Switch(
+                            checked = encrypt,
+                            onCheckedChange = onEncryptChange,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.error,
+                                checkedTrackColor = MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
+                            )
+                        )
                     }
 
-                    // ── Password field (when encrypt is on) ──
+                    // ── Password field ──
                     if (encrypt) {
-                        OutlinedTextField(
-                            value = password,
-                            onValueChange = onPasswordChange,
-                            label = { Text(if (isBackup) "Backup password" else "Export password") },
-                            placeholder = { Text("Enter a strong password") },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(18.dp),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
-                            trailingIcon = {
-                                if (LocalPrivacyTypingEnabled.current) {
-                                    PrivacyTypingIndicator()
-                                }
-                            }
-                        )
-
-                        // ── Password strength ──
-                        if (password.isNotBlank()) {
-                            val strength = remember(password) { FieldMindExportEncryption.PasswordStrength.evaluate(password) }
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                LinearProgressIndicator(
-                                    progress = { strength.score / 5f },
-                                    modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)),
-                                    color = Color(strength.color),
-                                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                                )
-                                Text(
-                                    strength.label,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color(strength.color)
-                                )
-                            }
-                        }
-
-                        // ── Password confirmation (backup mode only) ──
-                        if (isBackup) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedTextField(
-                                value = passwordConfirm,
-                                onValueChange = onPasswordConfirmChange,
-                                label = { Text("Confirm password") },
-                                placeholder = { Text("Re-enter password") },
+                                value = password,
+                                onValueChange = onPasswordChange,
+                                label = { Text(if (isBackup) "Backup password" else "Export password") },
+                                placeholder = { Text("Enter a strong password") },
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(18.dp),
+                                shape = RoundedCornerShape(16.dp),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
                                 trailingIcon = {
@@ -270,25 +242,81 @@ fun ExportPrivacyOptionsCard(
                                         PrivacyTypingIndicator()
                                     }
                                 },
-                                isError = passwordConfirm.isNotEmpty() && !passwordsMatch
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                                )
                             )
-                            if (passwordConfirm.isNotEmpty()) {
+
+                            // ── Password strength ──
+                            if (password.isNotBlank()) {
+                                val strength = remember(password) {
+                                    FieldMindExportEncryption.PasswordStrength.evaluate(password)
+                                }
                                 Row(
+                                    Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Icon(
-                                        if (passwordsMatch) FieldMindIcons.Check else FieldMindIcons.Close,
-                                        null,
-                                        tint = if (passwordsMatch) colors.positive else MaterialTheme.colorScheme.error,
-                                        size = 14.dp
+                                    LinearProgressIndicator(
+                                        progress = { strength.score / 5f },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(8.dp)
+                                            .clip(RoundedCornerShape(4.dp)),
+                                        color = Color(strength.color),
+                                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                                     )
                                     Text(
-                                        if (passwordsMatch) "Passwords match" else "Passwords do not match",
+                                        strength.label,
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (passwordsMatch) colors.positive else MaterialTheme.colorScheme.error,
-                                        fontWeight = FontWeight.Medium
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(strength.color)
                                     )
+                                }
+                            }
+
+                            // ── Password confirmation (backup only) ──
+                            if (isBackup) {
+                                OutlinedTextField(
+                                    value = passwordConfirm,
+                                    onValueChange = onPasswordConfirmChange,
+                                    label = { Text("Confirm password") },
+                                    placeholder = { Text("Re-enter password") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    singleLine = true,
+                                    keyboardOptions = KeyboardOptions.Default.withPrivacyTyping(LocalPrivacyTypingEnabled.current),
+                                    trailingIcon = {
+                                        if (LocalPrivacyTypingEnabled.current) {
+                                            PrivacyTypingIndicator()
+                                        }
+                                    },
+                                    isError = passwordConfirm.isNotEmpty() && !passwordsMatch,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                                        errorBorderColor = MaterialTheme.colorScheme.error
+                                    )
+                                )
+                                if (passwordConfirm.isNotEmpty()) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            if (passwordsMatch) FieldMindIcons.Check else FieldMindIcons.Close,
+                                            null,
+                                            tint = if (passwordsMatch) colors.positive else MaterialTheme.colorScheme.error,
+                                            size = 14.dp
+                                        )
+                                        Text(
+                                            if (passwordsMatch) "Passwords match" else "Passwords do not match",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (passwordsMatch) colors.positive else MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             }
                         }
