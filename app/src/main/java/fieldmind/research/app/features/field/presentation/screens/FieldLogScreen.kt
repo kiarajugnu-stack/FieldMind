@@ -22,6 +22,7 @@ import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 
 private enum class TimelineViewMode { List, Gallery }
@@ -154,6 +155,7 @@ fun FieldLogScreen(
         }
     }
 
+    val refreshScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -187,7 +189,7 @@ fun FieldLogScreen(
             isRefreshing = isRefreshing,
             onRefresh = {
                 isRefreshing = true
-                scope.launch {
+                refreshScope.launch {
                     // Simulate refresh — in production this would re-fetch data
                     kotlinx.coroutines.delay(600)
                     isRefreshing = false
