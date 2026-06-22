@@ -170,7 +170,7 @@ fun KnowledgeLibraryScreen(
                 0 -> SourcePanel(viewModel, sources, onOpenDetail, scrollState = sourceScrollState)
                 1 -> NotePanel(viewModel, notes, onOpenDetail, scrollState = noteScrollState)
                 2 -> PaperReadingPanel(sources, onOpenDetail, scrollState = readingScrollState)
-                3 -> FlashcardPanel(viewModel, flashcards, sources, notes, onOpenDetail, scrollState = flashcardScrollState) { onNavigate(FieldMindScreen.Flashcards) }
+                3 -> FlashcardPanel(viewModel, flashcards, sources, notes, onOpenDetail, onStartReview = { onNavigate(FieldMindScreen.Flashcards) }, scrollState = flashcardScrollState)
                 4 -> LearnScreenRedirect(onOpenReader = onOpenReader, onOpenLearn = { onNavigate(FieldMindScreen.Learn) })
             }
         }

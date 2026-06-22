@@ -9,6 +9,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.unit.IntOffset
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 
 /**
@@ -122,8 +123,7 @@ fun InfiniteCanvas(
                     val screenPos = canvasState.canvasToScreen(block.positionX, block.positionY)
 
                     placeable.place(
-                        x = screenPos.x.toInt(),
-                        y = screenPos.y.toInt(),
+                        position = IntOffset(screenPos.x.toInt(), screenPos.y.toInt()),
                         zIndex = block.zIndex.toFloat()
                     )
                 }
@@ -154,8 +154,7 @@ private fun PanZoomLayer(
     blocks: List<CanvasBlockEntity>,
     modifier: Modifier = Modifier
 ) {
-    // Use a custom pointerInput that detects when touch starts on empty canvas space
-    Modifier.pointerInput(blocks) {
+    val panZoomModifier = Modifier.pointerInput(blocks) {
         awaitPointerEventScope {
             while (true) {
                 val downEvent = awaitPointerEvent()
@@ -229,5 +228,5 @@ private fun PanZoomLayer(
             }
         }
     }
-    Box(modifier = modifier.then(this))
+    Box(modifier = modifier.then(panZoomModifier))
 }

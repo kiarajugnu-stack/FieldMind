@@ -239,7 +239,7 @@ fun InsightsScreen(
             val insightsScrollState = rememberLazyListState()
             LazyColumn(
                 state = insightsScrollState,
-                Modifier.fillMaxSize().padding(padding),
+                modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {

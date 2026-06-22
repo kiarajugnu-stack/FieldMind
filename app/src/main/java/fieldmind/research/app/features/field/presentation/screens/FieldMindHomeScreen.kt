@@ -252,8 +252,7 @@ fun HomeScreen(
     }
 
     val homeScrollState = rememberLazyListState()
-    Box(Modifier.fillMaxSize().statusBarsPadding()) {
-        LazyColumn(state = homeScrollState, Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Box(Modifier.fillMaxSize().statusBarsPadding()) {            LazyColumn(state = homeScrollState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             // ── Hero Section ──
             item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }) }
 

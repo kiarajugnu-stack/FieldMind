@@ -28,13 +28,16 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.AnimatedContentTransitionScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import fieldmind.research.app.features.field.presentation.components.FieldMindSnackbarProvider
+import fieldmind.research.app.features.field.presentation.components.SwipeBackHost
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.screens.*
@@ -908,7 +911,7 @@ composable(FieldMindScreen.Analysis.route) { SwipeBackHost(onBack = { navControl
                 onOpenSpeciesId = { navController.navigateToDestination(FieldMindScreen.SettingsSpeciesId.route) },
                 onOpenAutoGen = { navController.navigateToDestination(FieldMindScreen.SettingsAutoGen.route) }
             )
-        }
+        } }
         composable(FieldMindScreen.SettingsProfile.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { ProfileSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
         composable(FieldMindScreen.SettingsAppearance.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { AppearanceSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
         composable(FieldMindScreen.SettingsCapture.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { CaptureDefaultsSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
