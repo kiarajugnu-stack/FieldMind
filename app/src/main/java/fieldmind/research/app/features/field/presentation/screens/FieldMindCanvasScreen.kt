@@ -59,12 +59,14 @@ import org.json.JSONObject
  * @param noteId the ID of the note to edit
  * @param fieldViewModel the app-level ViewModel (for note title + entity linking)
  * @param onBack called to navigate back
+ * @param onOpenLinkedEntity called to navigate to a linked entity's detail screen (kind, id)
  */
 @Composable
 fun CanvasScreen(
     noteId: Long,
     fieldViewModel: FieldMindViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenLinkedEntity: ((String, Long) -> Unit)? = null
 ) {
     val canvasViewModel: CanvasViewModel = viewModel()
     val haptics = rememberFieldMindHaptics()
@@ -206,6 +208,13 @@ fun CanvasScreen(
                     },
                     onBlockLinkToEntity = { id ->
                         linkDialogBlockId = id
+                    },
+                    onBlockOpenLinkedEntity = { id ->
+                        // Navigate to the linked entity's detail screen
+                        val block = blocks.firstOrNull { it.id == id }
+                        if (block != null && block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
+                            onOpenLinkedEntity?.invoke(block.linkedEntityType, block.linkedEntityId!!)
+                        }
                     },
                     showMinimap = true,
                     viewportSize = viewportSize

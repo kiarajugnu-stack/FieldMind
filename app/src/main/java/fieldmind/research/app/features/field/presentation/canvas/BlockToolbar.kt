@@ -46,7 +46,8 @@ import kotlin.math.roundToInt
  * @param onMoveForward called to increase z-index
  * @param onMoveBackward called to decrease z-index
  * @param onCopy called to copy block content
- * @param onLink called to link to an entity
+ * @param onLink called to link to an entity (or re-link)
+ * @param onOpenLinked called to open the linked entity in the detail screen
  * @param modifier standard Compose modifier
  */
 @Composable
@@ -59,6 +60,7 @@ fun BlockToolbar(
     onMoveBackward: () -> Unit = {},
     onCopy: () -> Unit = {},
     onLink: () -> Unit = {},
+    onOpenLinked: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // ── Compute toolbar screen position based on the selected block ──
@@ -99,7 +101,9 @@ fun BlockToolbar(
             onMoveForward = onMoveForward,
             onMoveBackward = onMoveBackward,
             onCopy = onCopy,
-            onLink = onLink
+            onLink = onLink,
+            onOpenLinked = onOpenLinked,
+            hasLinkedEntity = selectedBlock?.linkedEntityType?.isNotBlank() == true && selectedBlock.linkedEntityId != null
         )
     }
 }
@@ -114,7 +118,9 @@ private fun BlockToolbarContent(
     onMoveForward: () -> Unit,
     onMoveBackward: () -> Unit,
     onCopy: () -> Unit,
-    onLink: () -> Unit
+    onLink: () -> Unit,
+    onOpenLinked: () -> Unit = {},
+    hasLinkedEntity: Boolean = false
 ) {
     Surface(
         shape = RoundedCornerShape(14.dp),
@@ -162,11 +168,27 @@ private fun BlockToolbarContent(
                 onClick = onMoveBackward
             )
             ToolbarDivider()
-            ToolbarAction(
-                icon = MaterialSymbolIcon("link"),
-                label = "Link",
-                onClick = onLink
-            )
+
+            // Show "Open linked" instead of "Link" when block already has a link
+            if (hasLinkedEntity) {
+                ToolbarAction(
+                    icon = MaterialSymbolIcon("open_in_new"),
+                    label = "Open",
+                    onClick = onOpenLinked,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                ToolbarAction(
+                    icon = MaterialSymbolIcon("link"),
+                    label = "Re-link",
+                    onClick = onLink
+                )
+            } else {
+                ToolbarAction(
+                    icon = MaterialSymbolIcon("link"),
+                    label = "Link",
+                    onClick = onLink
+                )
+            }
         }
     }
 }
