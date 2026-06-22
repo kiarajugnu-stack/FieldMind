@@ -669,7 +669,7 @@ private fun CollapsibleAchievements(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = Modifier.clickable { expanded = !expanded }.animateContentSize()
+        modifier = Modifier.pressScale(scaleDown = 0.98f).clickable { expanded = !expanded }.animateContentSize()
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
