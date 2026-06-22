@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -111,6 +113,9 @@ fun CanvasScreen(
     // ── Add-block menu state ──
     var showAddMenu by remember { mutableStateOf(false) }
 
+    // ── Figure gallery state ──
+    var showFigureGallery by remember { mutableStateOf(false) }
+
     // ── Canvas viewport with keyboard shortcuts ──
     Box(
         modifier = Modifier
@@ -137,18 +142,18 @@ fun CanvasScreen(
             }
     ) {
         Column(Modifier.fillMaxSize()) {
-            // ── Top bar ──
-            CanvasTopBar(
-                note = note,
-                isSaving = isSaving,
-                canUndo = canUndo,
-                canRedo = canRedo,
-                undoLabel = undoLabel,
-                redoLabel = redoLabel,
-                onBack = onBack,
-                onUndo = { haptics.light(); canvasViewModel.undo() },
-                onRedo = { haptics.light(); canvasViewModel.redo() }
-            )
+            // ── Top bar ──                CanvasTopBar(
+                    note = note,
+                    isSaving = isSaving,
+                    canUndo = canUndo,
+                    canRedo = canRedo,
+                    undoLabel = undoLabel,
+                    redoLabel = redoLabel,
+                    onBack = onBack,
+                    onUndo = { haptics.light(); canvasViewModel.undo() },
+                    onRedo = { haptics.light(); canvasViewModel.redo() },
+                    onToggleGallery = { showFigureGallery = !showFigureGallery }
+                )
 
             // ── Infinite canvas ──
             Box(
@@ -227,6 +232,35 @@ fun CanvasScreen(
                     }
                 }
             }
+        }
+
+        // ── Figure Gallery overlay (animated) ──
+        AnimatedVisibility(
+            visible = showFigureGallery,
+            enter = fadeIn() + slideInHorizontally { it / 4 },
+            exit = fadeOut() + slideOutHorizontally { it / 4 }
+        ) {
+            FigureGalleryView(
+                items = extractGalleryItems(blocks),
+                onFigureSelected = { blockId ->
+                    // Center the canvas on the selected figure
+                    val block = blocks.firstOrNull { it.id == blockId }
+                    if (block != null) {
+                        val centerX = block.positionX + block.width / 2f
+                        val centerY = block.positionY + block.height / 2f
+                        val zoom = canvasViewModel.canvasState.zoom
+                        // Pan so the block center is at viewport center, accounting for zoom
+                        canvasViewModel.canvasState.setPan(
+                            centerX - viewportSize.width / 2f / zoom,
+                            centerY - viewportSize.height / 2f / zoom
+                        )
+                        canvasViewModel.selectBlock(blockId)
+                        canvasViewModel.onCanvasViewChanged()
+                    }
+                    showFigureGallery = false
+                },
+                onDismiss = { showFigureGallery = false }
+            )
         }
 
         // ── FAB: Add block ──
@@ -343,7 +377,8 @@ private fun CanvasTopBar(
     redoLabel: String?,
     onBack: () -> Unit,
     onUndo: () -> Unit,
-    onRedo: () -> Unit
+    onRedo: () -> Unit,
+    onToggleGallery: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -428,6 +463,25 @@ private fun CanvasTopBar(
                         }
                     }
 
+                }
+            }
+
+            // Gallery button
+            if (onToggleGallery != null) {
+                Surface(
+                    onClick = onToggleGallery,
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            MaterialSymbolIcon("collections_bookmark"),
+                            "Figure Gallery",
+                            size = 18.dp,
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
 
