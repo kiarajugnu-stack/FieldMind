@@ -133,7 +133,7 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             val note = db.fieldMindDao().observeNote(id).first()
             if (note != null) {
-                canvasState.setZoom(note.canvasZoomLevel)
+                canvasState.zoomTo(note.canvasZoomLevel)
                 canvasState.setPan(note.canvasPanX, note.canvasPanY)
             }
         }
