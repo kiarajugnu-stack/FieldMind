@@ -170,8 +170,8 @@ fun TextBlock(
  * - `[text](url)` → Link style
  */
 private class MarkdownVisualTransformation : VisualTransformation {
-    override fun filter(text: androidx.compose.ui.text.AnnotatedString):
-            androidx.compose.ui.text.TransformedText {
+    override fun filter(text: AnnotatedString):
+            TransformedText {
 
         val raw = text.text
         val styles = mutableListOf<Pair<IntRange, SpanStyle>>()
@@ -209,7 +209,7 @@ private class MarkdownVisualTransformation : VisualTransformation {
             }
         }
 
-        return androidx.compose.ui.text.TransformedText(result,
+        return TransformedText(result,
             OffsetMapping.Identity)
     }
 

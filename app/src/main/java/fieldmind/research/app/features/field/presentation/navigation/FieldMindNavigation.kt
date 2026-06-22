@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.AnimatedContentTransitionScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -940,7 +939,8 @@ composable(FieldMindScreen.Analysis.route) { SwipeBackHost(onBack = { navControl
         composable("field_species_detail/{speciesId}") { entry ->
             val speciesId = entry.arguments?.getString("speciesId") ?: ""
             SwipeBackHost(onBack = { navController.popBackStack() }) {
-            SpeciesDetailScreen(speciesId = speciesId, onBack = { navController.popBackStack() })
+                SpeciesDetailScreen(speciesId = speciesId, onBack = { navController.popBackStack() })
+            }
         }
         composable(FieldMindScreen.SettingsSpeciesPacks.route) { SpeciesPackSettingsPage(onBack = { navController.popBackStack() }) }
         composable(FieldMindScreen.SettingsSpeciesId.route) { SpeciesIdentificationSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) }
@@ -975,7 +975,7 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
                         onBack = { navController.popBackStack() },
                         onOpenDetail = openDetail,
                         onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }
-                    ) } }
+                    ) }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
@@ -991,4 +991,5 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
             )
         }
     }
+}
 }

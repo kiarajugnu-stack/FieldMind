@@ -39,7 +39,6 @@ import fieldmind.research.app.features.field.data.database.entity.ObservationEnt
 import fieldmind.research.app.features.field.presentation.canvas.*
 import fieldmind.research.app.features.field.presentation.canvas.FigureSidePanel
 import fieldmind.research.app.features.field.presentation.canvas.LinkToEntityDialog
-import fieldmind.research.app.features.field.presentation.canvas.blocks.*
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -171,7 +170,7 @@ fun CanvasScreen(
                     canvasState = canvasViewModel.canvasState,
                     blocks = blocks,
                     modifier = Modifier.fillMaxSize(),
-                    blockContent = @Composable { block: CanvasBlockEntity, isSelected: Boolean ->
+                    blockContent = { block: CanvasBlockEntity, isSelected: Boolean ->
                         CanvasBlockContent(
                             block = block,
                             isSelected = isSelected,
