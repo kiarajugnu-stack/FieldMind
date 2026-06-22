@@ -48,6 +48,7 @@ private enum class EntityTab(
  * @param blockId the canvas block to link
  * @param viewModel the app-level ViewModel providing entity lists
  * @param canvasViewModel the canvas ViewModel for performing the link
+ * @param onLinked optional callback fired after a successful link with (entityType, entityId, entityName)
  * @param onDismiss called to close the dialog
  */
 @Composable
@@ -55,6 +56,7 @@ fun LinkToEntityDialog(
     blockId: Long,
     viewModel: FieldMindViewModel,
     canvasViewModel: CanvasViewModel,
+    onLinked: ((entityType: String, entityId: Long, entityName: String) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     // ── State ──
@@ -343,30 +345,32 @@ fun LinkToEntityDialog(
                                 EntityListItem(
                                     entity = entity,
                                     tab = selectedTab,
-                                    dateFormat = dateFormat,
-                                    onLink = {
-                                        when (entity) {
+                                    dateFormat = dateFormat,                                        onLink = {
+                                        val (eType, eId, eName) = when (entity) {
                                             is ObservationEntity -> {
                                                 canvasViewModel.linkBlockToEntity(blockId, "observation", entity.id)
-                                                linkedEntityName = entity.subject
+                                                Triple("observation", entity.id, entity.subject)
                                             }
                                             is NoteEntity -> {
                                                 canvasViewModel.linkBlockToEntity(blockId, "note", entity.id)
-                                                linkedEntityName = entity.title
+                                                Triple("note", entity.id, entity.title)
                                             }
                                             is QuestionEntity -> {
                                                 canvasViewModel.linkBlockToEntity(blockId, "question", entity.id)
-                                                linkedEntityName = entity.questionText
+                                                Triple("question", entity.id, entity.questionText)
                                             }
                                             is SourceEntity -> {
                                                 canvasViewModel.linkBlockToEntity(blockId, "source", entity.id)
-                                                linkedEntityName = entity.title
+                                                Triple("source", entity.id, entity.title)
                                             }
                                             is ProjectEntity -> {
                                                 canvasViewModel.linkBlockToEntity(blockId, "project", entity.id)
-                                                linkedEntityName = entity.title
+                                                Triple("project", entity.id, entity.title)
                                             }
+                                            else -> Triple("", 0L, "")
                                         }
+                                        linkedEntityName = eName
+                                        onLinked?.invoke(eType, eId, eName)
                                         onDismiss()
                                     }
                                 )

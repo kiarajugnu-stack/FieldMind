@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 import fieldmind.research.app.features.field.data.canvas.CanvasRepository
+import fieldmind.research.app.features.field.data.canvas.FigureMetaEntity
 import fieldmind.research.app.features.field.data.database.FieldMindDatabase
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
@@ -319,6 +320,77 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             command.execute(repository)
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Figure Metadata (Phase 2 — FigureSidePanel)
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Observe FigureMetaEntity for a given block.
+     * Returns null until the user first interacts with the figure side panel.
+     */
+    fun observeFigureMeta(blockId: Long): Flow<FigureMetaEntity?> =
+        repository.observeFigureMeta(blockId)
+
+    /**
+     * Ensure a FigureMetaEntity exists for [blockId], then update its user notes.
+     */
+    fun updateFigureNotes(blockId: Long, notes: String) {
+        viewModelScope.launch {
+            ensureFigureMeta(blockId)
+            repository.updateUserNotes(blockId, notes)
+        }
+    }
+
+    /**
+     * Ensure a FigureMetaEntity exists for [blockId], then update its interpretation.
+     */
+    fun updateFigureInterpretation(blockId: Long, interpretation: String) {
+        viewModelScope.launch {
+            ensureFigureMeta(blockId)
+            repository.updateInterpretation(blockId, interpretation)
+        }
+    }
+
+    /**
+     * Ensure a FigureMetaEntity exists for [blockId], then update its questions.
+     */
+    fun updateFigureQuestions(blockId: Long, questions: String) {
+        viewModelScope.launch {
+            ensureFigureMeta(blockId)
+            repository.updateQuestionsGenerated(blockId, questions)
+        }
+    }
+
+    /**
+     * Ensure a FigureMetaEntity exists for [blockId], then update its related ideas.
+     */
+    fun updateFigureRelatedIdeas(blockId: Long, ideas: String) {
+        viewModelScope.launch {
+            ensureFigureMeta(blockId)
+            repository.updateRelatedIdeas(blockId, ideas)
+        }
+    }
+
+    /**
+     * Ensure a FigureMetaEntity exists for [blockId] (create if missing).
+     */
+    private suspend fun ensureFigureMeta(blockId: Long) {
+        val existing = repository.getFigureMeta(blockId)
+        if (existing == null) {
+            repository.upsertFigureMeta(
+                FigureMetaEntity(blockId = blockId)
+            )
+        }
+    }
+
+    /**
+     * Get the latest block count for figure numbering.
+     */
+    suspend fun figureCount(blockType: String): Int {
+        val nid = _noteId.value ?: return 0
+        return _blocks.value.count { it.type == blockType && it.noteId == nid } + 1
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -35,6 +35,7 @@ import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 import fieldmind.research.app.features.field.data.database.entity.NoteEntity
 import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
 import fieldmind.research.app.features.field.presentation.canvas.*
+import fieldmind.research.app.features.field.presentation.canvas.FigureSidePanel
 import fieldmind.research.app.features.field.presentation.canvas.LinkToEntityDialog
 import fieldmind.research.app.features.field.presentation.canvas.blocks.*
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
@@ -94,6 +95,12 @@ fun CanvasScreen(
         lastAddedBlockId?.let { id ->
             canvasViewModel.selectBlock(id)
         }
+    }
+
+    // ── Figure side panel state ──
+    var figurePanelBlockId by remember { mutableStateOf<Long?>(null) }
+    val figurePanelMeta = figurePanelBlockId?.let { bid ->
+        canvasViewModel.observeFigureMeta(bid).collectAsState(initial = null)
     }
 
     // ── Link-to-entity dialog state ──
@@ -177,7 +184,14 @@ fun CanvasScreen(
                     },
                     onBlockMoved = { id, x, y -> canvasViewModel.moveBlock(id, x, y) },
                     onBlockResized = { id, w, h -> canvasViewModel.resizeBlock(id, w, h) },
-                    onBlockTapped = { id -> canvasViewModel.selectBlock(id) },
+                    onBlockTapped = { id ->
+                        canvasViewModel.selectBlock(id)
+                        // Open FigureSidePanel for image/figure/pdf blocks
+                        val block = blocks.firstOrNull { it.id == id }
+                        if (block != null && block.type in listOf("image", "figure", "pdf")) {
+                            figurePanelBlockId = id
+                        }
+                    },
                     onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
                     onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
                     onBlockMoveForward = { id -> canvasViewModel.moveBlockForward(id) },
@@ -256,8 +270,51 @@ fun CanvasScreen(
                 blockId = blockId,
                 viewModel = fieldViewModel,
                 canvasViewModel = canvasViewModel,
+                onLinked = { entityType, entityId, entityName ->
+                    // When linking from the figure panel, also update FigureMetaEntity.relatedIdeas
+                    figurePanelBlockId?.let { figBlockId ->
+                        val existing = figurePanelMeta?.value?.relatedIdeas ?: ""
+                        val arr = if (existing.isNotBlank()) {
+                            try { org.json.JSONArray(existing) } catch (_: Exception) { org.json.JSONArray() }
+                        } else {
+                            org.json.JSONArray()
+                        }
+                        arr.put(
+                            org.json.JSONObject().apply {
+                                put("id", entityId)
+                                put("type", entityType)
+                                put("label", entityName)
+                            }
+                        )
+                        canvasViewModel.updateFigureRelatedIdeas(figBlockId, arr.toString())
+                    }
+                },
                 onDismiss = { linkDialogBlockId = null }
             )
+        }
+
+        // ── FigureSidePanel (overlay on the right, inside outer Box) ──
+        figurePanelBlockId?.let { blockId ->
+            val selectedBlock = blocks.firstOrNull { it.id == blockId }
+            if (selectedBlock != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.15f))
+                        .clickable { figurePanelBlockId = null },
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    FigureSidePanel(
+                        block = selectedBlock,
+                        figureMeta = figurePanelMeta?.value,
+                        canvasViewModel = canvasViewModel,
+                        onDismiss = { figurePanelBlockId = null },
+                        onLinkToEntity = {
+                            linkDialogBlockId = blockId
+                        }
+                    )
+                }
+            }
         }
     }
 }
