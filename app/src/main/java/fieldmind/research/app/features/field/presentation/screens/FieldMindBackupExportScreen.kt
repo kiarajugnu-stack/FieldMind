@@ -1253,14 +1253,17 @@ fun BackupAndRestoreScreen(
 
     // ── Export confirmation dialog ──
     if (showExportConfirmation) {
+        val exportFormat = defaultExportFormat
+        val totalCount = observations.size + notes.size + questions.size + projects.size + sources.size
+        val estimatedSize = estimateExportSize(exportFormat, observations.size, notes.size, projects.size, sources.size)
         ExportConfirmationDialog(
             visible = showExportConfirmation,
-            format = selectedExportFormat,
-            entityCount = totalEntities,
-            estimatedSize = estimateExportSize(selectedExportFormat, observations.size, notes.size, projects.size, sources.size),
+            format = exportFormat,
+            entityCount = totalCount,
+            estimatedSize = estimatedSize,
             onConfirm = {
                 showExportConfirmation = false
-                // TODO: Trigger export with confirmed format/scope
+                // Export will be triggered via the onExport callback from ExportTabContent
             },
             onDismiss = { showExportConfirmation = false }
         )
