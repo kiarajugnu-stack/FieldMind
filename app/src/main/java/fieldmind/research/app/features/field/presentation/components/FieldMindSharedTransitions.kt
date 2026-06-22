@@ -2,12 +2,18 @@ package fieldmind.research.app.features.field.presentation.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -20,6 +26,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 
 /**
  * Shared element transition helpers for card-to-detail navigation,
@@ -52,66 +59,40 @@ object FieldMindTransitions {
         stiffness = 700f
     )
 
-    // ── Shared Element Animations ──
-
-    /**
-     * Animated scale for a shared element during navigation.
-     * Apply this to the source element (card) and target element (detail header).
-     */
-    @Composable
-    fun sharedElementScale(
-        isTransitioning: Boolean,
-        initialScale: Float = 1f
-    ): Float {
-        val targetScale = if (isTransitioning) 0.96f else initialScale
-        return animateFloatAsState(
-            targetValue = targetScale,
-            animationSpec = sharedElementSpring,
-            label = "sharedElementScale"
-        ).value
-    }
-
-    /** Opacity for fading elements during navigation. */
-    @Composable
-    fun transitionAlpha(isTransitioning: Boolean): Float {
-        return animateFloatAsState(
-            targetValue = if (isTransitioning) 0.6f else 1f,
-            animationSpec = tween(180),
-            label = "transitionAlpha"
-        ).value
-    }
-
-    /**
-     * Container transform: animates bounds (size) between two states.
-     * Use with Modifier.clip() for morphing shape effect.
-     */
-    @Composable
-    fun containerBounds(
-        isExpanded: Boolean,
-        expandedSize: Dp,
-        collapsedSize: Dp
-    ): Dp {
-        return animateDpAsState(
-            targetValue = if (isExpanded) expandedSize else collapsedSize,
-            animationSpec = spring(
-                dampingRatio = if (isExpanded) 0.65f else 0.8f,
-                stiffness = 500f
-            ),
-            label = "containerBounds"
-        ).value
-    }
-
-    // ── Standardized Content Transitions ──
+    // ── Screen Transition Specs ──
 
     /**
      * Fade-through transition: brief cross-fade between content states.
-     * Use for non-sequential state changes (tabs, filters, views).
+     * Use for non-sequential state changes (settings hub → settings page).
+     * @param durationMs Fade duration; default 250ms
      */
-    val fadeThrough: ContentTransform = fadeIn(
-        animationSpec = tween(250)
-    ) togetherWith fadeOut(
-        animationSpec = tween(200)
-    )
+    fun fadeThrough(durationMs: Int = 250): ContentTransform =
+        fadeIn(animationSpec = tween(durationMs, easing = FastOutSlowInEasing)) togetherWith
+        fadeOut(animationSpec = tween(durationMs, easing = FastOutSlowInEasing))
+
+    /**
+     * Scale-in + fade for modal-style screens (dialogs, overlays).
+     * Content enters from slightly smaller and fades up.
+     */
+    val scaleFade: ContentTransform =
+        scaleIn(initialScale = 0.92f, animationSpec = tween(250, easing = FastOutSlowInEasing)) +
+        fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing)) togetherWith
+        scaleOut(targetScale = 0.95f, animationSpec = tween(180)) +
+        fadeOut(animationSpec = tween(150))
+
+    /**
+     * Shared axis (horizontal): slides from the right on forward nav,
+     * from the left on back nav. Use for list→detail navigation.
+     * @param slideFraction How much of the screen width to slide (default 1/4)
+     */
+    fun sharedAxisHorizontal(slideFraction: Float = 0.25f): ContentTransform {
+        val slideSpec = tween<IntOffset>(350, easing = FastOutSlowInEasing)
+        val fadeSpec = tween<Float>(200, easing = FastOutSlowInEasing)
+        return slideInHorizontally(animationSpec = slideSpec) { (it * slideFraction).toInt() } +
+            fadeIn(animationSpec = fadeSpec) togetherWith
+            slideOutHorizontally(animationSpec = slideSpec) { -(it * slideFraction * 0.8f).toInt() } +
+            fadeOut(animationSpec = fadeSpec)
+    }
 
     /**
      * Shared axis (vertical): content slides up/down along shared vertical axis.
@@ -128,31 +109,42 @@ object FieldMindTransitions {
     )
 
     /**
-     * Shared axis (vertical) for entering items — slides up with fade.
+     * Fade-through + slight scale for hub→page transitions.
+     * New content fades in while old fades out, with a quick cross-fade moment.
      */
-    val itemEnter: ContentTransform = slideInVertically(
+    val fadeThroughScale: ContentTransform =
+        scaleIn(initialScale = 0.97f, animationSpec = tween(250, easing = FastOutSlowInEasing)) +
+        fadeIn(animationSpec = tween(250, easing = FastOutSlowInEasing)) togetherWith
+        scaleOut(targetScale = 1.03f, animationSpec = tween(180)) +
+        fadeOut(animationSpec = tween(180))
+
+    /**
+     * List item entrance: slide up + fade in with configurable offset.
+     * @param offsetFraction vertical slide distance as fraction of height
+     */
+    fun itemEnter(offsetFraction: Int = 4): ContentTransform = slideInVertically(
         animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f)
-    ) { it / 4 } + fadeIn(
+    ) { it / offsetFraction } + fadeIn(
         animationSpec = tween(250)
     ) togetherWith fadeOut(
         animationSpec = tween(200)
     )
 
     /**
+     * Default crossfade for inline AnimatedContent.
+     */
+    val fadeThroughInline: ContentTransform =
+        fadeIn(animationSpec = tween(250)) togetherWith
+        fadeOut(animationSpec = tween(200))
+
+    /**
      * Animated content wrapper that animates transitions between states.
      * Use with key(state) to animate content changes.
-     *
-     * Example:
-     * ```kotlin
-     * FieldMindTransitions.AnimatedContent(targetState = tab) { currentTab ->
-     *     when (currentTab) { ... }
-     * }
-     * ```
      */
     @Composable
     fun AnimatedContent(
         targetState: Any?,
-        transition: ContentTransform = fadeThrough,
+        transition: ContentTransform = fadeThroughInline,
         content: @Composable () -> Unit
     ) {
         key(targetState) {

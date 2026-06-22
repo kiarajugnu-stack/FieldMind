@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
@@ -169,8 +171,8 @@ fun TextBlock(
  * - `[text](url)` → Link style
  */
 private class MarkdownVisualTransformation : VisualTransformation {
-    override fun filter(text: androidx.compose.ui.text.AnnotatedString):
-            androidx.compose.ui.text.TransformedText {
+    override fun filter(text: AnnotatedString):
+            TransformedText {
 
         val raw = text.text
         val styles = mutableListOf<Pair<IntRange, SpanStyle>>()
@@ -208,7 +210,7 @@ private class MarkdownVisualTransformation : VisualTransformation {
             }
         }
 
-        return androidx.compose.ui.text.TransformedText(result,
+        return TransformedText(result,
             OffsetMapping.Identity)
     }
 

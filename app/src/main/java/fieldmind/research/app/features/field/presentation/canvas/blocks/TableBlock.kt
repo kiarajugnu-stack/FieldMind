@@ -81,7 +81,7 @@ data class TableData(
 
     /** Add a new empty row at the end. */
     fun addRow(): TableData = copy(
-        rows = rows + List(columnCount) { "" }
+        rows = rows + listOf(List(columnCount) { "" })
     )
 
     /** Remove the last row if there are > 0 rows. */

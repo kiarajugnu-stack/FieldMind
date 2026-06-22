@@ -148,6 +148,7 @@ fun FieldMindSubNavBar(
                             Color.Transparent,
                         modifier = Modifier
                             .height(IntrinsicSize.Min)
+                            .pressScale(scaleDown = 0.93f)
                     ) {
                         Row(
                             modifier = Modifier
@@ -309,7 +310,8 @@ fun OptionPickerDialog(
                         shape = RoundedCornerShape(18.dp),
                         color = if (isSelected) accentColor.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainerHigh,
                         border = if (isSelected) BorderStroke(1.5.dp, accentColor) else null,
-                        tonalElevation = 0.dp
+                        tonalElevation = 0.dp,
+                        modifier = Modifier.pressScale(scaleDown = 0.97f)
                     ) {
                         Row(
                             Modifier.fillMaxWidth().padding(14.dp),
@@ -403,7 +405,8 @@ fun MultiSelectPickerField(
             onClick = { haptics.light(); showDialog = true },
             shape = RoundedCornerShape(18.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+            modifier = Modifier.pressScale(scaleDown = 0.97f)
         ) {
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -481,7 +484,8 @@ fun OptionPickerField(
             onClick = { haptics.light(); showDialog = true },
             shape = RoundedCornerShape(18.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+            modifier = Modifier.pressScale(scaleDown = 0.97f)
         ) {
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -566,7 +570,8 @@ fun FieldScreenHeader(
                 Surface(
                     onClick = onAction,
                     shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.pressScale(scaleDown = 0.90f)
                 ) {
                     Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
                         Icon(icon = actionIcon, contentDescription = title, size = 22.dp)
@@ -679,7 +684,7 @@ fun BackButton(
         onClick = onClick,
         shape = shape,
         color = containerColor,
-        modifier = modifier.size(40.dp)
+        modifier = modifier.size(40.dp).pressScale(scaleDown = 0.88f)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
@@ -1385,7 +1390,10 @@ fun ProtocolPicker(
                 FieldProtocols.all.forEach { protocol ->
                     val isSelected = selectedId == protocol.id
                     Card(
-                        modifier = Modifier.fillMaxWidth().clickable { onSelect(protocol) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .expressivePress(scaleDown = 0.97f)
+                            .clickable { onSelect(protocol) },
                         shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh

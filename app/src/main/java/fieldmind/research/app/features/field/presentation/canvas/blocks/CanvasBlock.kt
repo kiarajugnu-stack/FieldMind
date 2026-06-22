@@ -6,10 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -149,6 +146,7 @@ fun CanvasBlock(
         // Resize handle (bottom-right corner)
         if (isSelected) {
             ResizeHandle(
+                modifier = Modifier.align(Alignment.BottomEnd),
                 onResize = { dx, dy -> onResized(block.width + dx, block.height + dy) },
                 canvasState = canvasState
             )
@@ -161,14 +159,14 @@ fun CanvasBlock(
  */
 @Composable
 private fun ResizeHandle(
+    modifier: Modifier = Modifier,
     onResize: (Float, Float) -> Unit,
     canvasState: CanvasState
 ) {
     val handleSize = 16.dp
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(handleSize)
-            .align(Alignment.BottomEnd)
             .background(
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                 RoundedCornerShape(topStart = 4.dp)

@@ -80,7 +80,7 @@ class CanvasState(
     /**
      * Zoom to a specific level centered on screen center (or a focus point).
      */
-    fun setZoom(newZoom: Float) {
+    fun zoomTo(newZoom: Float) {
         zoom = newZoom.coerceIn(minZoom, maxZoom)
     }
 

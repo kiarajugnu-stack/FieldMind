@@ -25,8 +25,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -158,11 +160,17 @@ fun KnowledgeLibraryScreen(
                 )
             }
         ) {
+            // Hoist scroll states to preserve position across tab switches
+            val sourceScrollState = rememberLazyListState()
+            val noteScrollState = rememberLazyListState()
+            val readingScrollState = rememberLazyListState()
+            val flashcardScrollState = rememberLazyListState()
+            val learnScrollState = rememberLazyListState()
             when (tab) {
-                0 -> SourcePanel(viewModel, sources, onOpenDetail)
-                1 -> NotePanel(viewModel, notes, onOpenDetail)
-                2 -> PaperReadingPanel(sources, onOpenDetail)
-                3 -> FlashcardPanel(viewModel, flashcards, sources, notes, onOpenDetail) { onNavigate(FieldMindScreen.Flashcards) }
+                0 -> SourcePanel(viewModel, sources, onOpenDetail, scrollState = sourceScrollState)
+                1 -> NotePanel(viewModel, notes, onOpenDetail, scrollState = noteScrollState)
+                2 -> PaperReadingPanel(sources, onOpenDetail, scrollState = readingScrollState)
+                3 -> FlashcardPanel(viewModel, flashcards, sources, notes, onOpenDetail, onStartReview = { onNavigate(FieldMindScreen.Flashcards) }, scrollState = flashcardScrollState)
                 4 -> LearnScreenRedirect(onOpenReader = onOpenReader, onOpenLearn = { onNavigate(FieldMindScreen.Learn) })
             }
         }
@@ -174,7 +182,7 @@ fun KnowledgeLibraryScreen(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) {
+private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit, scrollState: LazyListState) {
     val haptics = rememberFieldMindHaptics()
     val clipboard = LocalClipboardManager.current
     var showAdvancedDialog by remember { mutableStateOf(false) }
@@ -213,7 +221,7 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
     val importantCount = items.count { it.importance in listOf("Important", "Critical") }
     val totalCount = items.size
 
-    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(state = scrollState, contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         // ── Stats summary card ──
         if (items.isNotEmpty()) {
             item {
@@ -362,6 +370,7 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .pressScale(scaleDown = 0.97f)
                                 .clickable {
                                     expandedCategories = if (isExpanded) expandedCategories - type
                                     else expandedCategories + type
@@ -448,7 +457,7 @@ private fun SourceCardWithCitations(
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // Main content row
             Row(
-                Modifier.fillMaxWidth().clickable(onClick = onClick),
+                Modifier.fillMaxWidth().pressScale(scaleDown = 0.97f).clickable(onClick = onClick),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Box(
@@ -546,7 +555,7 @@ private fun SourceCardWithCitations(
             // Preview if link available
             if (source.link.isNotBlank()) {
                 Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = 10.dp, vertical = 6.dp),
+                    Modifier.fillMaxWidth().pressScale(scaleDown = 0.97f).clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
@@ -1060,20 +1069,20 @@ private fun ReadingTimerDialog(onDismiss: () -> Unit) {
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, onOpenDetail: (String, Long) -> Unit) {
+private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, onOpenDetail: (String, Long) -> Unit, scrollState: LazyListState) {
     var showAdd by remember { mutableStateOf(false) }
     var categoriesExpanded by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf("All") }
     val categories = remember(items) { listOf("All") + items.map { it.category.ifBlank { "Other" } }.distinct().sorted() }
     val filtered = remember(items, selectedCategory) { if (selectedCategory == "All") items else items.filter { it.category == selectedCategory } }
-    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(state = scrollState, contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { SectionHeader("Notes", "Add quick notes here. Categories stay collapsed until you need filtering.") }
         item { LibraryAddButton(if (showAdd) "Close note composer" else "Add note") { showAdd = !showAdd } }
         if (showAdd) item { NoteCaptureCard(viewModel = viewModel, initialCategory = selectedCategory.takeIf { it != "All" } ?: observationCategories.last()) { showAdd = false } }
         item {
             Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(Modifier.fillMaxWidth().clickable { categoriesExpanded = !categoriesExpanded }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(Modifier.fillMaxWidth().pressScale(scaleDown = 0.97f).clickable { categoriesExpanded = !categoriesExpanded }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Icon(icon = FieldMindIcons.Category, contentDescription = null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
                         Text("Categories", Modifier.weight(1f), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                         InfoChip(selectedCategory)
@@ -1104,13 +1113,13 @@ private fun NoteCaptureCard(
 }
 
 @Composable
-private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit) {
+private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, Long) -> Unit, scrollState: LazyListState) {
     val readCount = items.count { it.readingStatus == "Read" }
     val inProgressCount = items.count { it.readingStatus == "In progress" }
     val total = items.size.coerceAtLeast(1)
     val progressFraction = readCount.toFloat() / total
 
-    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(state = scrollState, contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             SectionHeader("Paper reading mode", "Track your reading progress across saved sources.")
         }
@@ -1188,7 +1197,8 @@ private fun FlashcardPanel(
     sources: List<SourceEntity>,
     notes: List<NoteEntity>,
     onOpenDetail: (String, Long) -> Unit,
-    onStartReview: () -> Unit
+    onStartReview: () -> Unit,
+    scrollState: LazyListState
 ) {
     var show by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -1203,7 +1213,7 @@ private fun FlashcardPanel(
     var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     
-    LazyColumn(contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyColumn(state = scrollState, contentPadding = libraryPanelPadding(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(onClick = onStartReview, Modifier.weight(1f), shape = RoundedCornerShape(16.dp), enabled = items.isNotEmpty()) {
@@ -1605,13 +1615,13 @@ private fun LearnCategoryCard(category: LearnCategory, onOpenResource: (LearnRes
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(18.dp))
-                    .clickable { expanded = !expanded }
-                    .padding(vertical = 2.dp),
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pressScale(scaleDown = 0.97f)
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable { expanded = !expanded }
+                        .padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -1642,6 +1652,7 @@ private fun LearnCategoryCard(category: LearnCategory, onOpenResource: (LearnRes
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .pressScale(scaleDown = 0.97f)
                                             .clip(RoundedCornerShape(14.dp))
                                             .clickable { onOpenResource(resource) }
                                             .padding(10.dp),

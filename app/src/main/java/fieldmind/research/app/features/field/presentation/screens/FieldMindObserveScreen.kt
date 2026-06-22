@@ -582,7 +582,7 @@ fun ObserveScreen(
                         item {
                             var expandSessions by remember { mutableStateOf(false) }
                             Card(
-                                modifier = Modifier.fillMaxWidth().clickable { expandSessions = !expandSessions },
+                                modifier = Modifier.fillMaxWidth().expressivePress(scaleDown = 0.97f).clickable { expandSessions = !expandSessions },
                                 shape = RoundedCornerShape(20.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -1185,7 +1185,7 @@ private fun EvidenceButton(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.height(80.dp).clickable(onClick = onClick),
+        modifier = modifier.height(80.dp).expressivePress(scaleDown = 0.95f).clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -1298,7 +1298,7 @@ private fun QuickObservationForm(
 
             // ── Collapsible categories ──
             Row(
-                Modifier.fillMaxWidth().clickable { showCategories = !showCategories },
+                Modifier.fillMaxWidth().pressScale(scaleDown = 0.97f).clickable { showCategories = !showCategories },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1321,7 +1321,7 @@ private fun QuickObservationForm(
 
             // ── Structured Fields (Phase 3) ──
             Row(
-                Modifier.fillMaxWidth().clickable { showStructured = !showStructured },
+                Modifier.fillMaxWidth().pressScale(scaleDown = 0.97f).clickable { showStructured = !showStructured },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1362,7 +1362,7 @@ private fun QuickObservationForm(
 
             // ── Protocol picker button ──
             Row(
-                Modifier.fillMaxWidth().clickable { showProtocols = !showProtocols },
+                Modifier.fillMaxWidth().pressScale(scaleDown = 0.97f).clickable { showProtocols = !showProtocols },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -2595,7 +2595,7 @@ private suspend fun awaitCurrentLocation(provider: FieldLocationProvider): Captu
 private fun FieldModeButton(category: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val accent = FieldMindTheme.colors.accentFor("observation")
     Card(
-        modifier = modifier.height(104.dp).clickable(onClick = onClick),
+        modifier = modifier.height(104.dp).expressivePress(scaleDown = 0.96f).clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

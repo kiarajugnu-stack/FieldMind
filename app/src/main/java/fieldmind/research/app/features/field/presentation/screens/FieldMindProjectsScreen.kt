@@ -259,7 +259,7 @@ private fun ResearchHubOverviewTab(
         // ── 1. Start Research Session ──
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().clickable { haptics.light(); onStartSession?.invoke() },
+                modifier = Modifier.fillMaxWidth().expressivePress(scaleDown = 0.97f).clickable { haptics.light(); onStartSession?.invoke() },
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.project.copy(alpha = 0.12f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -454,7 +454,7 @@ private fun TemplatesGrid(templates: List<ProjectTemplateDef>, onSelect: (Projec
             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(templates) { template ->
                     Card(
-                        modifier = Modifier.width(200.dp).clickable { onSelect(template) },
+                        modifier = Modifier.width(200.dp).expressivePress(scaleDown = 0.95f).clickable { onSelect(template) },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -557,7 +557,7 @@ internal fun ProjectDashboardCardCompact(
     val relatedObsRecent = observations.count { it.projectId == project.id && it.timestamp > System.currentTimeMillis() - 7 * 24 * 3600_000L }
 
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().expressivePress(scaleDown = 0.98f).clickable(onClick = onClick),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -666,7 +666,7 @@ private fun ObservationsTab(
         // ── Add observation button ──
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().clickable { obsHaptics.light(); showNewObservation = true },
+                modifier = Modifier.fillMaxWidth().expressivePress(scaleDown = 0.97f).clickable { obsHaptics.light(); showNewObservation = true },
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.1f)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

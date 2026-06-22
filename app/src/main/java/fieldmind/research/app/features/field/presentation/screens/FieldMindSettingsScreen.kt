@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +38,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.features.field.presentation.components.pressScale
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
@@ -93,7 +95,9 @@ fun FieldMindSettingsScreen(
     BackHandler(enabled = true) { onBack() }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
+    val settingsScrollState = rememberLazyListState()
     LazyColumn(
+        state = settingsScrollState,
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 40.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -133,77 +137,55 @@ fun FieldMindSettingsScreen(
             }
         }
 
-        item {
-            SettingsTileGroup("Quick settings") {
-                if (viewModel != null) {
-                    val themeMode by viewModel.fieldSettings.themeMode.collectAsState()
-                    val dynamicColor by viewModel.fieldSettings.dynamicColorEnabled.collectAsState()
-                    ToggleItem("Material You colors", "Use system wallpaper colors that auto-adapt.", dynamicColor, viewModel.fieldSettings::setDynamicColorEnabled, FieldMindIcons.Palette)
-                    ThemeToggle(themeMode, viewModel.fieldSettings::setThemeMode)
-                }
-            }
-        }
+
 
         // ╔════════════════════════════════════════════╗
         // ║  PROFILE                                   ║
         // ╚════════════════════════════════════════════╝
         item { SectionHeader("Profile", "Your research identity and preferences") }
         item { SettingsNavCard("Research profile", "Name, role, and research focus", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenProfile?.invoke() } }
+        item { SettingsNavCard("Screen visibility", "Show/hide navigation tabs and features", FieldMindIcons.Visibility, FieldMindTheme.colors.info) { onOpenScreenVisibility?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
-        // ║  DISPLAY & THEME                           ║
+        // ║  DISPLAY & FORMAT                          ║
         // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Display & theme", "Appearance, units, and format") }
-        item { SettingsNavCard("Appearance", "Theme, dynamic color, and layout", FieldMindIcons.Palette, FieldMindTheme.colors.info) { onOpenAppearance?.invoke() } }
+        item { SectionHeader("Display & format", "Appearance, units, and display preferences") }
+        item { SettingsNavCard("Appearance", "Theme, dynamic color, map, and layout", FieldMindIcons.Palette, FieldMindTheme.colors.info) { onOpenAppearance?.invoke() } }
         item { SettingsNavCard("Units & format", "Temperature, distance, date/time display", FieldMindIcons.Settings, FieldMindTheme.colors.info) { onOpenUnits?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
         // ║  DATA ENTRY                                ║
         // ╚════════════════════════════��═══════════════╝
-        item { SectionHeader("Data entry", "Capture defaults, weather, and species ID") }
+        item { SectionHeader("Data & capture", "Capture defaults, weather, and species tools") }
         item { SettingsNavCard("Capture defaults", "Categories, confidence, goal, location", FieldMindIcons.Capture, FieldMindTheme.colors.observation) { onOpenCapture?.invoke() } }
         item { SettingsNavCard("Weather", "Auto-weather, temperature unit, refresh, widget display", FieldMindIcons.Weather, FieldMindTheme.colors.info) { onOpenWeather?.invoke() } }
-        item { SettingsNavCard("Species identification", "Image analysis, API key, and model URL", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenSpeciesId?.invoke() } }
-        item { SettingsNavCard("Species packs", "Download regional model packs for species ID", FieldMindIcons.Download, FieldMindTheme.colors.observation) { onOpenSpeciesPacks?.invoke() } }
+        item { SettingsNavCard("Species tools", "Image ID, API keys, model packs, and regional catalogs", FieldMindIcons.Nature, FieldMindTheme.colors.observation) { onOpenSpeciesId?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
         // ║  TOOLS                                     ║
         // ╚══���═════════════════════════════════════════╝
-        item { SectionHeader("Tools", "Maps, navigation, and automation") }
-        item { SettingsNavCard("Map settings", "Map type, default zoom, location marker", FieldMindIcons.Map, FieldMindTheme.colors.data) { onOpenMap?.invoke() } }
-        item { SettingsNavCard("Screen visibility", "Show/hide navigation tabs", FieldMindIcons.Visibility, FieldMindTheme.colors.info) { onOpenScreenVisibility?.invoke() } }
-        item { SettingsNavCard("Auto generation", "Automatic flashcards & questions from observations", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAutoGen?.invoke() } }
+
 
         // ╔════════════════════════════════════════════╗
         // ║  AI ASSISTANCE                             ║
         // ╚════════════════════════════════════════════╝
-        item { SectionHeader("AI assistance", "On-device and cloud AI settings") }
+        item { SectionHeader("AI & intelligence", "AI assistant, local model, and auto-generation") }
         item { SettingsNavCard("AI assistant", "Gemini, OpenAI, provider settings", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAi?.invoke() } }
-        item { SettingsNavCard("Local model", "On-device study generation", FieldMindIcons.Download, FieldMindTheme.colors.hypothesis) { onOpenLocalModel?.invoke() } }
+        item { SettingsNavCard("Local model", "On-device study generation profiles", FieldMindIcons.Download, FieldMindTheme.colors.hypothesis) { onOpenLocalModel?.invoke() } }
+        item { SettingsNavCard("Auto generation", "Automatic flashcards & questions from observations", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenAutoGen?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
-        // ║  DATA & STORAGE                            ║
+        // ║  STORAGE & SECURITY                        ║
         // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Data & storage", "Backup, export, and database health") }
-        item { SettingsNavCard("Backup & Restore", "Export, import, backup with folder picker, encryption", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
-        item { SettingsNavCard("Data integrity", "Orphaned records, database health", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis) { onOpenDataIntegrity?.invoke() } }
+        item { SectionHeader("Storage & security", "Backup, data health, and privacy") }
+        item { SettingsNavCard("Backup & Restore", "Export, import, auto-backup, folder picker, encryption", FieldMindIcons.Archive, FieldMindTheme.colors.data) { onOpenBackup?.invoke() } }
+        item { SettingsNavCard("Security", "App lock, PIN, biometrics, privacy typing, screen protection", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
+        item { SettingsNavCard("Data integrity", "Orphaned records, database health checks", FieldMindIcons.Archive, FieldMindTheme.colors.hypothesis) { onOpenDataIntegrity?.invoke() } }
 
         // ╔════════════════════════════════════════════╗
-        // ║  SECURITY & PRIVACY                        ║
+        // ║  ABOUT & ADVANCED                          ║
         // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Security & privacy", "Lock, PIN, and privacy controls") }
-        item { SettingsNavCard("Security", "App lock, PIN lock, privacy typing, auto-lock", FieldMindIcons.Lock, FieldMindTheme.colors.confidenceVerify) { onOpenSecurity?.invoke() } }
-
-        // ╔════════════════════════════════════════════╗
-        // ║  ADVANCED                                  ║
-        // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Advanced", "Developer tools and debugging") }
-        item { SettingsNavCard("Developer", "Debug logging, dev tools, version info", FieldMindIcons.Sparkle, FieldMindTheme.colors.flashcard) { onOpenDeveloper?.invoke() } }
-
-        // ╔════════════════════════════════════════════╗
-        // ║  INFO                                      ║
-        // ╚════════════════════════════════════════════╝
-        item { SectionHeader("Info", "Release notes and app info") }
+        item { SectionHeader("About & advanced", "Developer tools, changelog, and app info") }
         item { SettingsNavCard("What’s new", "FieldMind redesign notes and migration changes", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
 
@@ -219,7 +201,7 @@ fun FieldMindSettingsScreen(
 @Composable
 private fun SettingsNavCard(title: String, subtitle: String, icon: MaterialSymbolIcon, color: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).pressScale(scaleDown = 0.97f),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -279,8 +261,12 @@ fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     val settings = viewModel.fieldSettings
     val themeMode by settings.themeMode.collectAsState()
     val dynamicColor by settings.dynamicColorEnabled.collectAsState()
+    val mapType by settings.mapType.collectAsState()
+    val mapShowLocation by settings.mapShowLocation.collectAsState()
 
     SettingsSubPage("Appearance", icon = FieldMindIcons.Palette, onBack = onBack) {
+        // ── Theme section ──
+        item { SectionHeader("Theme", "Control the look and feel of FieldMind") }
         item {
             SettingsGroupCard {
                 ThemeToggle(themeMode, settings::setThemeMode)
@@ -288,11 +274,20 @@ fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 ToggleItem("Material You dynamic color", "Use system wallpaper colors that auto-adapt to light/dark. Off keeps the FieldMind brand palette.", dynamicColor, settings::setDynamicColorEnabled, FieldMindIcons.Palette)
             }
         }
+        // ── Map settings ──
+        item { SectionHeader("Map", "Map type and location display preferences") }
         item {
             SettingsGroupCard {
+                ChoiceItemForm("Default map type", listOf("Standard", "Satellite", "Terrain"), mapType, FieldMindIcons.Map, settings::setMapType)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Show my location", "Display your current position as a marker on the map.", mapShowLocation, settings::setMapShowLocation, FieldMindIcons.Location)
+            }
+        }
+        item {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Theme preview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-                    Text("Changes apply immediately. The FieldMind brand palette uses forest green and warm ochre tones. When dynamic color is enabled, system wallpaper colors override the brand palette.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Map data", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("FieldMind uses OpenStreetMap tiles for map rendering. No map data is sent to any server beyond the tile request.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -2105,6 +2100,104 @@ private fun SettingsTileGroup(title: String, content: @Composable ColumnScope.()
 // ══════════════════════════════════════════════════════════════════════
 //  Species Pack Management Page
 // ════════════════════════════════════════��═════════════════════════════
+// ── Species Tools (merged page) ──
+@Composable
+fun SpeciesToolsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val context = LocalContext.current
+    val settings = viewModel.fieldSettings
+    val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
+    val database = remember { SpeciesDatabase(context) }
+    val apiKey by settings.speciesIdApiKey.collectAsState()
+    val offlineFirst by settings.speciesIdOfflineFirst.collectAsState()
+    val modelBaseUrl by settings.speciesModelBaseUrl.collectAsState()
+    val perenualKey by settings.perenualApiKey.collectAsState()
+    var packs by remember { mutableStateOf(database.getRegionalPacks()) }
+    var downloadingId by remember { mutableStateOf<String?>(null) }
+    var downloadProgress by remember { mutableFloatStateOf(0f) }
+    fun refreshPacks() { packs = database.getRegionalPacks() }
+    LaunchedEffect(Unit) { database.setProgressListener { _, d, t -> if (t > 0) downloadProgress = (d.toFloat() / t).coerceIn(0f, 1f) } }
+    DisposableEffect(Unit) { onDispose { database.setProgressListener(null) } }
+    LaunchedEffect(packs) { refreshPacks() }
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 40.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item { StandardScreenHeader(title = "Species tools", subtitle = "Identification settings, API keys, and regional model packs", icon = FieldMindIcons.Nature, trailing = { BackButton(onClick = onBack) }) }
+            item {
+                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                                Icon(FieldMindIcons.Nature, null, tint = FieldMindTheme.colors.observation, size = 18.dp)
+                            }
+                            Text("How identification works", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        }
+                        Text("FieldMind uses a pure-Kotlin image analysis engine - color histograms, edge detection, texture analysis, and perceptual hashing - to identify species from photos. No AI, no internet, no server needed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Predictions improve as you confirm IDs. Download regional packs below to expand the built-in ~500 species database.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            item { SectionHeader("Identification", "Offline analysis and cloud API keys") }
+            item { SettingsGroupCard { ToggleItem("Offline-first mode (recommended)", "Use the on-device image analyzer. No internet required. Turn off to allow cloud reference lookups if you add an API key.", offlineFirst, settings::setSpeciesIdOfflineFirst, FieldMindIcons.Nature) } }
+            if (!offlineFirst) {
+                item {
+                    SettingsGroupCard {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Perenual API (plant and botany data)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                            OutlinedTextField(value = perenualKey, onValueChange = settings::setPerenualApiKey, label = { Text("Perenual API key") }, placeholder = { Text("Paste your Perenual API key") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (perenualKey.isBlank()) "No key saved. Sign up free at perenual.com" else "Perenual key saved locally.") })
+                        }
+                    }
+                }
+                item {
+                    SettingsGroupCard {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text("Other species API (optional)", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            OutlinedTextField(value = apiKey, onValueChange = settings::setSpeciesIdApiKey, label = { Text("Custom API key (optional)") }, placeholder = { Text("Leave blank if using iNaturalist") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (apiKey.isBlank()) "No key - iNaturalist API is free" else "Custom key saved locally.") })
+                        }
+                    }
+                }
+            }
+            item { SectionHeader("Regional packs", "Download and manage species identification packs") }
+            item {
+                SettingsGroupCard {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(value = modelBaseUrl, onValueChange = settings::setSpeciesModelBaseUrl, label = { Text("Pack base URL (advanced)") }, placeholder = { Text("https://...") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), singleLine = true, supportingText = { Text(if (modelBaseUrl.isBlank()) "Default URL" else "Using: $modelBaseUrl") })
+                    }
+                }
+            }
+            items(packs, key = { it.regionId }) { pack ->
+                val isDownloaded = pack.isDownloaded
+                val isDownloading = downloadingId == pack.regionId
+                Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = if (isDownloaded) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
+                    Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) { Icon(if (isDownloaded) FieldMindIcons.Check else FieldMindIcons.Download, null, tint = FieldMindTheme.colors.observation, size = 24.dp) }
+                            Column(Modifier.weight(1f)) {
+                                Text(pack.regionName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(pack.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                        if (isDownloading) {
+                            Column { LinearProgressIndicator(progress = { downloadProgress }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)), color = FieldMindTheme.colors.observation)
+                                Text("${(downloadProgress * 100).toInt()}% - Downloading...", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            if (isDownloaded) {
+                                OutlinedButton(onClick = { haptics.light(); scope.launch { database.deletePack(pack.regionId); refreshPacks() } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+                                    Icon(FieldMindIcons.Delete, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Delete")
+                                }
+                            } else {
+                                Button(onClick = { haptics.confirm(); downloadingId = pack.regionId; downloadProgress = 0f; scope.launch { runCatching { database.downloadPack(pack.regionId) }; downloadingId = null; refreshPacks() } }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) {
+                                    Icon(FieldMindIcons.Download, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Download")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun SpeciesPackSettingsPage(onBack: () -> Unit) {
