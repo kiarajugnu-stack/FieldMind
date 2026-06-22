@@ -23,10 +23,12 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -188,7 +190,7 @@ private class MarkdownVisualTransformation : VisualTransformation {
         applyPairStyle(raw, "`", "`",
             SpanStyle(
                 fontFamily = FontFamily.Monospace,
-                background = Color(0x22000000)
+                background = Color.Black.copy(alpha = 0.13f)
             )) { styles.add(it) }
 
         // # Headings — style the content after the prefix
@@ -207,7 +209,7 @@ private class MarkdownVisualTransformation : VisualTransformation {
         }
 
         return androidx.compose.ui.text.TransformedText(result,
-            androidx.compose.ui.text.input.OffsetMapping.Identity)
+            OffsetMapping.Identity)
     }
 
     /** Find all `open...close` pairs and style the content between them. */

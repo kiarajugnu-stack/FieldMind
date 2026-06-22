@@ -67,7 +67,8 @@ fun DetailScreen(
     viewModel: FieldMindViewModel,
     onBack: () -> Unit,
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
-    onOpenReader: (String, String) -> Unit = { _, _ -> }
+    onOpenReader: (String, String) -> Unit = { _, _ -> },
+    onOpenCanvas: ((Long) -> Unit)? = null
 ) {
     val observations by viewModel.observations.collectAsState()
     val notes by viewModel.notes.collectAsState()
@@ -143,7 +144,7 @@ fun DetailScreen(
             // Editing is handled via EditEntityDialog overlay — detail content always shows behind it
             when (kind) {
                     "note" -> notes.firstOrNull { it.id == id }?.let { n ->
-                        item { NoteDetailContent(n, onOpenDetail) }
+                        item { NoteDetailContent(n, onOpenDetail, onOpenCanvas) }
                         item { BacklinksPanel(buildList {
                             projects.firstOrNull { it.id == n.projectId }?.let { add(Triple("project", it.title, it.id)) }
                             sources.firstOrNull { it.id == n.sourceId }?.let { add(Triple("source", it.title, it.id)) }
@@ -1413,7 +1414,8 @@ private fun ObsStatItem(value: String, label: String, icon: MaterialSymbolIcon) 
 @Composable
 private fun NoteDetailContent(
     n: NoteEntity,
-    onOpenDetail: (String, Long) -> Unit
+    onOpenDetail: (String, Long) -> Unit,
+    onOpenCanvas: ((Long) -> Unit)? = null
 ) {
     val colors = FieldMindTheme.colors
     Card(
@@ -1451,6 +1453,28 @@ private fun NoteDetailContent(
                     n.tags.split(",").filter { it.isNotBlank() }.forEach { tag ->
                         TagChip(tag.trim())
                     }
+                }
+            }
+
+            // ── Open Canvas button ──
+            if (onOpenCanvas != null) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                Button(
+                    onClick = { onOpenCanvas(n.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.source.copy(alpha = 0.12f),
+                        contentColor = colors.source
+                    )
+                ) {
+                    Icon(MaterialSymbolIcon("dashboard_customize"), null, size = 18.dp)
+                    Spacer(Modifier.size(8.dp))
+                    Text(
+                        "Open Canvas Editor",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         }

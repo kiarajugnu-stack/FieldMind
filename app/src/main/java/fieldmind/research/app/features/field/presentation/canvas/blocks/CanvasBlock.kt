@@ -7,7 +7,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
@@ -24,6 +27,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
+import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlin.math.roundToInt
 
 /**
@@ -108,8 +113,38 @@ fun CanvasBlock(
                 }
             }
     ) {
-        // Block content
-        content()
+        // Content fills the entire area
+        Box(Modifier.fillMaxSize()) {
+            content()
+        }
+
+        // Link badge overlay (top-right corner)
+        if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        end = (4f / canvasState.zoom).dp,
+                        top = (4f / canvasState.zoom).dp
+                    ),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size((16f / canvasState.zoom).coerceAtLeast(12f).dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        MaterialSymbolIcon("link"),
+                        "Linked to ${block.linkedEntityType}",
+                        size = (10f / canvasState.zoom).coerceAtLeast(6f).dp,
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+        }
 
         // Resize handle (bottom-right corner)
         if (isSelected) {
