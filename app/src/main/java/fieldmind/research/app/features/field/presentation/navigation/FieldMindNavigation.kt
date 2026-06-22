@@ -44,7 +44,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.animation.SharedTransitionLayout
 import fieldmind.research.app.features.field.presentation.components.FieldMindMotion
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
@@ -676,8 +675,7 @@ private fun FieldMindNavHost(
         navController.navigateToDestination(FieldMindScreen.Reader.route)
     }
 
-    SharedTransitionLayout {
-        NavHost(
+    NavHost(
             navController = navController,
             startDestination = FieldMindScreen.Home.route,
             modifier = modifier
@@ -805,6 +803,5 @@ composable(FieldMindScreen.SpeciesTool.route) { SpeciesToolScreen(viewModel = vi
                 }
             )
         }
-    }
 }
 }
