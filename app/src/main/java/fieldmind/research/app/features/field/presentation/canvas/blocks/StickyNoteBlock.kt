@@ -29,8 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
-import kotlin.math.atan2
-import kotlin.math.roundToInt
 
 /**
  * Sticky note block for the infinite canvas.
