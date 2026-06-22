@@ -335,6 +335,7 @@ fun TabSwipeHost(
 ) {
     val reduceMotion = FieldMindMotion.isReduceMotion()
     val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
 
     var tabOffsetX by remember { mutableFloatStateOf(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
@@ -396,8 +397,10 @@ fun TabSwipeHost(
                                 onDragEnd = {
                                     val threshold = contentWidth * 0.20f
                                     if (tabOffsetX > threshold) {
+                                        haptics.confirm()
                                         scope.launch { tabOffsetX = contentWidth; onSwipeBack() }
                                     } else if (tabOffsetX < -threshold) {
+                                        haptics.confirm()
                                         scope.launch { tabOffsetX = -contentWidth; onSwipeForward() }
                                     } else {
                                         tabOffsetX = 0f
@@ -431,6 +434,7 @@ fun SwipeBackHost(
 ) {
     val reduceMotion = FieldMindMotion.isReduceMotion()
     val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
 
     var activeDirection by remember { mutableStateOf<SwipeDirection?>(null) }
     var targetOffsetX by remember { mutableFloatStateOf(0f) }
@@ -573,6 +577,7 @@ fun SwipeBackHost(
                                         null -> 0f
                                     }
                                     if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
+                                        haptics.confirm()
                                         scope.launch {
                                             when (activeDirection) {
                                                 SwipeDirection.Horizontal -> targetOffsetX = contentWidth
