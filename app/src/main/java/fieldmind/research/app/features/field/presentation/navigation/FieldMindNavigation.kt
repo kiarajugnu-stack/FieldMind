@@ -673,10 +673,13 @@ private fun FieldMindNavHost(
     val openReader: (String, String) -> Unit = { url, title ->
         readerTarget = url to title
         navController.navigateToDestination(FieldMindScreen.Reader.route)
-    }    NavHost(
+    }
+
+    NavHost(
         navController = navController,
         startDestination = FieldMindScreen.Home.route,
-        modifier = modifier
+        modifier = modifier,
+        route = null
     ) {
         composable(FieldMindScreen.Home.route) { HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader) }
         composable(FieldMindScreen.Observe.route) { ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) }
