@@ -146,6 +146,7 @@ fun CanvasBlock(
         // Resize handle (bottom-right corner)
         if (isSelected) {
             ResizeHandle(
+                modifier = Modifier.align(Alignment.BottomEnd),
                 onResize = { dx, dy -> onResized(block.width + dx, block.height + dy) },
                 canvasState = canvasState
             )
@@ -158,14 +159,14 @@ fun CanvasBlock(
  */
 @Composable
 private fun ResizeHandle(
+    modifier: Modifier = Modifier,
     onResize: (Float, Float) -> Unit,
     canvasState: CanvasState
 ) {
     val handleSize = 16.dp
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(handleSize)
-            .align(Alignment.BottomEnd)
             .background(
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                 RoundedCornerShape(topStart = 4.dp)
