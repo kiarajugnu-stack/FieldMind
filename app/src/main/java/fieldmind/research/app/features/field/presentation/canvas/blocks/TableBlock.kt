@@ -122,11 +122,15 @@ data class TableData(
             val headers: List<String> = obj.getJSONArray("headers").let { arr ->
                 (0 until arr.length()).map { arr.optString(it, "") }
             }
-            val rows: List<List<String>> = obj.getJSONArray("rows").let { arr ->
-                (0 until arr.length()).map { rowIdx: Int ->
-                    val row: JSONArray = arr.getJSONArray(rowIdx)
-                    (0 until row.length()).map { colIdx: Int -> row.optString(colIdx, "") }
+            val rows = mutableListOf<List<String>>()
+            val rowsArr = obj.getJSONArray("rows")
+            for (rowIdx in 0 until rowsArr.length()) {
+                val jsonRow = rowsArr.getJSONArray(rowIdx)
+                val cols = mutableListOf<String>()
+                for (colIdx in 0 until jsonRow.length()) {
+                    cols.add(jsonRow.optString(colIdx, ""))
                 }
+                rows.add(cols)
             }
             TableData(headers = headers, rows = rows)
         } catch (_: Exception) { null }

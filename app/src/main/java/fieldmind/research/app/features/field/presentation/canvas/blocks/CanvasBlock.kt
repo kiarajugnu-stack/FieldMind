@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -114,16 +113,24 @@ fun CanvasBlock(
                 }
             }
     ) {
+        // Content fills the entire area
         Box(Modifier.fillMaxSize()) {
-            // Block content fills the entire area
             content()
+        }
 
-            // Link badge (top-right corner, shown when block is linked to an entity)
-            if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
+        // Link badge overlay (top-right corner)
+        if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        end = (4f / canvasState.zoom).dp,
+                        top = (4f / canvasState.zoom).dp
+                    ),
+                contentAlignment = Alignment.TopEnd
+            ) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = (4f / canvasState.zoom).dp, y = (4f / canvasState.zoom).dp)
                         .size((16f / canvasState.zoom).coerceAtLeast(12f).dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary),
@@ -137,14 +144,14 @@ fun CanvasBlock(
                     )
                 }
             }
+        }
 
-            // Resize handle (bottom-right corner)
-            if (isSelected) {
-                ResizeHandle(
-                    onResize = { dx, dy -> onResized(block.width + dx, block.height + dy) },
-                    canvasState = canvasState
-                )
-            }
+        // Resize handle (bottom-right corner)
+        if (isSelected) {
+            ResizeHandle(
+                onResize = { dx, dy -> onResized(block.width + dx, block.height + dy) },
+                canvasState = canvasState
+            )
         }
     }
 }
