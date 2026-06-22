@@ -541,15 +541,7 @@ fun SwipeBackHost(
                     scaleY = contentScale
                     shadowElevation = shadowElevation
                     transformOrigin = TransformOrigin(if (offsetX > 0) 0f else 0.5f, if (offsetY > 0) 0f else 0.5f)
-
-                    // Clip to prevent content bleeding outside during scale
                     clip = true
-                    shape = RoundedCornerShape(
-                        topStart = 0.dp,
-                        topEnd = 0.dp,
-                        bottomEnd = if (offsetX > 0) (12f * progress).dp else 0.dp,
-                        bottomStart = if (offsetX > 0) (12f * progress).dp else 0.dp
-                    )
                 }
                 .then(
                     if (!reduceMotion) {
