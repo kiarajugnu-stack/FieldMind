@@ -386,9 +386,6 @@ class FieldMindSettings private constructor(context: Context) {
         FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
     }
     fun setAutoBackupRetention(value: String) = edit(KEY_AUTO_BACKUP_RETENTION, value) { _autoBackupRetention.value = value }
-        _autoBackupInterval.value = value
-        FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
-    }
     fun setBackupFolderUri(value: String) = edit(KEY_BACKUP_FOLDER_URI, value) { _backupFolderUri.value = value }
     fun setAutoWeatherEnabled(value: Boolean) = edit(KEY_AUTO_WEATHER, value) { _autoWeatherEnabled.value = value }
     fun setAutoFlashcardsEnabled(value: Boolean) = edit(KEY_AUTO_FLASHCARDS, value) { _autoFlashcardsEnabled.value = value }

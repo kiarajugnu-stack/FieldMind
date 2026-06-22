@@ -576,80 +576,7 @@ fun BackupAndRestoreScreen(
                         }
                     )
                 }
-            // ── Export History Section ──
-            item {
-                SectionHeader("Recent exports", "Your latest export and backup files")
-            }
-            if (exportHistory.isEmpty()) {
-                item {
-                    Card(
-                        shape = RoundedCornerShape(24.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Row(
-                            Modifier.fillMaxWidth().padding(20.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(FieldMindIcons.Export, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 24.dp)
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                "No exports yet. Create your first export above.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
-                        }
                     }
-                }
-            } else {
-                items(exportHistory, key = { it.id }) { record ->
-                    ExportHistoryItemCard(
-                        record = record,
-                        context = context,
-                        onShare = {
-                            try {
-                                val backupDir = File(context.filesDir, "fieldmind/backups")
-                                val exportDir = File(context.cacheDir, "exports")
-                                val file = (backupDir.listFiles()?.find { it.name == record.fileName }
-                                    ?: exportDir.listFiles()?.find { it.name == record.fileName })
-                                if (file != null && file.exists()) {
-                                    val shareUri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
-                                    val mimeType = when {
-                                        record.fileName.endsWith(".pdf") -> "application/pdf"
-                                        record.fileName.endsWith(".png") -> "image/png"
-                                        record.fileName.endsWith(".svg") -> "image/svg+xml"
-                                        record.fileName.endsWith(".csv") -> "text/csv"
-                                        record.fileName.endsWith(".html") -> "text/html"
-                                        record.fileName.endsWith(".md") -> "text/markdown"
-                                        record.fileName.endsWith(".json") -> "application/json"
-                                        else -> "application/octet-stream"
-                                    }
-                                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                                        type = mimeType
-                                        putExtra(Intent.EXTRA_STREAM, shareUri)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }, "Share ${record.fileName}"))
-                                }
-                            } catch (_: Exception) { }
-                        },
-                        onDelete = {
-                            scope.launch {
-                                withContext(Dispatchers.IO) {
-                                    val backupDir = File(context.filesDir, "fieldmind/backups")
-                                    val exportDir = File(context.cacheDir, "exports")
-                                    (backupDir.listFiles()?.find { it.name == record.fileName }
-                                        ?: exportDir.listFiles()?.find { it.name == record.fileName })?.delete()
-                                    exportHistoryStore.remove(record.id)
-                                    exportHistory = exportHistoryStore.load()
-                                }
-                            }
-                        }
-                    )
-                }
-            }
-        }
     }
 
     // ── Password prompt dialog ──
@@ -849,6 +776,18 @@ fun BackupAndRestoreScreen(
                     importPreview = null
                     lastBackupRefresh++
                 }) { Text("Done") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showImportResultDialog = false
+                    importFileUri = null
+                    importFileName = ""
+                    importPreview = null
+                }) { Text("Cancel") }
+            },
+            shape = RoundedCornerShape(28.dp)
+        )
+    }
 
     // ── Backup confirmation dialog ──
     if (showBackupConfirmation) {
@@ -1179,9 +1118,6 @@ fun BackupAndRestoreScreen(
                 }
             },
             onDismiss = { showExportConfirmation = false }
-        )
-    }
-            }
         )
     }
 
