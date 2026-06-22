@@ -71,6 +71,7 @@ fun CanvasScreen(
 ) {
     val canvasViewModel: CanvasViewModel = viewModel()
     val haptics = rememberFieldMindHaptics()
+    val clipboard = LocalClipboardManager.current
 
     // ── Initialize ViewModel with note ID ──
     LaunchedEffect(noteId) {
@@ -206,7 +207,6 @@ fun CanvasScreen(
                     onBlockCopy = { id ->
                         val block = blocks.firstOrNull { it.id == id }
                         if (block != null) {
-                            val clipboard = LocalClipboardManager.current
                             clipboard.setText(AnnotatedString(block.contentJson))
                             haptics.confirm()
                         }
