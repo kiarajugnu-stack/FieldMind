@@ -2,7 +2,7 @@ package fieldmind.research.app.features.field.presentation.screens
 
 import android.content.Context
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
-import fieldmind.research.app.features.field.presentation.components.icons.MaterialSymbolIcon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import androidx.compose.ui.graphics.Color
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken

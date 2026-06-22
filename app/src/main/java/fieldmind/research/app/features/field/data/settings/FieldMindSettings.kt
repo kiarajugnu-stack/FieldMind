@@ -385,7 +385,7 @@ class FieldMindSettings private constructor(context: Context) {
         _autoBackupInterval.value = value
         FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
     }
-    fun setAutoBackupRetention(value: String) = edit(KEY_AUTO_BACKUP_RETENTION, value) { _autoBackupRetention.value = value }{
+    fun setAutoBackupRetention(value: String) = edit(KEY_AUTO_BACKUP_RETENTION, value) { _autoBackupRetention.value = value }
         _autoBackupInterval.value = value
         FieldMindBackgroundScheduler.scheduleAutoBackup(appContext, _autoBackupEnabled.value, value)
     }
