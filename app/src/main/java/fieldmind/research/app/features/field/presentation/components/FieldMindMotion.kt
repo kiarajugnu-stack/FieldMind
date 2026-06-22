@@ -507,7 +507,7 @@ fun SwipeBackHost(
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(FieldMindIcons.Back, "Swipe back", size = 22.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(FieldMindIcons.ChevronLeft, "Swipe back", size = 22.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -521,7 +521,7 @@ fun SwipeBackHost(
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(FieldMindIcons.Back, "Swipe down to dismiss", size = 22.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(FieldMindIcons.ChevronDown, "Swipe down to dismiss", size = 22.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
