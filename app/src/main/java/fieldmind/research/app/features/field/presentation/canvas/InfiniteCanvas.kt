@@ -17,7 +17,8 @@ import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
  * Architecture (bottom → top):
  * 1. [GpuCanvasSurface] — OpenGL ES 2.0 surface rendering dot-grid + block outlines
  * 2. [SubcomposeLayout] — Positions [CanvasBlock] composables in a Compose overlay
- * 3. Gesture layer — Pan, zoom, and tap detection
+ * 3. [BlockToolbar] — Floating action bar above the selected block
+ * 4. Gesture layer — Pan, zoom, and tap detection
  *
  * **Gesture coordination:** This layer only handles pan/zoom/tap for touches that
  * do NOT start on a block. If a touch starts on a block, the event propagates to
@@ -30,6 +31,12 @@ import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
  * @param onBlockMoved called when a block is dragged to a new position
  * @param onBlockResized called when a block's size changes
  * @param onBlockTapped called when a block is tapped
+ * @param onBlockDelete called when the delete action is triggered
+ * @param onBlockDuplicate called when the duplicate action is triggered
+ * @param onBlockMoveForward called when the move-forward (increase z-index) action is triggered
+ * @param onBlockMoveBackward called when the move-backward (decrease z-index) action is triggered
+ * @param onBlockCopy called when the copy action is triggered
+ * @param onBlockLinkToEntity called when the link-to-entity action is triggered
  */
 @Composable
 fun InfiniteCanvas(
@@ -39,7 +46,13 @@ fun InfiniteCanvas(
     blockContent: @Composable (CanvasBlockEntity, Boolean) -> Unit = { _, _ -> },
     onBlockMoved: ((Long, Float, Float) -> Unit)? = null,
     onBlockResized: ((Long, Float, Float) -> Unit)? = null,
-    onBlockTapped: ((Long) -> Unit)? = null
+    onBlockTapped: ((Long) -> Unit)? = null,
+    onBlockDelete: ((Long) -> Unit)? = null,
+    onBlockDuplicate: ((Long) -> Unit)? = null,
+    onBlockMoveForward: ((Long) -> Unit)? = null,
+    onBlockMoveBackward: ((Long) -> Unit)? = null,
+    onBlockCopy: ((Long) -> Unit)? = null,
+    onBlockLinkToEntity: ((Long) -> Unit)? = null
 ) {
     // Convert selected blocks to BlockRect for GPU highlight rendering
     val selectedBlockRects = remember(blocks, canvasState.selectedBlockIds) {
@@ -130,7 +143,34 @@ fun InfiniteCanvas(
             }
         }
 
-        // Layer 3: Pan/Zoom gesture layer (sits above everything)
+        // Layer 3: BlockToolbar (floating action bar above selected block)
+        val selectedBlock = remember(blocks, canvasState.selectedBlockIds) {
+            blocks.firstOrNull { it.id in canvasState.selectedBlockIds }
+        }
+        BlockToolbar(
+            selectedBlock = selectedBlock,
+            canvasState = canvasState,
+            onDelete = {
+                selectedBlock?.let { onBlockDelete?.invoke(it.id) }
+            },
+            onDuplicate = {
+                selectedBlock?.let { onBlockDuplicate?.invoke(it.id) }
+            },
+            onMoveForward = {
+                selectedBlock?.let { onBlockMoveForward?.invoke(it.id) }
+            },
+            onMoveBackward = {
+                selectedBlock?.let { onBlockMoveBackward?.invoke(it.id) }
+            },
+            onCopy = {
+                selectedBlock?.let { onBlockCopy?.invoke(it.id) }
+            },
+            onLink = {
+                selectedBlock?.let { onBlockLinkToEntity?.invoke(it.id) }
+            }
+        )
+
+        // Layer 4: Pan/Zoom gesture layer (sits above everything)
         // Only activates for touches that do NOT start on a block
         PanZoomLayer(
             canvasState = canvasState,
