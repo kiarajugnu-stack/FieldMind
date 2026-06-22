@@ -21,7 +21,19 @@ data class NoteEntity(
     val archivedAt: Long? = null,
     val deletedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    // ── Canvas / Notes App fields (Phase 0+) ──
+    val canvasVersion: Int = 1,               // schema version for canvas data
+    val color: Long? = null,                    // note accent color (ARGB)
+    val iconName: String = "",                  // Material Symbol icon name
+    val isPinned: Boolean = false,
+    val parentNoteId: Long? = null,             // for note nesting / sub-notes
+    val linkedProjectId: Long? = null,          // quick link to a project
+    val isTemplate: Boolean = false,
+    val viewMode: String = "canvas",           // "canvas" or "list" (flat block list)
+    val canvasZoomLevel: Float = 1f,            // saved canvas zoom
+    val canvasPanX: Float = 0f,                 // saved canvas pan X
+    val canvasPanY: Float = 0f                  // saved canvas pan Y
 )
 
 @Entity(tableName = "field_observations")
