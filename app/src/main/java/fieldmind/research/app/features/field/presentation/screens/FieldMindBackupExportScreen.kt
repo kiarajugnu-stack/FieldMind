@@ -576,7 +576,8 @@ fun BackupAndRestoreScreen(
                         }
                     )
                 }
-                    }
+            }
+        }
     }
 
     // ── Password prompt dialog ──
