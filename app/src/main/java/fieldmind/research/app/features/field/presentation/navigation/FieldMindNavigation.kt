@@ -886,13 +886,10 @@ private fun FieldMindNavHost(
     // during the predictive back gesture.
     val currentBackEntry by navController.currentBackStackEntryAsState()
     val previousScreenInfo = remember(currentBackEntry) {
-        val entries = navController.backStack.entries
-        val currentIndex = entries.indexOfLast { it == currentBackEntry }
-        if (currentIndex > 0) {
-            entries.getOrNull(currentIndex - 1)?.destination?.route?.let { route ->
-                previousScreenLabel(route)
-            }
-        } else null
+        val prevEntry = navController.previousBackStackEntry
+        prevEntry?.destination?.route?.let { route ->
+            previousScreenLabel(route)
+        }
     }
 
     SharedTransitionLayout(modifier = modifier) {

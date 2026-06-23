@@ -1,5 +1,6 @@
 package fieldmind.research.app.features.field.presentation.canvas
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -16,21 +17,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 import fieldmind.research.app.features.field.data.canvas.DrawingEntity
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
-import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 // A4 aspect ratio: width/height ≈ 1/1.414 = 0.707
 private const val A4_ASPECT = 1.414f
@@ -45,13 +50,13 @@ private const val A4_ASPECT = 1.414f
  * - Page breaks with shadow between pages
  * - Blocks positioned within page boundaries
  * - Full editing: drag, resize, tap selection, toolbar
+ * - Zoom slider for page scaling
+ * - Per-page drawing overlay (on the page surface, not behind)
  * - Page count indicator in the top-left of each page
  *
- * @param canvasState shared canvas state (zoom is forced to 1, pan tracks scroll)
+ * @param canvasState shared canvas state (zoom scales page size, pan tracks scroll)
  * @param blocks list of canvas blocks to render
- * @param currentPage current visible page index (0-based), emitted on scroll
- * @param totalPages total number of pages (emitted once on init and when pages change)
- * @param viewportSize the current viewport size in pixels
+ * @param modifier standard Compose modifier
  * @param blockContent composable factory for each block's content
  * @param onBlockMoved called when a block is dragged (intermediate positions, no undo)
  * @param onBlockMovedFinal called when a block drag ends (final position, records undo)
@@ -64,7 +69,6 @@ private const val A4_ASPECT = 1.414f
  * @param onBlockCopy copy callback
  * @param onBlockLinkToEntity link callback
  * @param onBlockOpenLinkedEntity open linked entity callback
- * @param onBlockMovedFinal called when a block drag ends (final position, records undo)
  * @param currentPage current visible page index (0-based), emitted on scroll
  * @param totalPages total number of pages (emitted when pages change)
  * @param viewportSize viewport size in pixels
@@ -90,34 +94,32 @@ fun PageCanvas(
     onBlockCopy: ((Long) -> Unit)? = null,
     onBlockLinkToEntity: ((Long) -> Unit)? = null,
     onBlockOpenLinkedEntity: ((Long) -> Unit)? = null,
-    currentPage: (Int) -> Unit = {},  /* emits 0-based page index when scroll changes */
-    totalPages: (Int) -> Unit = {},   /* emits total page count when pages change */
+    currentPage: (Int) -> Unit = {},
+    totalPages: (Int) -> Unit = {},
     viewportSize: Size = Size(0f, 0f),
     drawingState: DrawingState? = null,
     drawings: List<DrawingEntity> = emptyList(),
     onStrokeComplete: (InProgressStroke) -> Unit = {},
     onEraseDrawing: (Long) -> Unit = {}
 ) {
-    // ── Compute page dimensions ──
+    // ── Compute page dimensions (zoom-scaled) ──
     val density = LocalDensity.current
-    val pageWidthPx = with(density) {
+    val zoom = canvasState.zoom
+    val basePageWidthPx = with(density) {
         (viewportSize.width - 48.dp.toPx()).coerceAtLeast(300f)
     }
+    val pageWidthPx = basePageWidthPx * zoom
     val pageHeightPx = pageWidthPx * A4_ASPECT
+    val basePageHeightPx = basePageWidthPx * A4_ASPECT
 
-    // ── Force zoom to 1x in pages mode ──
-    LaunchedEffect(Unit) {
-        canvasState.zoomTo(1f)
-    }
-
-    // ── Scroll state — update canvas panY to track scroll offset ──
+    // ── Scroll state ──
     val scrollState = rememberScrollState()
 
-    // Sync canvasState panY with scroll so CanvasBlock transforms work
-    LaunchedEffect(scrollState.value) {
+    // Sync canvasState panY with scroll + zoom for BlockToolbar transforms
+    LaunchedEffect(scrollState.value, zoom) {
         canvasState.setPan(
-            (viewportSize.width - pageWidthPx) / 2f, // center page horizontally
-            -scrollState.value.toFloat()              // track vertical scroll
+            (viewportSize.width - pageWidthPx) / 2f,
+            -scrollState.value.toFloat()
         )
     }
 
@@ -128,15 +130,15 @@ fun PageCanvas(
         val blocks: List<CanvasBlockEntity>
     )
 
-    val pages = remember(blocks, pageHeightPx) {
+    val pages = remember(blocks, basePageHeightPx) {
         if (blocks.isEmpty()) {
             listOf(PageInfo(0, 0f, emptyList()))
         } else {
             val maxY = blocks.maxOf { it.positionY + it.height }
-            val count = ((maxY / pageHeightPx).toInt() + 1).coerceAtLeast(1)
+            val count = ((maxY / basePageHeightPx).toInt() + 1).coerceAtLeast(1)
             (0 until count).map { pageIdx ->
-                val pageStart = pageIdx * pageHeightPx
-                val pageEnd = (pageIdx + 1) * pageHeightPx
+                val pageStart = pageIdx * basePageHeightPx
+                val pageEnd = (pageIdx + 1) * basePageHeightPx
                 val pageBlocks = blocks.filter { b ->
                     b.positionY < pageEnd && b.positionY + b.height > pageStart
                 }.sortedBy { it.zIndex }
@@ -146,7 +148,7 @@ fun PageCanvas(
     }
 
     // ── Compute and emit current page from scroll position ──
-    val gapPx = with(density) { 28.dp.toPx() }
+    val gapPx = with(density) { 28.dp.toPx() } * zoom
     val totalPageStep = pageHeightPx + gapPx
     val currentPageIndex = remember(scrollState.value, pages.size) {
         val idx = (scrollState.value.toFloat() / totalPageStep).toInt()
@@ -161,29 +163,13 @@ fun PageCanvas(
         totalPages(pages.size)
     }
 
-    // ── Compute document positions for toolbar placement ──
-    val paddingTopPx = with(density) { 24.dp.toPx() }
-    val paddingHoriPx = with(density) { 24.dp.toPx() }
-
-    // Tile the page background + page columns
+    // ── Outer container ──
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFE8E8E8)) // light gray like PDF reader
+            .background(Color(0xFFE8E8E8))
     ) {
-        // Layer 1: Drawing overlay (rendered behind scrollable pages)
-        if (drawingState != null) {
-            DrawingOverlay(
-                canvasState = canvasState,
-                drawingState = drawingState,
-                drawings = drawings,
-                onStrokeComplete = onStrokeComplete,
-                onEraseStroke = onEraseDrawing,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        // Layer 2: Scrollable pages
+        // ── Layer 1: Scrollable pages ──
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -220,33 +206,44 @@ fun PageCanvas(
                             val posX = livePos?.x ?: block.positionX
                             val posY = livePos?.y ?: block.positionY
                             val pageRelativeY = posY - page.startY
-                            val isSelected = block.id in canvasState.selectedBlockIds    PageBlock(
-        block = block,
-        pageX = posX,
-        pageY = pageRelativeY,
-        isSelected = isSelected,
-        canvasState = canvasState,
-        onTapped = { id ->
-            canvasState.selectBlock(id)
-            onBlockTapped?.invoke(id)
-        },
-        onMoved = { newX, newY ->
-            // Convert page-relative coords back to document coords
-            val docY = newY + page.startY
-            onBlockMoved?.invoke(block.id, newX, docY)
-        },
-        onMovedFinal = { startX, startY, finalX, finalY ->
-            val docStartY = startY + page.startY
-            val docFinalY = finalY + page.startY
-            onBlockMovedFinal?.invoke(block.id, startX, docStartY, finalX, docFinalY)
-        },
-        onResized = { w, h ->
-            onBlockResized?.invoke(block.id, w, h)
-        }
-    ) {
-        blockContent(block, isSelected)
-    }
+                            val isSelected = block.id in canvasState.selectedBlockIds
+                            PageBlock(
+                                block = block,
+                                pageX = posX,
+                                pageY = pageRelativeY,
+                                isSelected = isSelected,
+                                canvasState = canvasState,
+                                onTapped = { id ->
+                                    canvasState.selectBlock(id)
+                                    onBlockTapped?.invoke(id)
+                                },
+                                onMoved = { newX, newY ->
+                                    val docY = newY + page.startY
+                                    onBlockMoved?.invoke(block.id, newX, docY)
+                                },
+                                onMovedFinal = { startX, startY, finalX, finalY ->
+                                    val docStartY = startY + page.startY
+                                    val docFinalY = finalY + page.startY
+                                    onBlockMovedFinal?.invoke(block.id, startX, docStartY, finalX, docFinalY)
+                                },
+                                onResized = { w, h ->
+                                    onBlockResized?.invoke(block.id, w, h)
+                                }
+                            ) {
+                                blockContent(block, isSelected)
+                            }
                         }
+
+                        // ── Per-page drawing overlay ──
+                        PageDrawingOverlay(
+                            pageStartY = page.startY,
+                            zoom = zoom,
+                            drawingState = drawingState,
+                            drawings = drawings,
+                            onStrokeComplete = onStrokeComplete,
+                            onEraseDrawing = onEraseDrawing,
+                            modifier = Modifier.fillMaxSize()
+                        )
 
                         // ── Empty page hint ──
                         if (page.blocks.isEmpty() && pages.size == 1) {
@@ -277,7 +274,7 @@ fun PageCanvas(
 
                 // ── Page break (gap between pages) ──
                 if (page.index < pages.lastIndex) {
-                    Spacer(Modifier.height(28.dp))
+                    Spacer(Modifier.height(with(density) { gapPx.toDp() }))
                 }
             }
 
@@ -285,62 +282,383 @@ fun PageCanvas(
             Spacer(Modifier.height(40.dp))
         }
 
-        // Layer 2: BlockToolbar (overlay, positioned absolutely in the outer Box)
+        // ── Layer 2: BlockToolbar (uses canvasToScreen internally) ──
         val selectedBlock = remember(blocks, canvasState.selectedBlockIds) {
             blocks.firstOrNull { it.id in canvasState.selectedBlockIds }
         }
-        if (selectedBlock != null) {
-            // Find which page the selected block is on
-            val selPageIdx = remember(selectedBlock, pages) {
-                pages.indexOfFirst { page ->
-                    selectedBlock.positionY < page.startY + pageHeightPx &&
-                    selectedBlock.positionY + selectedBlock.height > page.startY
-                }.coerceAtLeast(0)
-            }
+        BlockToolbar(
+            selectedBlock = selectedBlock,
+            canvasState = canvasState,
+            onToggleCollapse = { canvasState.toggleBlockCollapse(it) },
+            onDelete = { selectedBlock?.let { onBlockDelete?.invoke(it.id) } },
+            onDuplicate = { selectedBlock?.let { onBlockDuplicate?.invoke(it.id) } },
+            onMoveForward = { selectedBlock?.let { onBlockMoveForward?.invoke(it.id) } },
+            onMoveBackward = { selectedBlock?.let { onBlockMoveBackward?.invoke(it.id) } },
+            onCopy = { selectedBlock?.let { onBlockCopy?.invoke(it.id) } },
+            onLink = { selectedBlock?.let { onBlockLinkToEntity?.invoke(it.id) } },
+            onOpenLinked = { selectedBlock?.let { onBlockOpenLinkedEntity?.invoke(it.id) } }
+        )
 
-            // Compute toolbar position: the block's position within the document,
-            // minus the scroll offset, gives its screen position within the outer Box.
-            val pageStartY = pages.getOrNull(selPageIdx)?.startY ?: 0f
-            val docBlockY = paddingTopPx + selPageIdx * totalPageStep +
-                (selectedBlock.positionY - pageStartY)
-            val toolBarY = docBlockY - scrollState.value
+        // ── Layer 3: ZoomSlider (always visible in page mode) ──
+        ZoomSlider(
+            canvasState = canvasState,
+            viewportSize = viewportSize,
+            show = true,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 8.dp)
+        )
+    }
+}
 
-            // Compute toolbar offset in Dp for a stable positioning
-            val toolbarOffsetDpX = with(density) {
-                (paddingHoriPx + selectedBlock.positionX).toDp()
-            }
-            val toolbarOffsetDpY = with(density) {
-                ((toolBarY - 48.dp.toPx()).coerceAtLeast(0f)).toDp()
-            }
+// ══════════════════════════════════════════════════════════════════════
+//  Per-Page Drawing Overlay
+// ══════════════════════════════════════════════════════════════════════
 
-            Box(
-                modifier = Modifier
-                    .offset(x = toolbarOffsetDpX, y = toolbarOffsetDpY)
-                    .zIndex(999f)
-            ) {
-                BlockToolbar(
-                    selectedBlock = selectedBlock,
-                    canvasState = canvasState,
-                    onToggleCollapse = { canvasState.toggleBlockCollapse(it) },
-                    onDelete = { onBlockDelete?.invoke(selectedBlock.id) },
-                    onDuplicate = { onBlockDuplicate?.invoke(selectedBlock.id) },
-                    onMoveForward = { onBlockMoveForward?.invoke(selectedBlock.id) },
-                    onMoveBackward = { onBlockMoveBackward?.invoke(selectedBlock.id) },
-                    onCopy = { onBlockCopy?.invoke(selectedBlock.id) },
-                    onLink = { onBlockLinkToEntity?.invoke(selectedBlock.id) },
-                    onOpenLinked = { onBlockOpenLinkedEntity?.invoke(selectedBlock.id) }
-                )
+/**
+ * A per-page drawing Canvas that renders saved drawings (scoped to this page's
+ * Y range) and handles drawing/erasing gestures in page-local coordinates.
+ *
+ * Coordinates:
+ * - Gesture offsets are in page-local pixels (relative to the page top-left).
+ * - Document Y = pageY / zoom + pageStartY.
+ * - Saved drawings are in document coordinates; subtract pageStartY when rendering.
+ */
+@Composable
+private fun PageDrawingOverlay(
+    pageStartY: Float,
+    zoom: Float,
+    drawingState: DrawingState?,
+    drawings: List<DrawingEntity>,
+    onStrokeComplete: (InProgressStroke) -> Unit = {},
+    onEraseDrawing: (Long) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    if (drawingState == null) return
+
+    var currentStroke by remember { mutableStateOf<InProgressStroke?>(null) }
+
+    // ── Gesture handlers ──
+    val gestureModifier = if (!drawingState.isEraser) {
+        Modifier.pointerInput(drawingState.activeTool, drawingState.strokeWidth, drawingState.color, drawingState.shapeType) {
+            detectDragGestures(
+                onDragStart = { offset ->
+                    val docX = offset.x / zoom
+                    val docY = offset.y / zoom + pageStartY
+                    currentStroke = InProgressStroke(
+                        points = mutableListOf(StrokePoint(docX, docY)),
+                        tool = drawingState.activeTool,
+                        color = drawingState.color,
+                        strokeWidth = drawingState.effectiveStrokeWidth,
+                        shapeType = drawingState.shapeType
+                    )
+                },
+                onDrag = { change, _ ->
+                    change.consume()
+                    val docX = change.position.x / zoom
+                    val docY = change.position.y / zoom + pageStartY
+                    currentStroke?.let { stroke ->
+                        stroke.points.add(StrokePoint(docX, docY, change.pressure))
+                    }
+                },
+                onDragEnd = {
+                    currentStroke?.let { stroke ->
+                        if (stroke.points.size >= 2) {
+                            onStrokeComplete(stroke)
+                        }
+                    }
+                    currentStroke = null
+                },
+                onDragCancel = {
+                    currentStroke = null
+                }
+            )
+        }
+    } else {
+        // Eraser mode — tap to remove entire stroke
+        Modifier.pointerInput(drawings) {
+            detectTapGestures { offset ->
+                val docX = offset.x / zoom
+                val docY = offset.y / zoom + pageStartY
+                val hit = findPageHitStroke(drawings, docX, docY)
+                if (hit != null) {
+                    onEraseDrawing(hit.id)
+                }
+            }
+        }
+    }
+
+    // ── Render ──
+    Canvas(modifier = modifier.then(gestureModifier)) {
+        // 1. Render saved drawings scoped to this page
+        val pageDrawings = drawings.filter { drawing ->
+            val strokes = parseStrokeData(drawing.strokeDataJson) ?: return@filter false
+            strokes.any { stroke ->
+                stroke.points.any { pt ->
+                    pt.y in pageStartY..(pageStartY + (size.height / zoom))
+                }
+            }
+        }
+
+        pageDrawings.forEach { drawing ->
+            drawDrawingOnPage(drawing, pageStartY, zoom)
+        }
+
+        // 2. Render in-progress stroke
+        currentStroke?.let { stroke ->
+            drawPageStroke(stroke, pageStartY, zoom)
+        }
+    }
+}
+
+/**
+ * Find the drawing whose stroke contains the given document-space point
+ * and is within this page's Y range.
+ */
+private fun findPageHitStroke(
+    drawings: List<DrawingEntity>,
+    docX: Float,
+    docY: Float
+): DrawingEntity? {
+    val hitRadius = 12f
+    return drawings.lastOrNull { drawing ->
+        val strokes = parseStrokeData(drawing.strokeDataJson) ?: return@lastOrNull false
+        strokes.any { stroke ->
+            stroke.points.any { pt ->
+                val dx = pt.x - docX
+                val dy = pt.y - docY
+                sqrt(dx * dx + dy * dy) < hitRadius
             }
         }
     }
 }
 
 /**
- * A single block rendered within a page in PAGES mode.
+ * Render a [DrawingEntity] onto a page Canvas, offsetting Y by pageStartY
+ * and scaling by zoom.
+ */
+private fun DrawScope.drawDrawingOnPage(
+    drawing: DrawingEntity,
+    pageStartY: Float,
+    zoom: Float
+) {
+    val strokes = parseStrokeData(drawing.strokeDataJson) ?: return
+    val color = Color(drawing.color)
+    val alpha = if (drawing.toolType == "highlighter") 0.35f else 1f
+    val tool = when (drawing.toolType) {
+        "highlighter" -> DrawingTool.HIGHLIGHTER
+        "shape" -> DrawingTool.SHAPE
+        else -> DrawingTool.PEN
+    }
+
+    strokes.forEach { parsedStroke ->
+        if (parsedStroke.points.size < 2) return@forEach
+
+        val pagePoints = parsedStroke.points.map { pt ->
+            Offset(pt.x * zoom, (pt.y - pageStartY) * zoom)
+        }
+
+        if (tool == DrawingTool.SHAPE && parsedStroke.points.size >= 2) {
+            drawPageShape(
+                points = pagePoints,
+                color = color,
+                width = drawing.strokeWidth,
+                alpha = alpha,
+                shapeType = parsedStroke.shapeType ?: ShapeType.RECTANGLE
+            )
+        } else {
+            drawPageSmoothPath(
+                points = pagePoints,
+                color = color,
+                width = drawing.strokeWidth,
+                alpha = alpha
+            )
+        }
+    }
+}
+
+/**
+ * Render the current in-progress stroke on the page.
+ */
+private fun DrawScope.drawPageStroke(
+    stroke: InProgressStroke,
+    pageStartY: Float,
+    zoom: Float
+) {
+    if (stroke.points.size < 2) return
+
+    val pagePoints = stroke.points.map { pt ->
+        Offset(pt.x * zoom, (pt.y - pageStartY) * zoom)
+    }
+
+    val color = Color(stroke.color)
+    val alpha = if (stroke.tool == DrawingTool.HIGHLIGHTER) 0.35f else 1f
+
+    if (stroke.tool == DrawingTool.SHAPE) {
+        drawPageShape(
+            points = pagePoints,
+            color = color,
+            width = stroke.strokeWidth,
+            alpha = alpha,
+            shapeType = stroke.shapeType
+        )
+    } else {
+        drawPageSmoothPath(
+            points = pagePoints,
+            color = color,
+            width = stroke.strokeWidth,
+            alpha = alpha
+        )
+    }
+}
+
+/**
+ * Draw a smooth quadratic bezier path through the given page-local points.
+ */
+private fun DrawScope.drawPageSmoothPath(
+    points: List<Offset>,
+    color: Color,
+    width: Float,
+    alpha: Float
+) {
+    if (points.size < 2) return
+
+    val path = Path()
+    path.moveTo(points[0].x, points[0].y)
+
+    for (i in 1 until points.size) {
+        val mid = Offset(
+            (points[i - 1].x + points[i].x) / 2f,
+            (points[i - 1].y + points[i].y) / 2f
+        )
+        path.quadraticBezierTo(
+            points[i - 1].x, points[i - 1].y,
+            mid.x, mid.y
+        )
+    }
+
+    path.lineTo(points.last().x, points.last().y)
+
+    drawPath(
+        path = path,
+        color = color.copy(alpha = alpha),
+        style = Stroke(
+            width = width,
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round
+        )
+    )
+}
+
+/**
+ * Draw a shape based on the first and last points.
+ */
+private fun DrawScope.drawPageShape(
+    points: List<Offset>,
+    color: Color,
+    width: Float,
+    alpha: Float,
+    shapeType: ShapeType = ShapeType.RECTANGLE
+) {
+    if (points.size < 2) return
+
+    val start = points.first()
+    val end = points.last()
+
+    val rect = androidx.compose.ui.geometry.Rect(
+        left = minOf(start.x, end.x),
+        top = minOf(start.y, end.y),
+        right = maxOf(start.x, end.x),
+        bottom = maxOf(start.y, end.y)
+    )
+
+    when (shapeType) {
+        ShapeType.RECTANGLE -> {
+            drawRect(
+                topLeft = rect.topLeft,
+                size = rect.size,
+                color = color.copy(alpha = alpha * 0.2f),
+                style = androidx.compose.ui.graphics.drawscope.Fill
+            )
+            drawRect(
+                topLeft = rect.topLeft,
+                size = rect.size,
+                color = color.copy(alpha = alpha),
+                style = Stroke(width = width, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
+        }
+        ShapeType.CIRCLE -> {
+            val centerX = (start.x + end.x) / 2f
+            val centerY = (start.y + end.y) / 2f
+            val radius = maxOf(kotlin.math.abs(end.x - start.x) / 2f, kotlin.math.abs(end.y - start.y) / 2f, 1f)
+            drawCircle(
+                color = color.copy(alpha = alpha * 0.2f),
+                radius = radius,
+                center = Offset(centerX, centerY),
+                style = androidx.compose.ui.graphics.drawscope.Fill
+            )
+            drawCircle(
+                color = color.copy(alpha = alpha),
+                radius = radius,
+                center = Offset(centerX, centerY),
+                style = Stroke(width = width, cap = StrokeCap.Round)
+            )
+        }
+        ShapeType.LINE -> {
+            drawLine(
+                color = color.copy(alpha = alpha),
+                start = start,
+                end = end,
+                strokeWidth = width,
+                cap = StrokeCap.Round
+            )
+        }
+        ShapeType.ARROW -> {
+            drawLine(
+                color = color.copy(alpha = alpha),
+                start = start,
+                end = end,
+                strokeWidth = width,
+                cap = StrokeCap.Round
+            )
+            val angle = kotlin.math.atan2(
+                (end.y - start.y).toDouble(),
+                (end.x - start.x).toDouble()
+            )
+            val arrowLen = 20f + width * 2f
+            val arrowAngle = kotlin.math.PI / 6
+            val p1 = Offset(
+                (end.x - arrowLen * kotlin.math.cos(angle - arrowAngle)).toFloat(),
+                (end.y - arrowLen * kotlin.math.sin(angle - arrowAngle)).toFloat()
+            )
+            val p2 = Offset(
+                (end.x - arrowLen * kotlin.math.cos(angle + arrowAngle)).toFloat(),
+                (end.y - arrowLen * kotlin.math.sin(angle + arrowAngle)).toFloat()
+            )
+            val arrowPath = Path().apply {
+                moveTo(end.x, end.y)
+                lineTo(p1.x, p1.y)
+                moveTo(end.x, end.y)
+                lineTo(p2.x, p2.y)
+            }
+            drawPath(
+                path = arrowPath,
+                color = color.copy(alpha = alpha),
+                style = Stroke(width = width + 2f, cap = StrokeCap.Round)
+            )
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  PageBlock
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * A single block rendered within a page in PAGES mode, with zoom support.
  *
- * Simpler than [CanvasBlock] — no zoom/pan transforms needed since
- * pages are rendered at 1:1 scale. Supports drag-to-move, resize,
- * tap selection, and a resize handle at the bottom-right.
+ * Block positions and sizes are scaled by [canvasState.zoom]. Drag and resize
+ * deltas are divided by zoom to convert screen-pixel deltas to document-space deltas.
  *
  * @param block the block entity
  * @param pageX X position within the page (document X coordinate)
@@ -348,10 +666,7 @@ fun PageCanvas(
  * @param isSelected whether this block is currently selected
  * @param onTapped called when the block is tapped
  * @param onMoved called with new (pageX, pageY) during drag (intermediate, no undo)
- * @param onMovedFinal called with (startX, startY, finalX, finalY) when drag ends —
- *        the original start position is included so the caller can record undo
- *        with the correct starting point even though intermediate DB writes
- *        have already updated the block entity in Room.
+ * @param onMovedFinal called with (startX, startY, finalX, finalY) when drag ends
  * @param onResized called with new (width, height)
  * @param content the block's inner content
  */
@@ -369,15 +684,15 @@ private fun PageBlock(
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
+    val zoom = canvasState.zoom
 
     Box(
         modifier = Modifier
-            .offset { IntOffset(pageX.roundToInt(), pageY.roundToInt()) }
+            .offset { IntOffset((pageX * zoom).roundToInt(), (pageY * zoom).roundToInt()) }
             .size(
-                width = with(density) { block.width.toDp() },
-                height = with(density) { block.height.toDp() }
+                width = with(density) { (block.width * zoom).toDp() },
+                height = with(density) { (block.height * zoom).toDp() }
             )
-            // Selection border
             .then(
                 if (isSelected) {
                     Modifier.border(
@@ -387,24 +702,9 @@ private fun PageBlock(
                     )
                 } else Modifier
             )
-            // Background
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
-            // ── Clean up stale live overrides when entity catches up ──
-            LaunchedEffect(block.id, block.positionX, block.positionY, block.width, block.height) {
-                val livePos = canvasState.liveBlockPositions[block.id]
-                if (livePos != null && livePos.x == block.positionX && livePos.y == block.positionY) {
-                    canvasState.removeLiveBlockPosition(block.id)
-                }
-                val liveSize = canvasState.liveBlockSizes[block.id]
-                if (liveSize != null && liveSize.width == block.width && liveSize.height == block.height) {
-                    canvasState.removeLiveBlockSize(block.id)
-                }
-            }
-
-            // Combined tap + drag gesture (single pointerInput to avoid conflicts)
             .pointerInput(block.id) {
-                // Track cumulative drag offset locally for smooth movement
                 var cumulativeDx = 0f
                 var cumulativeDy = 0f
                 var startX = 0f
@@ -419,17 +719,14 @@ private fun PageBlock(
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        cumulativeDx += dragAmount.x
-                        cumulativeDy += dragAmount.y
+                        cumulativeDx += dragAmount.x / zoom
+                        cumulativeDy += dragAmount.y / zoom
                         val newX = (startX + cumulativeDx).coerceAtLeast(0f)
                         val newY = startY + cumulativeDy
-                        // Use live position for smooth visual feedback
                         canvasState.setLiveBlockPosition(block.id, newX, newY)
                         onMoved(newX, newY)
                     },
                     onDragEnd = {
-                        // Flush final position with undo (pass original start position
-                        // since intermediate DB writes have already updated the entity)
                         val finalX = (startX + cumulativeDx).coerceAtLeast(0f)
                         val finalY = startY + cumulativeDy
                         canvasState.setLiveBlockPosition(block.id, finalX, finalY)
@@ -440,13 +737,22 @@ private fun PageBlock(
                     }
                 )
             }
-            // Tap to select (on a separate pointerInput — Compose handles
-            // the tap-vs-drag coordination: a quick press+release triggers
-            // tap, a press+move triggers drag)
             .pointerInput(block.id) {
                 detectTapGestures { onTapped(block.id) }
             }
     ) {
+        // ── Clean up stale live overrides when entity catches up ──
+        LaunchedEffect(block.id, block.positionX, block.positionY, block.width, block.height) {
+            val livePos = canvasState.liveBlockPositions[block.id]
+            if (livePos != null && livePos.x == block.positionX && livePos.y == block.positionY) {
+                canvasState.removeLiveBlockPosition(block.id)
+            }
+            val liveSize = canvasState.liveBlockSizes[block.id]
+            if (liveSize != null && liveSize.width == block.width && liveSize.height == block.height) {
+                canvasState.removeLiveBlockSize(block.id)
+            }
+        }
+
         // Block content
         Box(Modifier.fillMaxSize()) {
             content()
@@ -475,8 +781,8 @@ private fun PageBlock(
                             },
                             onDrag = { change, dragAmount ->
                                 change.consume()
-                                cumulativeDx += dragAmount.x
-                                cumulativeDy += dragAmount.y
+                                cumulativeDx += dragAmount.x / zoom
+                                cumulativeDy += dragAmount.y / zoom
                                 val newW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
                                 val newH = (displayHeight + cumulativeDy).coerceAtLeast(60f)
                                 canvasState.setLiveBlockSize(block.id, newW, newH)

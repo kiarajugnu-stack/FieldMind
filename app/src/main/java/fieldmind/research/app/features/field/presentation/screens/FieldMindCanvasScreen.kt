@@ -678,8 +678,7 @@ private fun CanvasTopBar(
                 }
             }
 
-            // Zoom controls (hides in PAGES mode where zoom is fixed at 1x)
-            if (canvasMode != CanvasMode.PAGES) {
+            // Zoom controls (always visible — zoom works in both modes now)
                 Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                     // Zoom out
                     Surface(
@@ -732,7 +731,6 @@ private fun CanvasTopBar(
                         }
                     }
                 }
-            }
 
             // Undo / Redo buttons
             Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
