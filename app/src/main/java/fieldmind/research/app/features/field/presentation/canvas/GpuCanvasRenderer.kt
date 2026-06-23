@@ -103,7 +103,7 @@ class GpuCanvasRenderer : GLSurfaceView.Renderer {
     // ═══════════════════════════════════════════════════════════════
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        GLES20.glClearColor(0f, 0f, 0f, 0f) // transparent background
+        GLES20.glClearColor(1f, 1f, 1f, 1f) // white background
         gridProgram = createProgram(vertexShaderSrc, gridFragmentSrc)
         rectProgram = createProgram(vertexShaderSrc, rectFragmentSrc)
 

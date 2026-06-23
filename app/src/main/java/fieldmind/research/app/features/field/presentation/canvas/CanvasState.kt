@@ -6,6 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 
+enum class CanvasMode {
+    INFINITE,  // Infinite scrollable canvas
+    PAGES      // Page-by-page (like document)
+}
+
 /**
  * Mutable state holder for the infinite canvas.
  *
@@ -44,6 +49,10 @@ class CanvasState(
 
     /** Set of collapsed block IDs (minimized to small preview cards). */
     var collapsedBlockIds: Set<Long> by mutableStateOf(emptySet())
+        private set
+
+    /** Canvas mode: infinite or page-by-page. */
+    var canvasMode: CanvasMode by mutableStateOf(CanvasMode.INFINITE)
         private set
 
     // ── Clamp values ──
@@ -146,6 +155,11 @@ class CanvasState(
     /** Expand a collapsed block. */
     fun expandBlock(id: Long) {
         collapsedBlockIds = collapsedBlockIds - id
+    }
+
+    /** Toggle between infinite and page-by-page modes. */
+    fun toggleCanvasMode() {
+        canvasMode = if (canvasMode == CanvasMode.INFINITE) CanvasMode.PAGES else CanvasMode.INFINITE
     }
 
     // ── Coordinate transforms ──

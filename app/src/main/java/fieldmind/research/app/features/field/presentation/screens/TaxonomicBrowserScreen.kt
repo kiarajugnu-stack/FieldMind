@@ -369,7 +369,7 @@ private fun TaxoLevelCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
-            .animateContentSize()
+            
     ) {
         Row(
             Modifier.fillMaxWidth().padding(16.dp),

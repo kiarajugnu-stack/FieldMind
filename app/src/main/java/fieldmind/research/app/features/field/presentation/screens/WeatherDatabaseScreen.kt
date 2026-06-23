@@ -823,7 +823,7 @@ private fun ForecastDashboard(
                         .clickable { expandedIdx = if (isExpanded) -1 else forecasts.indexOf(day) }
                         .background(textOnScene.copy(alpha = 0.08f))
                         .padding(10.dp)
-                        .animateContentSize(),
+                        ,
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {

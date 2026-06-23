@@ -359,7 +359,7 @@ private fun LearnCategoryCardCompact(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize(),
+            ,
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

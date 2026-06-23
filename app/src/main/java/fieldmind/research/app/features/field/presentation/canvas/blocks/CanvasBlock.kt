@@ -147,8 +147,9 @@ fun CanvasBlock(
             }
         }
 
-        // Minimize button (top-left corner when selected)
+        // Minimize button + Resize handle (when selected)
         if (isSelected && !isCollapsed) {
+            // Minimize button (top-left corner)
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -176,6 +177,44 @@ fun CanvasBlock(
                         "Minimize",
                         size = (10f / canvasState.zoom).coerceAtLeast(6f).dp,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Resize handle (bottom-right corner)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        end = (2f / canvasState.zoom).dp,
+                        bottom = (2f / canvasState.zoom).dp
+                    ),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                val handleSize = (16f / canvasState.zoom).coerceAtLeast(12f).dp
+                Box(
+                    modifier = Modifier
+                        .size(handleSize)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                // Convert drag from screen-space to canvas-space
+                                val canvasDw = dragAmount.x / canvasState.zoom
+                                val canvasDh = dragAmount.y / canvasState.zoom
+                                val newW = (block.width + canvasDw).coerceAtLeast(60f)
+                                val newH = (block.height + canvasDh).coerceAtLeast(60f)
+                                onResized(newW, newH)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        MaterialSymbolIcon("unfold_more"),
+                        "Resize",
+                        size = (8f / canvasState.zoom).coerceAtLeast(5f).dp,
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
