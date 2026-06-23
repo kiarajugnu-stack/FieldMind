@@ -133,7 +133,7 @@ fun FieldMindAppLock(
 
     Box(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
         Card(
-            modifier = Modifier.fillMaxWidth(0.88f).animateContentSize(),
+            modifier = Modifier.fillMaxWidth(0.88f),
             shape = RoundedCornerShape(32.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

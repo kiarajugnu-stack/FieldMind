@@ -1,7 +1,6 @@
 package fieldmind.research.app.features.field.presentation.screens.species
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -406,7 +405,6 @@ private fun SpeciesMatchCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize()
             .clickable(onClick = onSelect),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
