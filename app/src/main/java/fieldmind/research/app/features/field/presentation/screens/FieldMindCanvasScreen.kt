@@ -46,6 +46,7 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import org.json.JSONObject
+import androidx.activity.compose.BackHandler
 
 /**
  * Full-screen canvas editor for a single note.
@@ -69,6 +70,9 @@ fun CanvasScreen(
     onBack: () -> Unit,
     onOpenLinkedEntity: ((String, Long) -> Unit)? = null
 ) {
+    // Handle device back button
+    BackHandler(enabled = true) { onBack() }
+
     val canvasViewModel: CanvasViewModel = viewModel()
     val haptics = rememberFieldMindHaptics()
     val clipboard = LocalClipboardManager.current

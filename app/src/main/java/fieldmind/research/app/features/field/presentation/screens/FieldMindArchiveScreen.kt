@@ -17,12 +17,16 @@ import fieldmind.research.app.features.field.presentation.navigation.FieldMindSc
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import androidx.activity.compose.BackHandler
+
 // ══════════════════════════════════════════════════════════════════════
 //  Search archive
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun ArchiveScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }, onOpenReader: (String, String) -> Unit = { _, _ -> }) {
+fun ArchiveScreen(viewModel: FieldMindViewModel, onOpenDetail: (String, Long) -> Unit = { _, _ -> }, onOpenReader: (String, String) -> Unit = { _, _ -> }, onBack: () -> Unit = {}) {
+    // Handle device back button
+    BackHandler(enabled = true) { onBack() }
     val observations by viewModel.observations.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()

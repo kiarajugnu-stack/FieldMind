@@ -58,6 +58,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.activity.compose.BackHandler
 
 // ══════════════════════════════════════════════════════════════════════
 //  Detail Screen — Entity-specific rich layouts
@@ -73,6 +74,8 @@ fun SharedTransitionScope.DetailScreen(
     onOpenReader: (String, String) -> Unit = { _, _ -> },
     onOpenCanvas: ((Long) -> Unit)? = null
 ) {
+    // Handle device back button
+    BackHandler(enabled = true) { onBack() }
     val observations by viewModel.observations.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
@@ -259,7 +262,7 @@ fun ObservationDetailContent(
             // ── 1. Swipeable Media Gallery (hero carousel) ──
             ObservationHeroCarousel(viewModel, o.id, onOpenReader)
 
-            // ── 2. Header with subject and badges ──
+            // ── 2. Header with subject and badges ��─
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
