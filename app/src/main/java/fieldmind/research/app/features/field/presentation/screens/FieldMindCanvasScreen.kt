@@ -26,6 +26,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -122,6 +123,17 @@ fun CanvasScreen(
 
     // ── Add-block menu state ──
     var showAddMenu by remember { mutableStateOf(false) }
+
+    // ── Keyboard visibility (hide FAB when typing) ──
+    var isKeyboardVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        while (true) {
+            val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            isKeyboardVisible = imm?.isAcceptingText ?: false
+            kotlinx.coroutines.delay(100)
+        }
+    }
 
     // ── Figure gallery state ──
     var showFigureGallery by remember { mutableStateOf(false) }
@@ -346,7 +358,7 @@ fun CanvasScreen(
         }
 
         // ── FAB: Add block ──
-        if (!showAddMenu) {
+        if (!showAddMenu && !isKeyboardVisible) {
             FloatingActionButton(
                 onClick = {
                     haptics.light()
