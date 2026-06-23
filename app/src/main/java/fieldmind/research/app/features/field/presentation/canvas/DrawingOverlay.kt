@@ -3,6 +3,7 @@ package fieldmind.research.app.features.field.presentation.canvas
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -10,6 +11,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import fieldmind.research.app.features.field.data.canvas.DrawingEntity
@@ -75,15 +77,10 @@ fun DrawingOverlay(
     // ── In-progress stroke (built during drag) ──
     var currentStroke by remember { mutableStateOf<InProgressStroke?>(null) }
 
-    // ── Render ──
-    Canvas(
-        modifier = modifier
-            .fillMaxSize()
-            .then(
-                if (!drawingState.isEraser) {
-                    // Freehand / shape drawing gesture handler
-                    Modifier.pointerInput(drawingState.activeTool, drawingState.strokeWidth, drawingState.color, drawingState.shapeType) {
-                        detectDragGestures(
+    // ── Determine gesture modifier ──
+    val gestureModifier: Modifier = if (!drawingState.isEraser) {
+        Modifier.pointerInput(drawingState.activeTool, drawingState.strokeWidth, drawingState.color, drawingState.shapeType) {
+            detectDragGestures(
                             onDragStart = { offset ->
                                 val canvasPt = canvasState.screenToCanvas(offset.x, offset.y)
                                 currentStroke = InProgressStroke(
@@ -114,21 +111,22 @@ fun DrawingOverlay(
                             }
                         )
                     }
-                } else {
-                    // Eraser gesture handler — tap to remove entire stroke
-                    Modifier.pointerInput(drawings) {
-                        detectTapGestures { offset ->
-                            val canvasPt = canvasState.screenToCanvas(offset.x, offset.y)
-                            // Find the topmost drawing whose stroke contains this point
-                            val hit = findHitStroke(drawings, canvasPt, canvasState)
-                            if (hit != null) {
-                                onEraseStroke(hit.id)
-                            }
-                        }
-                    }
+    } else {
+        // Eraser gesture handler — tap to remove entire stroke
+        Modifier.pointerInput(drawings) {
+            detectTapGestures { offset ->
+                val canvasPt = canvasState.screenToCanvas(offset.x, offset.y)
+                // Find the topmost drawing whose stroke contains this point
+                val hit = findHitStroke(drawings, canvasPt, canvasState)
+                if (hit != null) {
+                    onEraseStroke(hit.id)
                 }
-            )
-    ) {
+            }
+        }
+    }
+
+    // ── Render ──
+    Canvas(modifier = modifier.fillMaxSize().then(gestureModifier)) {
         // ── 1. Render saved drawings ──
         drawings.forEach { drawing ->
             drawDrawingEntity(drawing, canvasState)
@@ -500,7 +498,7 @@ private fun findHitStroke(
     return drawings.lastOrNull { drawing ->
         val strokes = parseStrokeData(drawing.strokeDataJson) ?: return@lastOrNull false
         strokes.any { strokePoints ->
-            strokePoints.any { pt ->
+            strokePoints.points.any { pt ->
                 val dx = pt.x - point.x
                 val dy = pt.y - point.y
                 sqrt(dx * dx + dy * dy) < hitRadius

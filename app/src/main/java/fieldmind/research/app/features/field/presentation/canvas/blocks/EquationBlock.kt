@@ -161,7 +161,6 @@ fun EquationBlock(
                             isEditing = true
                         },
                         modifier = Modifier
-                            .align(Alignment.TopEnd)
                             .padding(2.dp)
                             .size(24.dp)
                     ) {

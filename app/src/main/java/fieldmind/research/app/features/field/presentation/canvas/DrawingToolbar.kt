@@ -19,7 +19,9 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.border
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -191,11 +193,11 @@ fun DrawingToolbar(
                                     .size(20.dp)
                                     .clip(CircleShape)
                                     .background(drawingState.composeColor)
-                                    .then(
-                                        if (drawingState.composeColor.luminance() > 0.5f)
-                                            Modifier.background(Color.Transparent)
-                                        else Modifier
-                                    )
+                            .then(
+                                if (drawingState.composeColor.luminance() > 0.5f)
+                                    Modifier.background(Color.Transparent)
+                                else Modifier
+                            )
                             )
                             Text(
                                 "Color",
@@ -232,7 +234,7 @@ fun DrawingToolbar(
                                 drawCircle(
                                     color = drawingState.composeColor,
                                     radius = size.minDimension / 2f - 2f - w / 2f,
-                                    style = Stroke(width = 1.5f, color = Color.Black.copy(alpha = 0.1f))
+                                    style = Stroke(width = 1.5f)
                                 )
                             }
                             Text(

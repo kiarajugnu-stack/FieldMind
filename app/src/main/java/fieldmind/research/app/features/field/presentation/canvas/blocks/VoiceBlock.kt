@@ -152,7 +152,12 @@ fun VoiceBlock(
             r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             r.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             r.setAudioSamplingRate(44100)
-            r.setAudioBitRate(128000)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                @Suppress("DEPRECATION")
+                r.setAudioEncodingBitRate(128000)
+            } else {
+                r.setAudioBitRate(128000)
+            }
             r.setOutputFile(file.absolutePath)
             r.prepare()
             r.start()
