@@ -89,6 +89,9 @@ fun InfiniteCanvas(
             }
     }
 
+    // Zoom slider visibility — shown only in Infinite mode
+    val showZoomSlider = canvasState.canvasMode == CanvasMode.INFINITE
+
     /**
      * Returns the topmost block at the given canvas-space coordinate, or null.
      * Blocks are evaluated in reverse z-order (highest z-index first).
@@ -231,7 +234,17 @@ fun InfiniteCanvas(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Layer 6: CanvasMinimap (floating widget, bottom-right)
+        // Layer 6: ZoomSlider (floating widget, right-center)
+        ZoomSlider(
+            canvasState = canvasState,
+            viewportSize = viewportSize,
+            show = showZoomSlider,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 8.dp)
+        )
+
+        // Layer 7: CanvasMinimap (floating widget, bottom-right)
         CanvasMinimap(
             blocks = blocks,
             canvasState = canvasState,
