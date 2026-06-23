@@ -885,7 +885,7 @@ private fun FieldMindNavHost(
             popEnterTransition = { routePopEnterTransition() },
             popExitTransition = { routePopExitTransition() }
         ) {
-        composable(FieldMindScreen.Home.route) {
+            composable(FieldMindScreen.Home.route) {
             WithSharedTransitionScope(sharedTransitionScope) {
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
                     TabSwipeHost(
@@ -1072,7 +1072,6 @@ private fun FieldMindNavHost(
                     }
                 )
             }
-        }
         }
     }
 }
