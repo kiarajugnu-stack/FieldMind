@@ -278,17 +278,29 @@ fun PageCanvas(
                             }
                         }
 
-                        // ── Per-page drawing overlay (only when drawing toolbar is shown) ──
-                        if (drawingState?.showToolbar == true) {
-                            PageDrawingOverlay(
-                                pageStartY = page.startY,
-                                zoom = zoom,
-                                drawingState = drawingState,
-                                drawings = drawings,
-                                onStrokeComplete = onStrokeComplete,
-                                onEraseDrawing = onEraseDrawing,
-                                modifier = Modifier.fillMaxSize()
-                            )
+                        // ── Per-page drawing rendering (always visible — saved strokes persist) ──
+                        if (drawings.isNotEmpty() || drawingState?.showToolbar == true) {
+                            // Layer A: Always render saved drawings (so they don't disappear when toolbar hides)
+                            if (drawings.isNotEmpty()) {
+                                PageDrawingRender(
+                                    pageStartY = page.startY,
+                                    zoom = zoom,
+                                    drawings = drawings,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            // Layer B: Gesture input + in-progress stroke (only when toolbar is active)
+                            if (drawingState?.showToolbar == true) {
+                                PageDrawingInput(
+                                    pageStartY = page.startY,
+                                    zoom = zoom,
+                                    drawingState = drawingState,
+                                    drawings = drawings,
+                                    onStrokeComplete = onStrokeComplete,
+                                    onEraseDrawing = onEraseDrawing,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
 
                         // ── Empty page hint ──
@@ -376,26 +388,48 @@ fun PageCanvas(
 // ══════════════════════════════════════════════════════════════════════
 
 /**
- * A per-page drawing Canvas that renders saved drawings (scoped to this page's
- * Y range) and handles drawing/erasing gestures in page-local coordinates.
- *
- * Coordinates:
- * - Gesture offsets are in page-local pixels (relative to the page top-left).
- * - Document Y = pageY / zoom + pageStartY.
- * - Saved drawings are in document coordinates; subtract pageStartY when rendering.
+ * READ-ONLY drawing renderer: renders saved drawings scoped to this page.
+ * No gesture handlers — visible even when the drawing toolbar is hidden.
  */
 @Composable
-private fun PageDrawingOverlay(
+private fun PageDrawingRender(
     pageStartY: Float,
     zoom: Float,
-    drawingState: DrawingState?,
     drawings: List<DrawingEntity>,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier) {
+        val pageDrawings = drawings.filter { drawing ->
+            val strokes = parseStrokeData(drawing.strokeDataJson) ?: return@filter false
+            strokes.any { stroke ->
+                stroke.points.any { pt ->
+                    pt.y in pageStartY..(pageStartY + (size.height / zoom))
+                }
+            }
+        }
+        pageDrawings.forEach { drawing ->
+            drawDrawingOnPage(drawing, pageStartY, zoom)
+        }
+    }
+}
+
+/**
+ * Interactive drawing input layer: handles pen, highlighter, shape, and eraser
+ * gestures in page-local coordinates. Renders the in-progress stroke.
+ * Only mounted when the drawing toolbar is shown.
+ *
+ * @param drawings needed for eraser hit-testing (re-composes when drawings change)
+ */
+@Composable
+private fun PageDrawingInput(
+    pageStartY: Float,
+    zoom: Float,
+    drawingState: DrawingState,
+    drawings: List<DrawingEntity> = emptyList(),
     onStrokeComplete: (InProgressStroke) -> Unit = {},
     onEraseDrawing: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    if (drawingState == null) return
-
     var currentStroke by remember { mutableStateOf<InProgressStroke?>(null) }
 
     // ── Gesture handlers ──
@@ -448,23 +482,8 @@ private fun PageDrawingOverlay(
         }
     }
 
-    // ── Render ──
+    // ── Render in-progress stroke ──
     Canvas(modifier = modifier.then(gestureModifier)) {
-        // 1. Render saved drawings scoped to this page
-        val pageDrawings = drawings.filter { drawing ->
-            val strokes = parseStrokeData(drawing.strokeDataJson) ?: return@filter false
-            strokes.any { stroke ->
-                stroke.points.any { pt ->
-                    pt.y in pageStartY..(pageStartY + (size.height / zoom))
-                }
-            }
-        }
-
-        pageDrawings.forEach { drawing ->
-            drawDrawingOnPage(drawing, pageStartY, zoom)
-        }
-
-        // 2. Render in-progress stroke
         currentStroke?.let { stroke ->
             drawPageStroke(stroke, pageStartY, zoom)
         }
