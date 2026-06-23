@@ -1,9 +1,6 @@
 package fieldmind.research.app.features.field.presentation.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -20,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.Shape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -82,21 +78,21 @@ fun SwipeableAlertDialog(
     val dismissThreshold: Float
         get() = dialogWidth * 0.35f
 
-    // Apply rubber-band resistance when dragging beyond threshold
-    val clampedOffset = if (isDragging || isAnimatingAway) {
-        val absDrag = abs(dragOffset)
-        if (absDrag > dismissThreshold) {
-            val overscroll = absDrag - dismissThreshold
-            dismissThreshold * (1f + 0.5f * (1f - 1f / (overscroll / dismissThreshold + 1f)))
-        } else absDrag
-    } else 0f
+    // Rubber-band: compute the effective (resisted) offset so position,
+    // scale, and alpha all respond consistently beyond the threshold.
+    fun rubberBanded(absRaw: Float): Float = if (absRaw > dismissThreshold) {
+        val overscroll = absRaw - dismissThreshold
+        dismissThreshold * (1f + 0.5f * (1f - 1f / (overscroll / dismissThreshold + 1f)))
+    } else absRaw
 
     val effectiveSign: Float = if (dragOffset < 0) -1f else 1f
+    val effectiveAbs = rubberBanded(abs(dragOffset))
+    val effectiveDragOffset = effectiveSign * effectiveAbs
 
     // Animate the drag offset with spring physics
     val animatedDragOffset by animateFloatAsState(
         targetValue = if (isAnimatingAway) effectiveSign * dialogWidth * 1.1f
-                    else if (isDragging) dragOffset
+                    else if (isDragging) effectiveDragOffset
                     else 0f,
         animationSpec = if (isDragging)
             FieldMindMotion.expressiveFloat
@@ -107,8 +103,8 @@ fun SwipeableAlertDialog(
         label = "dialogSwipe"
     )
 
-    // Scrim alpha: fade as dialog is dragged
-    val dragProgress = (clampedOffset / dismissThreshold).coerceIn(0f, 1f)
+    // Drag progress for visual effects — based on rubber-banded offset
+    val dragProgress = (effectiveAbs / dismissThreshold).coerceIn(0f, 1f)
     val scrimAlpha = (1f - dragProgress * 0.6f).coerceIn(0f, 1f)
     val contentScale = 1f - dragProgress * 0.06f
     val contentAlpha = 1f - dragProgress * 0.3f
