@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -99,13 +100,15 @@ fun SharedTransitionScope.DetailScreen(
     }
     val detailSnackbar = remember { SnackbarHostState() }
     val detailScope = rememberCoroutineScope()
+    val detailScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
 
     Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
+            state = detailScrollState,
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 40.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {

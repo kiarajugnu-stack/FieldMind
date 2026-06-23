@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -211,11 +212,13 @@ fun FieldMindSettingsNewScreen(
 
     // Show categories when no search and no category selected
     val showCategories = searchQuery.isBlank() && selectedCategory == null
+    val settingsScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
+            state = settingsScrollState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
