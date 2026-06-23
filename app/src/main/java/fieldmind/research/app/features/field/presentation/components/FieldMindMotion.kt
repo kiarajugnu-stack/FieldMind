@@ -44,6 +44,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
+import kotlin.coroutines.cancellation.CancellationException
+import androidx.activity.BackEventCompat
+import androidx.activity.ExperimentalActivityApi
+import androidx.activity.compose.PredictiveBackHandler
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -426,6 +431,7 @@ fun TabSwipeHost(
 
 private enum class SwipeDirection { Horizontal, Vertical }
 
+@OptIn(ExperimentalActivityApi::class)
 @Composable
 fun SwipeBackHost(
     onBack: () -> Unit,
@@ -441,6 +447,19 @@ fun SwipeBackHost(
     var targetOffsetY by remember { mutableFloatStateOf(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
     var contentHeight by remember { mutableFloatStateOf(1f) }
+
+    // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
+    PredictiveBackHandler(enabled = !reduceMotion) { progressFlow ->
+        try {
+            progressFlow.collect { backEvent ->
+                targetOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
+            }
+            // Flow completed → gesture committed; system handles back navigation
+        } catch (_: CancellationException) {
+            // Gesture cancelled — snap back via spring animation
+            targetOffsetX = 0f
+        }
+    }
 
     val animatedOffsetX by animateFloatAsState(
         targetValue = targetOffsetX,
@@ -577,14 +596,23 @@ fun SwipeBackHost(
                                         null -> 0f
                                     }
                                     if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
-                                        haptics.confirm()
-                                        scope.launch {
-                                            when (activeDirection) {
-                                                SwipeDirection.Horizontal -> targetOffsetX = contentWidth
-                                                SwipeDirection.Vertical -> targetOffsetY = contentHeight
-                                                null -> {}
+                                        // If the system back gesture already animated to full extent,
+                                        // don't call onBack() again — the system handled it.
+                                        if (currentVal < maxVal * 0.99f) {
+                                            haptics.confirm()
+                                            scope.launch {
+                                                when (activeDirection) {
+                                                    SwipeDirection.Horizontal -> targetOffsetX = contentWidth
+                                                    SwipeDirection.Vertical -> targetOffsetY = contentHeight
+                                                    null -> {}
+                                                }
+                                                onBack()
                                             }
-                                            onBack()
+                                        } else {
+                                            // System already handled back; just clean up local state
+                                            activeDirection = null
+                                            targetOffsetX = 0f
+                                            targetOffsetY = 0f
                                         }
                                     } else {
                                         activeDirection = null
