@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -496,7 +497,8 @@ fun FieldLogScreen(
                                             kind = "observation",
                                             body = "${obs.category} • ${obs.date}",
                                             meta = listOf(obs.confidenceLevel),
-                                            onClick = { onOpenDetail("observation", obs.id) }
+                                            onClick = { onOpenDetail("observation", obs.id) },
+                                            animate = true
                                         )
                                     }
                                 }
@@ -504,13 +506,15 @@ fun FieldLogScreen(
                         }
                     } else {
                         // Flat list without session grouping
-                        items(filteredObservations) { obs ->
+                        itemsIndexed(filteredObservations) { i, obs ->
                             EntityCard(
                                 title = obs.subject.ifBlank { "Observation" },
                                 kind = "observation",
                                 body = "${obs.category} • ${obs.date}",
                                 meta = listOf(obs.confidenceLevel),
-                                onClick = { onOpenDetail("observation", obs.id) }
+                                onClick = { onOpenDetail("observation", obs.id) },
+                                index = i,
+                                animate = true
                             )
                         }
                     }

@@ -1907,7 +1907,8 @@ private fun RecentActivityGroupCard(group: List<RecentEntry>, onOpenDetail: (Str
             kind = newest.kind,
             body = newest.sub,
             meta = buildList { add(newest.group); add(recentRelativeTime(newest.time)); if (more > 0) add("+$more more ${newest.kind}${if (more == 1) "" else "s"}") },
-            onClick = { onOpenDetail(newest.kind, newest.id) }
+            onClick = { onOpenDetail(newest.kind, newest.id) },
+            animate = true
         )
         if (more > 0) {
             TextButton(onClick = { expanded = !expanded }, modifier = Modifier.align(Alignment.End)) {
@@ -1917,8 +1918,8 @@ private fun RecentActivityGroupCard(group: List<RecentEntry>, onOpenDetail: (Str
             }
             AnimatedVisibility(expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    group.drop(1).forEach { entry ->
-                        EntityCard(entry.title, entry.kind, body = entry.sub, meta = listOf(recentRelativeTime(entry.time)), onClick = { onOpenDetail(entry.kind, entry.id) })
+                    group.drop(1).forEachIndexed { i, entry ->
+                        EntityCard(entry.title, entry.kind, body = entry.sub, meta = listOf(recentRelativeTime(entry.time)), onClick = { onOpenDetail(entry.kind, entry.id) }, animate = true, index = i + 1)
                     }
                 }
             }

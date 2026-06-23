@@ -439,7 +439,8 @@ private fun ReObservationLink(
                         title = parent.subject.ifBlank { "Observation #${parent.id}" },
                         kind = "observation",
                         meta = listOf(parent.date, parent.category, parent.confidenceLevel),
-                        onClick = { onOpenDetail("observation", parent.id) }
+                        onClick = { onOpenDetail("observation", parent.id) },
+                        animate = true
                     )
                 }
             }
@@ -458,12 +459,14 @@ private fun ReObservationLink(
                         Icon(FieldMindIcons.Project, null, tint = colors.observation, size = 18.dp)
                         Text("${children.size} follow-up observation${if (children.size != 1) "s" else ""}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 }
-                children.forEach { child ->
+                children.forEachIndexed { i, child ->
                     EntityCard(
                         title = child.subject.ifBlank { "Observation #${child.id}" },
                         kind = "observation",
                         meta = listOf(child.date, child.category, child.confidenceLevel),
-                        onClick = { onOpenDetail("observation", child.id) }
+                        onClick = { onOpenDetail("observation", child.id) },
+                        index = i,
+                        animate = true
                     )
                 }
             }
@@ -1750,10 +1753,12 @@ private fun ProjectDetailContent(
                     if (projectObs.isEmpty()) {
                         Text("No observations linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        projectObs.take(5).forEach { o ->
+                        projectObs.take(5).forEachIndexed { i, o ->
                             EntityCard(o.subject.ifBlank { "Observation" }, "observation",
                                 body = "${o.category} • ${o.date}",
-                                meta = listOf(o.confidenceLevel))
+                                meta = listOf(o.confidenceLevel),
+                                index = i,
+                                animate = true)
                         }
                         if (projectObs.size > 5) {
                             Text("+${projectObs.size - 5} more observations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1781,8 +1786,8 @@ private fun ProjectDetailContent(
                     if (projectReports.isEmpty()) {
                         Text("No reports for this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        projectReports.forEach { r ->
-                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status))
+                        projectReports.forEachIndexed { i, r ->
+                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), index = i, animate = true)
                         }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -1800,8 +1805,8 @@ private fun ProjectDetailContent(
                     if (projectSrcs.isEmpty()) {
                         Text("No sources linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        projectSrcs.forEach { s ->
-                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus))
+                        projectSrcs.forEachIndexed { i, s ->
+                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus), index = i, animate = true)
                         }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -3040,7 +3045,7 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
             }
             if (source.relatedProjectId != null) {
                 projects.firstOrNull { it.id == source.relatedProjectId }?.let { project ->
-                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project"), onClick = { onOpenDetail("project", project.id) })
+                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project"), onClick = { onOpenDetail("project", project.id) }), animate = true
                 }
             }
         }
@@ -3173,8 +3178,8 @@ private fun BacklinksPanel(links: List<Triple<String, String, Long>>, onOpenDeta
             Text("Linked records", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text("${links.size}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        links.forEach { (lkKind, lkTitle, lkId) ->
-            EntityCard(lkTitle, lkKind, onClick = { onOpenDetail(lkKind, lkId) })
+        links.forEachIndexed { i, (lkKind, lkTitle, lkId) ->
+            EntityCard(lkTitle, lkKind, onClick = { onOpenDetail(lkKind, lkId) }, index = i, animate = true)
         }
     }
 }

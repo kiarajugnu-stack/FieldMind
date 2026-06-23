@@ -1094,7 +1094,7 @@ private fun NotePanel(viewModel: FieldMindViewModel, items: List<NoteEntity>, on
             }
         }
         if (filtered.isEmpty()) item { EmptyState("No notes yet", "Create one from this Notes tab or Capture → Note.", icon = FieldMindIcons.Note) }
-        items(filtered) { EntityCard(it.title, "note", body = it.body.ifBlank { "No body yet." }, meta = listOf(it.category, recentRelativeTime(it.updatedAt), if (it.attachmentUris.isBlank()) "No attachments" else "Attachments"), onClick = { onOpenDetail("note", it.id) }) }
+        itemsIndexed(filtered) { i, it -> EntityCard(it.title, "note", body = it.body.ifBlank { "No body yet." }, meta = listOf(it.category, recentRelativeTime(it.updatedAt), if (it.attachmentUris.isBlank()) "No attachments" else "Attachments"), onClick = { onOpenDetail("note", it.id) }, index = i, animate = true) }
     }
 }
 
@@ -1160,7 +1160,7 @@ private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, 
             item { EmptyState("Add a source first", "Paper prompts are saved inside each source note.", icon = FieldMindIcons.Source) }
         }
 
-        items(items) { source ->
+        itemsIndexed(items) { i, source ->
             val readingColor = when (source.readingStatus) {
                 "Read" -> FieldMindTheme.colors.positive
                 "In progress" -> FieldMindTheme.colors.flashcard
@@ -1176,7 +1176,9 @@ private fun PaperReadingPanel(items: List<SourceEntity>, onOpenDetail: (String, 
                     source.readingStatus.ifBlank { "Not started" },
                     "${source.personalSummary.length.coerceAtMost(2000)} chars"
                 ),
-                onClick = { onOpenDetail("source", source.id) }
+                onClick = { onOpenDetail("source", source.id) },
+                index = i,
+                animate = true
             )
         }
     }
@@ -1564,9 +1566,9 @@ private fun LearnPanel(viewModel: FieldMindViewModel, onOpenReader: (String, Str
         items(beginnerResearchMilestones) { milestone -> ResearchMilestoneCard(milestone, onOpenReader) }
         item { SectionHeader("Based on your activity", if (signals.isBlank()) "Start capturing to personalize this section" else "Recent topics shape these suggestions") }
         if (signals.isBlank()) {
-            item { EntityCard("Start with one observation", "observation", body = "Capture one facts-only observation, then return here for a tailored next step.") }
+            item { EntityCard("Start with one observation", "observation", body = "Capture one facts-only observation, then return here for a tailored next step.", animate = true) }
         } else {
-            items(recommendedResources(listOf(signals))) { rec -> EntityCard(rec.resource.title, "learn", body = rec.resource.why, meta = listOf(rec.resource.kind, rec.path), onClick = { onOpenReader(rec.resource.url, rec.resource.title) }) }
+            itemsIndexed(recommendedResources(listOf(signals))) { i, rec -> EntityCard(rec.resource.title, "learn", body = rec.resource.why, meta = listOf(rec.resource.kind, rec.path), onClick = { onOpenReader(rec.resource.url, rec.resource.title) }, index = i, animate = true) }
         }
         item { SectionHeader("Book suggestions", "Free first: OpenStax, Project Gutenberg, BHL, NCBI, and Open Library subject shelves.") }
         items(BookSuggestions.filter { signals.isBlank() || signals.contains(it.category, ignoreCase = true) || signals.contains(it.genre, ignoreCase = true) }.ifEmpty { BookSuggestions.take(6) }) { book ->
@@ -1706,12 +1708,14 @@ private fun OnlineApiProposalCard() {
             }
             AnimatedVisibility(expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SuggestedOnlineApis.forEach { api ->
+                    SuggestedOnlineApis.forEachIndexed { i, api ->
                         EntityCard(
                             title = api.name,
                             kind = "source",
                             body = api.notes,
-                            meta = listOf(api.baseUrl)
+                            meta = listOf(api.baseUrl),
+                            index = i,
+                            animate = true
                         )
                     }
                 }
@@ -1778,7 +1782,7 @@ private fun ResearchJourneyHero(next: ResearchMilestone, signals: String, onOpen
 @Composable
 private fun ResearchMilestoneCard(milestone: ResearchMilestone, onOpenReader: (String, String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    EntityCard(milestone.title, "learn", body = milestone.body, meta = listOf(milestone.resource.kind), onClick = { expanded = !expanded })
+    EntityCard(milestone.title, "learn", body = milestone.body, meta = listOf(milestone.resource.kind), onClick = { expanded = !expanded }, animate = true)
     AnimatedVisibility(expanded) {
         Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
