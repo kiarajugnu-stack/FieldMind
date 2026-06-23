@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
+import fieldmind.research.app.features.field.data.canvas.DrawingEntity
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlin.math.roundToInt
@@ -59,6 +60,13 @@ private const val A4_ASPECT = 1.414f
  * @param onBlockCopy copy callback
  * @param onBlockLinkToEntity link callback
  * @param onBlockOpenLinkedEntity open linked entity callback
+ * @param currentPage current visible page index (0-based), emitted on scroll
+ * @param totalPages total number of pages (emitted when pages change)
+ * @param viewportSize viewport size in pixels
+ * @param drawingState shared drawing tool state (null = no drawing enabled)
+ * @param drawings saved drawing entities for rendering
+ * @param onStrokeComplete called when user finishes a stroke
+ * @param onEraseDrawing called when user taps a stroke with eraser
  */
 @Composable
 fun PageCanvas(
@@ -78,7 +86,11 @@ fun PageCanvas(
     onBlockOpenLinkedEntity: ((Long) -> Unit)? = null,
     currentPage: (Int) -> Unit = {},  /* emits 0-based page index when scroll changes */
     totalPages: (Int) -> Unit = {},   /* emits total page count when pages change */
-    viewportSize: Size = Size(0f, 0f)
+    viewportSize: Size = Size(0f, 0f),
+    drawingState: DrawingState? = null,
+    drawings: List<DrawingEntity> = emptyList(),
+    onStrokeComplete: (InProgressStroke) -> Unit = {},
+    onEraseDrawing: (Long) -> Unit = {}
 ) {
     // ── Compute page dimensions ──
     val density = LocalDensity.current
@@ -153,7 +165,19 @@ fun PageCanvas(
             .fillMaxSize()
             .background(Color(0xFFE8E8E8)) // light gray like PDF reader
     ) {
-        // Layer 1: Scrollable pages
+        // Layer 1: Drawing overlay (rendered behind scrollable pages)
+        if (drawingState != null) {
+            DrawingOverlay(
+                canvasState = canvasState,
+                drawingState = drawingState,
+                drawings = drawings,
+                onStrokeComplete = onStrokeComplete,
+                onEraseStroke = onEraseDrawing,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Layer 2: Scrollable pages
         Column(
             modifier = Modifier
                 .fillMaxSize()

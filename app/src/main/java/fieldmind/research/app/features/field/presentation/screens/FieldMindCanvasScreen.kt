@@ -91,6 +91,7 @@ fun CanvasScreen(
     val undoLabel by canvasViewModel.undoRedo.undoDescription.collectAsState()
     val redoLabel by canvasViewModel.undoRedo.redoDescription.collectAsState()
     val lastAddedBlockId by canvasViewModel.lastAddedBlockId.collectAsState()
+    val drawings by canvasViewModel.drawings.collectAsState()
 
     // Get the note title from FieldMindViewModel
     val notes by fieldViewModel.notes.collectAsState()
@@ -170,7 +171,9 @@ fun CanvasScreen(
                     onToggleCanvasMode = { canvasViewModel.canvasState.toggleCanvasMode() },
                     onToggleGallery = { showFigureGallery = !showFigureGallery },
                     currentPage = currentPage,
-                    totalPages = totalPages
+                    totalPages = totalPages,
+                    showDrawingToolbar = canvasViewModel.drawingState.showToolbar,
+                    onToggleDrawing = { canvasViewModel.drawingState.toggleToolbar() }
                 )
 
             // ── Canvas body (Infinite or Pages mode) ──
@@ -230,6 +233,8 @@ fun CanvasScreen(
                     }
                 }
 
+                val drawingState = canvasViewModel.drawingState
+
                 if (canvasViewModel.canvasState.canvasMode == CanvasMode.PAGES) {
                     PageCanvas(
                         canvasState = canvasViewModel.canvasState,
@@ -248,7 +253,11 @@ fun CanvasScreen(
                         onBlockOpenLinkedEntity = onBlockOpenLinkedCallback,
                         currentPage = { page -> currentPage = page },
                         totalPages = { pages -> totalPages = pages },
-                        viewportSize = viewportSize
+                        viewportSize = viewportSize,
+                        drawingState = drawingState,
+                        drawings = drawings,
+                        onStrokeComplete = { stroke -> canvasViewModel.saveStroke(stroke) },
+                        onEraseDrawing = { id -> canvasViewModel.eraseDrawing(id) }
                     )
                 } else {
                     InfiniteCanvas(
@@ -267,7 +276,11 @@ fun CanvasScreen(
                         onBlockLinkToEntity = { id -> linkDialogBlockId = id },
                         onBlockOpenLinkedEntity = onBlockOpenLinkedCallback,
                         showMinimap = true,
-                        viewportSize = viewportSize
+                        viewportSize = viewportSize,
+                        drawingState = drawingState,
+                        drawings = drawings,
+                        onStrokeComplete = { stroke -> canvasViewModel.saveStroke(stroke) },
+                        onEraseDrawing = { id -> canvasViewModel.eraseDrawing(id) }
                     )
 
                     // ── Signal pan/zoom persistence when viewport changes ──
@@ -277,6 +290,21 @@ fun CanvasScreen(
                         }
                     }
                 }
+            }
+        }
+
+        // ── Drawing toolbar (floating, bottom-center) ──
+        if (canvasViewModel.drawingState.showToolbar) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 24.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                DrawingToolbar(
+                    drawingState = canvasViewModel.drawingState,
+                    onDismiss = { canvasViewModel.drawingState.hideToolbar() }
+                )
             }
         }
 
@@ -432,7 +460,9 @@ private fun CanvasTopBar(
     onToggleCanvasMode: () -> Unit = {},
     onToggleGallery: (() -> Unit)? = null,
     currentPage: Int = 0,
-    totalPages: Int = 1
+    totalPages: Int = 1,
+    showDrawingToolbar: Boolean = false,
+    onToggleDrawing: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -553,6 +583,25 @@ private fun CanvasTopBar(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
+                }
+            }
+
+            // Drawing tool toggle
+            Surface(
+                onClick = onToggleDrawing,
+                shape = RoundedCornerShape(12.dp),
+                color = if (showDrawingToolbar) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        MaterialSymbolIcon("draw"),
+                        if (showDrawingToolbar) "Hide drawing tools" else "Show drawing tools",
+                        size = 18.dp,
+                        tint = if (showDrawingToolbar) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
 

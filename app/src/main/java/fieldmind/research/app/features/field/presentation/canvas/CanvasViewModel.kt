@@ -440,10 +440,95 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     // ═══════════════════════════════════════════════════════════════
+    //  Drawings
+    // ═══════════════════════════════════════════════════════════════
+
+    /** Shared drawing tool state. */
+    val drawingState = DrawingState()
+
+    /** Live drawing list observed from Room. */
+    private val _drawings = MutableStateFlow<List<fieldmind.research.app.features.field.data.canvas.DrawingEntity>>(emptyList())
+    val drawings: StateFlow<List<fieldmind.research.app.features.field.data.canvas.DrawingEntity>> = _drawings.asStateFlow()
+
+    init {
+        // Observe drawings for the current note
+        viewModelScope.launch {
+            _noteId.flatMapLatest { id ->
+                if (id != null) repository.observeDrawingsForNote(id)
+                else flowOf(emptyList())
+            }.collect { list ->
+                _drawings.value = list
+            }
+        }
+    }
+
+    /**
+     * Save a completed stroke to the database.
+     */
+    fun saveStroke(stroke: InProgressStroke) {
+        val nid = _noteId.value ?: return
+        viewModelScope.launch {
+            val json = serializeStroke(stroke)
+            val toolType = when (stroke.tool) {
+                DrawingTool.HIGHLIGHTER -> "highlighter"
+                DrawingTool.SHAPE -> "shape"
+                else -> "pen"
+            }
+            val drawing = fieldmind.research.app.features.field.data.canvas.DrawingEntity(
+                noteId = nid,
+                strokeDataJson = json,
+                toolType = toolType,
+                color = stroke.color,
+                strokeWidth = stroke.strokeWidth,
+                layerIndex = 0
+            )
+            repository.upsertDrawing(drawing)
+        }
+    }
+
+    /**
+     * Erase (delete) a drawing by its ID.
+     */
+    fun eraseDrawing(id: Long) {
+        viewModelScope.launch {
+            val drawing = repository.getDrawing(id) ?: return@launch
+            undoRedo.push(DrawingCommand.EraseStroke(drawing))
+            repository.hardDeleteDrawing(id)
+        }
+    }
+
+    /**
+     * Undo the last drawing action (delete the most recent drawing).
+     */
+    fun undoLastDraw() {
+        val last = _drawings.value.lastOrNull() ?: return
+        viewModelScope.launch {
+            repository.hardDeleteDrawing(last.id)
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     //  Selection (delegated to CanvasState)
     // ═══════════════════════════════════════════════════════════════
 
     fun selectBlock(id: Long) = canvasState.selectBlock(id)
     fun clearSelection() = canvasState.clearSelection()
     fun toggleBlockSelection(id: Long) = canvasState.toggleBlockSelection(id)
+}
+
+/**
+ * Undo/redo command for drawing operations.
+ */
+sealed class DrawingCommand : CanvasCommand {
+    data class EraseStroke(
+        val drawing: fieldmind.research.app.features.field.data.canvas.DrawingEntity,
+        override val description: String = "Erase stroke"
+    ) : DrawingCommand() {
+        override suspend fun execute(repo: CanvasRepository) {
+            repo.hardDeleteDrawing(drawing.id)
+        }
+        override suspend fun undo(repo: CanvasRepository) {
+            repo.upsertDrawing(drawing)
+        }
+    }
 }
