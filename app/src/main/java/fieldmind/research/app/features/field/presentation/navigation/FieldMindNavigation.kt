@@ -876,7 +876,6 @@ private fun FieldMindNavHost(
     }
 
     SharedTransitionLayout(modifier = modifier) { sharedTransitionScope ->
-        @Suppress("UNCHECKED_CAST")
         NavHost(
             navController = navController,
             startDestination = "field_today",
@@ -885,7 +884,7 @@ private fun FieldMindNavHost(
             exitTransition = { routeExitTransition() },
             popEnterTransition = { routePopEnterTransition() },
             popExitTransition = { routePopExitTransition() }
-        ) {
+        ) content@{
             composable(FieldMindScreen.Home.route) {
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
                     TabSwipeHost(
