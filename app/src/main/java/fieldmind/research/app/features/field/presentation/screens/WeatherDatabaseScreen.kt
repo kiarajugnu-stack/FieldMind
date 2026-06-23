@@ -5,12 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +25,7 @@ import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.AnimatedWeatherScene
+import fieldmind.research.app.features.field.presentation.components.ClickableCard
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.GpsOffDialog
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -774,7 +776,7 @@ private fun ForecastDashboard(
     colors: fieldmind.research.app.features.field.presentation.theme.FieldMindColors
 ) {
     var expandedIdx by remember { mutableIntStateOf(-1) }
-    val scrollState = rememberLazyListState()
+    val scrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     val allTemps = forecasts.map { it.temperatureMax }
     val globalMax = allTemps.maxOrNull() ?: 30.0
     val globalMin = allTemps.minOrNull() ?: 0.0
@@ -944,13 +946,11 @@ private fun WeatherRecordCard(
     colors: fieldmind.research.app.features.field.presentation.theme.FieldMindColors,
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
-    Card(
+    ClickableCard(
+        onClick = { onOpenDetail("observation", observation.id) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onOpenDetail("observation", observation.id) }
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             Modifier.fillMaxWidth().padding(16.dp),

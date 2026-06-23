@@ -17,9 +17,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -71,6 +71,8 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import fieldmind.research.app.features.field.presentation.components.ObservationStatsDashboard
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.runtime.saveable.rememberSaveable
 
 /**
  * Loads a PNG image from Android assets folder as an ImageBitmap for display.
@@ -97,12 +99,13 @@ internal fun rememberAssetImage(assetPath: String?): androidx.compose.ui.graphic
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun HomeScreen(
+fun SharedTransitionScope.HomeScreen(
     viewModel: FieldMindViewModel,
     onOpenSettings: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit,
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
-    onOpenReader: (String, String) -> Unit = { _, _ -> }
+    onOpenReader: (String, String) -> Unit = { _, _ -> },
+    onOpenCanvas: () -> Unit = {}
 ) {
     // ── Interest-aware configuration (must be early for defaultCategory) ──
     val userInterests by viewModel.fieldSettings.userInterests.collectAsState()
@@ -251,10 +254,10 @@ fun HomeScreen(
         }
     }
 
-    val homeScrollState = rememberLazyListState()
+    val homeScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     Box(Modifier.fillMaxSize().statusBarsPadding()) {            LazyColumn(state = homeScrollState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             // ── Hero Section ──
-            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }) }
+            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }, onOpenCanvas = onOpenCanvas) }
 
             // ── Research Session CTA ──
             item { ResearchSessionCtaCard(
@@ -727,7 +730,8 @@ private fun HomeHeroSection(
     onOpenSettings: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit,
     onCapture: () -> Unit = {},
-    onNewNote: () -> Unit = {}
+    onNewNote: () -> Unit = {},
+    onOpenCanvas: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
     Surface(
@@ -818,6 +822,17 @@ private fun HomeHeroSection(
                     accent = colors.flashcard,
                     modifier = Modifier.weight(1f)
                 ) { onNavigate(FieldMindScreen.TimerTool) }
+            }
+
+            // ── Row 3: Canvas ──
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HeroActionChip(
+                    icon = MaterialSymbolIcon("dashboard_customize"),
+                    label = "Canvas",
+                    accent = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f)
+                ) { onOpenCanvas() }
+                Spacer(Modifier.weight(1f))
             }
         }
     }
@@ -1151,6 +1166,7 @@ private fun LiveWeatherDashboardWidget(
             .animateContentSize(
                 animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
             )
+            .expressiveCardPress(liftDp = 1.5f, scaleDown = 0.985f)
             .clickable { onNavigate(FieldMindScreen.WeatherDatabase) },
         shape = RoundedCornerShape(28.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -1844,7 +1860,7 @@ private fun CurrentProjectResearchCard(
     val connectedSources = sources.count { it.relatedProjectId == project.id }
     val connectedReports = reports.count { it.projectId == project.id }
 
-    Card(onClick = onOpen, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+    ClickableCard(onClick = onOpen, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 24.dp)
@@ -1892,7 +1908,8 @@ private fun RecentActivityGroupCard(group: List<RecentEntry>, onOpenDetail: (Str
             kind = newest.kind,
             body = newest.sub,
             meta = buildList { add(newest.group); add(recentRelativeTime(newest.time)); if (more > 0) add("+$more more ${newest.kind}${if (more == 1) "" else "s"}") },
-            onClick = { onOpenDetail(newest.kind, newest.id) }
+            onClick = { onOpenDetail(newest.kind, newest.id) },
+            animate = true
         )
         if (more > 0) {
             TextButton(onClick = { expanded = !expanded }, modifier = Modifier.align(Alignment.End)) {
@@ -1902,8 +1919,8 @@ private fun RecentActivityGroupCard(group: List<RecentEntry>, onOpenDetail: (Str
             }
             AnimatedVisibility(expanded) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    group.drop(1).forEach { entry ->
-                        EntityCard(entry.title, entry.kind, body = entry.sub, meta = listOf(recentRelativeTime(entry.time)), onClick = { onOpenDetail(entry.kind, entry.id) })
+                    group.drop(1).forEachIndexed { i, entry ->
+                        EntityCard(entry.title, entry.kind, body = entry.sub, meta = listOf(recentRelativeTime(entry.time)), onClick = { onOpenDetail(entry.kind, entry.id) }, animate = true, index = i + 1)
                     }
                 }
             }
@@ -2495,7 +2512,7 @@ private fun computeFieldworkNudge(weather: WeatherSnapshot): String {
 
 // ══════════════════════════════════════════════════════════════════════
 //  Recent Captures Card
-// ══════════════════════════════════════════════════════════════════════
+// ════════════════════════════��═══════════════════���═════════════════════
 
 @Composable
 private fun RecentCapturesCard(observations: List<ObservationEntity>, onOpenDetail: (String, Long) -> Unit) {

@@ -7,6 +7,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +31,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.delay
+import androidx.compose.animation.SharedTransitionScope
 
 // ── Category accent colors ──
 @Composable
@@ -79,9 +82,9 @@ fun SpeciesBrowserScreen(
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
 
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
-    var selectedContinent by remember { mutableStateOf<String?>(null) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedCategory by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedContinent by rememberSaveable { mutableStateOf<String?>(null) }
     var categories by remember { mutableStateOf<List<Pair<String, Int>>>(emptyList()) }
     var continents by remember { mutableStateOf<List<String>>(emptyList()) }
     var species by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
@@ -100,6 +103,7 @@ fun SpeciesBrowserScreen(
         "Kingdom (A-Z)",
         "Category (A-Z)"
     )
+    val speciesListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     var selectedSort by rememberSaveable { mutableStateOf(sortOptions[0]) }
     var showSortDropdown by remember { mutableStateOf(false) }
 
@@ -165,6 +169,7 @@ fun SpeciesBrowserScreen(
     }
 
     Scaffold(
+        modifier = Modifier.statusBarsPadding(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Surface(
@@ -330,7 +335,8 @@ fun SpeciesBrowserScreen(
             }
         } else {
             LazyColumn(
-                Modifier.fillMaxSize().padding(padding),
+                modifier = Modifier.fillMaxSize().padding(padding),
+                state = speciesListState,
                 contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -443,14 +449,13 @@ internal fun SpeciesCard(
     val accent = categoryColor(record.category)
     val colors = FieldMindTheme.colors
 
-    Card(
+    ClickableCard(
+        onClick = onClick,
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
-            .fillMaxWidth()
             .animateContentSize()
-            .clickable(onClick = onClick)
     ) {
         Row(
             Modifier.fillMaxWidth().padding(16.dp),
@@ -550,7 +555,7 @@ internal fun SpeciesCard(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun SpeciesDetailScreen(
+fun SharedTransitionScope.SpeciesDetailScreen(
     speciesId: String,
     onBack: () -> Unit
 ) {

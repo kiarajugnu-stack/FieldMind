@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -55,13 +56,15 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.launch
 import java.util.Locale
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.runtime.saveable.rememberSaveable
 
 // ══════════════════════════════════════════════════════════════════════
 //  Detail Screen — Entity-specific rich layouts
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun DetailScreen(
+fun SharedTransitionScope.DetailScreen(
     kind: String,
     id: Long,
     viewModel: FieldMindViewModel,
@@ -98,13 +101,15 @@ fun DetailScreen(
     }
     val detailSnackbar = remember { SnackbarHostState() }
     val detailScope = rememberCoroutineScope()
+    val detailScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
 
     Box(Modifier.fillMaxSize()) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
+            state = detailScrollState,
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 40.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
@@ -435,7 +440,8 @@ private fun ReObservationLink(
                         title = parent.subject.ifBlank { "Observation #${parent.id}" },
                         kind = "observation",
                         meta = listOf(parent.date, parent.category, parent.confidenceLevel),
-                        onClick = { onOpenDetail("observation", parent.id) }
+                        onClick = { onOpenDetail("observation", parent.id) },
+                        animate = true
                     )
                 }
             }
@@ -454,12 +460,14 @@ private fun ReObservationLink(
                         Icon(FieldMindIcons.Project, null, tint = colors.observation, size = 18.dp)
                         Text("${children.size} follow-up observation${if (children.size != 1) "s" else ""}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 }
-                children.forEach { child ->
+                children.forEachIndexed { i, child ->
                     EntityCard(
                         title = child.subject.ifBlank { "Observation #${child.id}" },
                         kind = "observation",
                         meta = listOf(child.date, child.category, child.confidenceLevel),
-                        onClick = { onOpenDetail("observation", child.id) }
+                        onClick = { onOpenDetail("observation", child.id) },
+                        index = i,
+                        animate = true
                     )
                 }
             }
@@ -1746,10 +1754,12 @@ private fun ProjectDetailContent(
                     if (projectObs.isEmpty()) {
                         Text("No observations linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        projectObs.take(5).forEach { o ->
+                        projectObs.take(5).forEachIndexed { i, o ->
                             EntityCard(o.subject.ifBlank { "Observation" }, "observation",
                                 body = "${o.category} • ${o.date}",
-                                meta = listOf(o.confidenceLevel))
+                                meta = listOf(o.confidenceLevel),
+                                index = i,
+                                animate = true)
                         }
                         if (projectObs.size > 5) {
                             Text("+${projectObs.size - 5} more observations", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1777,8 +1787,8 @@ private fun ProjectDetailContent(
                     if (projectReports.isEmpty()) {
                         Text("No reports for this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        projectReports.forEach { r ->
-                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status))
+                        projectReports.forEachIndexed { i, r ->
+                            EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), index = i, animate = true)
                         }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -1796,8 +1806,8 @@ private fun ProjectDetailContent(
                     if (projectSrcs.isEmpty()) {
                         Text("No sources linked to this project.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        projectSrcs.forEach { s ->
-                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus))
+                        projectSrcs.forEachIndexed { i, s ->
+                            EntityCard(s.title, "source", body = s.author, meta = listOf(s.type, s.readingStatus), index = i, animate = true)
                         }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -2826,7 +2836,7 @@ private fun deleteEntityByKind(kind: String, id: Long, viewModel: FieldMindViewM
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ═════════════════��════════════════��═══════════════════════════════════
 //  Source Detail Content — Sectioned layout with proper visual hierarchy
 // ══════════════════════════════════════════════════════════════════════
 
@@ -3036,7 +3046,7 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
             }
             if (source.relatedProjectId != null) {
                 projects.firstOrNull { it.id == source.relatedProjectId }?.let { project ->
-                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project"), onClick = { onOpenDetail("project", project.id) })
+                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project"), onClick = { onOpenDetail("project", project.id) }, animate = true)
                 }
             }
         }
@@ -3169,8 +3179,8 @@ private fun BacklinksPanel(links: List<Triple<String, String, Long>>, onOpenDeta
             Text("Linked records", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text("${links.size}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        links.forEach { (lkKind, lkTitle, lkId) ->
-            EntityCard(lkTitle, lkKind, onClick = { onOpenDetail(lkKind, lkId) })
+        links.forEachIndexed { i, (lkKind, lkTitle, lkId) ->
+            EntityCard(lkTitle, lkKind, onClick = { onOpenDetail(lkKind, lkId) }, index = i, animate = true)
         }
     }
 }

@@ -699,10 +699,10 @@ private fun DrawingsTab(
             }
         }
         items(overlays) { overlay ->
-            Card(
+            ClickableCard(
+                onClick = { onEditOverlay(overlay) },
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                modifier = Modifier.clickable { onEditOverlay(overlay) }
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 Row(
                     Modifier.padding(14.dp),

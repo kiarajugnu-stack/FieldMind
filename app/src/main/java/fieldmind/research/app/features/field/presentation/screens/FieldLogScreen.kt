@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +23,7 @@ import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 
 private enum class TimelineViewMode { List, Gallery }
@@ -154,6 +156,9 @@ fun FieldLogScreen(
         }
     }
 
+    val refreshScope = rememberCoroutineScope()
+    var isRefreshing by remember { mutableStateOf(false) }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -181,14 +186,26 @@ fun FieldLogScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 32.dp)
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                refreshScope.launch {
+                    // Simulate refresh — in production this would re-fetch data
+                    kotlinx.coroutines.delay(600)
+                    isRefreshing = false
+                }
+            },
+            modifier = Modifier.fillMaxSize()
         ) {
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 32.dp)
+            ) {
             // ── Quick stats ──
             item { ObservationStatsDashboard(observations) }
 
@@ -199,11 +216,11 @@ fun FieldLogScreen(
                     SectionHeader("Past research sessions", "${completedSessions.size} completed")
                 }
                 items(completedSessions.take(5), key = { it.id }) { session ->
-                    Card(
+                    ClickableCard(
+                        onClick = { onOpenDetail("research_session", session.id) },
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                        modifier = Modifier.fillMaxWidth().clickable { onOpenDetail("research_session", session.id) }
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Row(
                             Modifier.fillMaxWidth().padding(16.dp),
@@ -480,7 +497,8 @@ fun FieldLogScreen(
                                             kind = "observation",
                                             body = "${obs.category} • ${obs.date}",
                                             meta = listOf(obs.confidenceLevel),
-                                            onClick = { onOpenDetail("observation", obs.id) }
+                                            onClick = { onOpenDetail("observation", obs.id) },
+                                            animate = true
                                         )
                                     }
                                 }
@@ -488,13 +506,15 @@ fun FieldLogScreen(
                         }
                     } else {
                         // Flat list without session grouping
-                        items(filteredObservations) { obs ->
+                        itemsIndexed(filteredObservations) { i, obs ->
                             EntityCard(
                                 title = obs.subject.ifBlank { "Observation" },
                                 kind = "observation",
                                 body = "${obs.category} • ${obs.date}",
                                 meta = listOf(obs.confidenceLevel),
-                                onClick = { onOpenDetail("observation", obs.id) }
+                                onClick = { onOpenDetail("observation", obs.id) },
+                                index = i,
+                                animate = true
                             )
                         }
                     }
@@ -520,23 +540,22 @@ fun FieldLogScreen(
                 )
             }
         }
+        } // end PullToRefreshBox
     }
 
     // ── Advanced Filter Sheet ──
-    if (showFilterSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showFilterSheet = false },
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-        ) {
-            AdvancedFilterSheetContent(
-                filterState = filterState,
-                onFilterChange = { filterState = it },
-                onDismiss = { showFilterSheet = false },
-                onReset = { filterState = ObservationFilterState() },
-                projects = emptyList()
+    FluidBottomSheet(
+        visible = showFilterSheet,
+        onDismiss = { showFilterSheet = false }
+    ) {
+        AdvancedFilterSheetContent(
+            filterState = filterState,
+            onFilterChange = { filterState = it },
+            onDismiss = { showFilterSheet = false },
+            onReset = { filterState = ObservationFilterState() },
+            projects = emptyList()
         )
     }
-}
 
 /** Filter state for the Field Log screen. */
 data class ObservationFilterState(

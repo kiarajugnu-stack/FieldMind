@@ -5,8 +5,9 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
@@ -26,8 +27,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -35,165 +41,143 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
+import kotlin.coroutines.cancellation.CancellationException
+import androidx.activity.BackEventCompat
+import androidx.activity.ExperimentalActivityApi
+import androidx.activity.compose.PredictiveBackHandler
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
  * Material expressive motion specifications for FieldMind.
- *
- * These specs follow the M3 Expressive motion theming guidelines:
- * - **Expressive** springs overshoot for personality (bouncy, vibrant)
- * - **Standard** springs are smooth and predictable (utility, clarity)
- * - All durations are named tokens for consistency
- * - Stagger delays create cascading list animations
  */
 object FieldMindMotion {
 
-    // ── Expressive Springs (overshoot / bounce / elastic) ──
+    // -- Expressive Springs (overshoot / bounce / elastic) --
 
-    /** Expressive: bold bounce for hero elements, cards entering, state changes. */
     val expressiveSpring = spring<Float>(
-        dampingRatio = Spring.DampingRatioMediumBouncy,   // 0.5 — noticeable overshoot
-        stiffness = Spring.StiffnessMedium                 // 1500 — responsive but visible
-    )
-
-    /** Expressive: soft bounce for secondary elements, chips, icons. */
-    val expressiveSoft = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessLow                    // 200 — gentle, slow bounce
-    )
-
-    /** Expressive: elastic stretch for emphasis (pulls past target then snaps back). */
-    val expressiveElastic = spring<Float>(
-        dampingRatio = 0.3f,                               // Low damping = more oscillation
         stiffness = Spring.StiffnessMedium
     )
 
-    /** Expressive: gentle float for fading, alpha transitions. */
+    val expressiveSoft = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessLow
+    )
+
+    val expressiveElastic = spring<Float>(
+        dampingRatio = 0.3f,
+        stiffness = Spring.StiffnessMedium
+    )
+
     val expressiveFloat = spring<Float>(
-        dampingRatio = Spring.DampingRatioNoBouncy,        // 1.0 — no overshoot
+        dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness = Spring.StiffnessMediumLow
     )
 
-    /** Expressive: rapid snap for micro-interactions (press, tap). */
     val expressiveSnap = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessHigh                   // ~10k — instant with tiny bounce
+        stiffness = Spring.StiffnessHigh
     )
 
-    /** Expressive: dramatic entrance for onboarding, modals, sheets. */
     val expressiveDramatic = spring<Float>(
         dampingRatio = 0.4f,
-        stiffness = 400f                                   // Low stiffness = slow, dramatic bounce
+        stiffness = 400f
     )
 
-    // ── Standard Springs (no overshoot, utility) ──
+    // -- Standard Springs (no overshoot) --
 
-    /** Standard: smooth layout transitions. */
     val layoutSpring = spring<Float>(
         dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness = Spring.StiffnessLow
     )
 
-    /** Standard: press feedback. */
     val pressSpring = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
         stiffness = Spring.StiffnessMedium
     )
 
-    /** Standard: save confirmations. */
     val confirmSpring = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
         stiffness = Spring.StiffnessLow
     )
 
-    // ── Navigation Springs ──
+    // -- Navigation Springs --
 
-    /** Navigation: swipe-back gesture feel (low stiffness = slow drag following). */
     val swipeBackSpring = spring<Float>(
-        dampingRatio = Spring.DampingRatioMediumBouncy,   // 0.5 — subtle overshoot on release
-        stiffness = 300f                                   // Low stiffness = gentle follow
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = 300f
     )
 
-    /** Navigation: shared element morphing (card content → detail header). */
     val sharedElementSpring = spring<Float>(
-        dampingRatio = 0.7f,                                // Slightly overdamped for clean morph
-        stiffness = 600f                                    // Medium-fast for responsive feel
+        dampingRatio = 0.7f,
+        stiffness = 600f
     )
 
-    /** Navigation: axis slide between screens (list→detail). */
     val slideSpring = spring<Float>(
-        dampingRatio = 0.75f,                               // Slightly bouncy
-        stiffness = 700f                                    // Responsive but visible
+        dampingRatio = 0.75f,
+        stiffness = 700f
     )
 
-    /** Navigation: fade-through crossfade (hub→settings page). */
     val fadeThroughSpring = spring<Float>(
-        dampingRatio = Spring.DampingRatioNoBouncy,         // 1.0 — clean, no overshoot
-        stiffness = Spring.StiffnessMediumLow               // ~300 — gentle
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessMediumLow
     )
 
-    // ── Duration Tokens (ms) ──
+    val slideOffsetSpring = spring<IntOffset>(
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessMedium
+    )
 
-    /** Micro-interactions: press, hover, tap feedback. */
+    // -- Duration Tokens (ms) --
+
     const val durationMicro = 120
-
-    /** Subtle transitions: color changes, alpha fades. */
     const val durationSubtle = 200
-
-    /** Standard transitions: card expansion, list item enter. */
     const val durationStandard = 350
-
-    /** Emphasized transitions: screen transitions, hero animations. */
     const val durationEmphasized = 500
-
-    /** Expressive transitions: dramatic entrance, onboarding. */
     const val durationExpressive = 800
-
-    /** Number count-up animation. */
     const val countUpMs = 600
 
-    // ── Stagger & Delay Tokens ──
+    // -- Stagger & Delay Tokens --
 
-    /** Delay between each staggered item in a list. */
     const val staggerItemDelayMs = 50
-
-    /** Delay for the first item in a staggered animation. */
     const val staggerInitialDelayMs = 80
-
-    /** Maximum total stagger duration for a list. */
     const val staggerMaxDurationMs = 500
 
-    // ── Shape Morphing ──
+    // -- Shape Morphing --
 
-    /** Spring for morphing between shapes (e.g., pill → square). */
     val morphSpring = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
         stiffness = Spring.StiffnessMediumLow
     )
 
-    /** Spring for corner radius animation. */
     val cornerSpring = spring<Float>(
         dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness = Spring.StiffnessMedium
     )
 
-    // ── Convenience Tween ──
+    // -- Convenience Tween --
 
-    /** Fade tween (200ms). */
     val fadeTween = tween<Float>(durationMillis = durationSubtle)
-
-    /** Scale press tween (120ms). */
     val pressScaleTween = tween<Float>(durationMillis = durationMicro)
 
-    // ── Utility ──
+    // -- Swipe-back Constants --
 
-    /**
-     * Returns the appropriate [AnimationSpec] for an expressive entrance
-     * based on the [emphasis] level.
-     */
+    const val swipeEdgeWidthDp = 30f
+    const val swipeEdgeHeightDp = 30f
+    const val swipeThreshold = 0.30f
+    const val swipeScaleFactor = 0.92f
+    const val swipeScrimAlpha = 0.35f
+    const val swipeShadowElevationDp = 24f
+    const val swipeCornerRadiusDp = 22f
+
+    // -- Utility --
+
     fun entranceSpec(emphasis: Emphasis = Emphasis.Standard): AnimationSpec<Float> = when (emphasis) {
         Emphasis.Expressive -> expressiveDramatic
         Emphasis.Emphasized -> expressiveSpring
@@ -201,10 +185,8 @@ object FieldMindMotion {
         Emphasis.Snap -> expressiveSnap
     }
 
-    /** Emphasis levels for animation weighting. */
     enum class Emphasis { Expressive, Emphasized, Standard, Snap }
 
-    /** Check if reduce-motion is enabled. */
     @Composable
     fun isReduceMotion(): Boolean {
         if (LocalInspectionMode.current) return false
@@ -218,23 +200,12 @@ object FieldMindMotion {
         return animatorScale == 0f
     }
 
-    /**
-     * Stagger delay for list items. Use with LaunchedEffect(index * staggerItemDelayMs).
-     * @param index The item's index in the list
-     * @return Delay in milliseconds for this item
-     */
     fun staggerDelay(index: Int): Int =
         (staggerInitialDelayMs + index * staggerItemDelayMs).coerceAtMost(staggerMaxDurationMs)
 }
 
-// ──────────────────────────────────────────────────────────────────────
-//  Expressive Press Modifiers
-// ──────────────────────────────────────────────────────────────────────
+// -- Expressive Press Modifiers --
 
-/**
- * Expressive press with Material 3 bounce-back.
- * Scales to [scaleDown] on press, then springs back with expressive overshoot.
- */
 fun Modifier.expressivePress(
     scaleDown: Float = 0.95f,
     enabled: Boolean = true
@@ -271,10 +242,6 @@ fun Modifier.expressivePress(
         }
 }
 
-/**
- * Expressive card press with lift + scale.
- * Cards lift (translateY negative) and scale down slightly, mimicking a literal "lift."
- */
 fun Modifier.expressiveCardPress(
     liftDp: Float = 2f,
     scaleDown: Float = 0.98f,
@@ -317,10 +284,6 @@ fun Modifier.expressiveCardPress(
         }
 }
 
-/**
- * Standard press scale (backward-compatible with existing usage).
- * Scales down to [scaleDown] when pressed, with a spring bounce.
- */
 fun Modifier.pressScale(
     scaleDown: Float = 0.97f,
     enabled: Boolean = true
@@ -353,30 +316,125 @@ fun Modifier.pressScale(
         .scale(scale)
 }
 
-/**
- * Modifier that applies press scale feedback + clips to shape.
- * Use on all interactive cards and buttons for consistent feel.
- */
 fun Modifier.pressCardScale(): Modifier = composed {
     this.pressScale(scaleDown = 0.97f)
 }
 
-// ──────────────────────────────────────────────────────────────────────
-//  Swipe-back Gesture Host
-// ──────────────────────────────────────────────────────────────────────
+// -- Tab Swipe Host -- switch between adjacent tabs with horizontal swipe --
 
 /**
- * Wraps content with a horizontal swipe-back gesture. Users can swipe
- * from the left edge to navigate back. The content follows the finger
- * with spring physics, snapping back if released before the threshold or
- * calling [onBack] if released past the threshold.
+ * Wraps content with a horizontal swipe gesture that triggers tab switching.
+ * Unlike [SwipeBackHost] which only activates from the left edge, this detects
+ * swipes anywhere on the content area (like iOS springboard).
  *
- * Uses [detectHorizontalDragGestures] for gesture detection with
- * [animateFloatAsState] for smooth spring-back animation.
+ * Swipe left → calls [onSwipeForward] (next tab)
+ * Swipe right → calls [onSwipeBack] (previous tab)
  *
- * Place this around any screen composable that should support swipe-back
- * navigation (settings, tools, detail, creation — not bottom-nav tabs).
+ * Shows visual feedback (offset, scale, gradient scrim) during the swipe.
  */
+@Composable
+fun TabSwipeHost(
+    onSwipeBack: () -> Unit,
+    onSwipeForward: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val reduceMotion = FieldMindMotion.isReduceMotion()
+    val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
+
+    var tabOffsetX by remember { mutableFloatStateOf(0f) }
+    var contentWidth by remember { mutableFloatStateOf(1f) }
+
+    val animatedOffsetX by animateFloatAsState(
+        targetValue = tabOffsetX,
+        animationSpec = FieldMindMotion.swipeBackSpring,
+        label = "tabSwipeX"
+    )
+
+    val progress = abs(animatedOffsetX / contentWidth).coerceIn(0f, 1f)
+    val scrimAlpha = progress * 0.25f
+    val scale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
+    val swipeCornerRadius = (progress * FieldMindMotion.swipeCornerRadiusDp).dp
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coords ->
+                contentWidth = coords.size.width.toFloat().coerceAtLeast(1f)
+            }
+    ) {
+        // Gradient scrim on the side opposite the swipe direction
+        if (progress > 0.01f) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(
+                    if (animatedOffsetX > 0) {
+                        Brush.horizontalGradient(
+                            colors = listOf(Color.Black.copy(alpha = scrimAlpha * 0.9f), Color.Black.copy(alpha = scrimAlpha * 0.4f), Color.Transparent),
+                            startX = 0f, endX = contentWidth * 0.5f
+                        )
+                    } else {
+                        Brush.horizontalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = scrimAlpha * 0.4f), Color.Black.copy(alpha = scrimAlpha * 0.9f)),
+                            startX = contentWidth * 0.5f, endX = contentWidth
+                        )
+                    }
+                )
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(swipeCornerRadius))
+                .graphicsLayer {
+                    translationX = animatedOffsetX
+                    scaleX = scale
+                    scaleY = scale
+                    clip = true
+                }
+                .then(
+                    if (!reduceMotion) {
+                        Modifier.pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = { /* swipe anywhere */ },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    tabOffsetX = (tabOffsetX + dragAmount.x).coerceIn(-contentWidth * 0.4f, contentWidth * 0.4f)
+                                },
+                                onDragEnd = {
+                                    val threshold = contentWidth * 0.20f
+                                    if (tabOffsetX > threshold) {
+                                        haptics.confirm()
+                                        scope.launch { tabOffsetX = contentWidth; onSwipeBack() }
+                                    } else if (tabOffsetX < -threshold) {
+                                        haptics.confirm()
+                                        scope.launch { tabOffsetX = -contentWidth; onSwipeForward() }
+                                    } else {
+                                        tabOffsetX = 0f
+                                    }
+                                },
+                                onDragCancel = {
+                                    tabOffsetX = 0f
+                                }
+                            )
+                        }
+                    } else {
+                        Modifier
+                    }
+                ),
+            contentAlignment = Alignment.TopStart
+        ) {
+            content()
+        }
+    }
+}
+
+// -- Swipe-back Gesture Host -- iOS-style with predictive peek --
+
+private enum class SwipeDirection { Horizontal, Vertical }
+
+@OptIn(ExperimentalActivityApi::class)
 @Composable
 fun SwipeBackHost(
     onBack: () -> Unit,
@@ -385,65 +443,194 @@ fun SwipeBackHost(
 ) {
     val reduceMotion = FieldMindMotion.isReduceMotion()
     val scope = rememberCoroutineScope()
+    val haptics = rememberFieldMindHaptics()
 
-    var offsetX by remember { mutableFloatStateOf(0f) }
-    var contentWidth by remember { mutableFloatStateOf(0f) }
+    var activeDirection by remember { mutableStateOf<SwipeDirection?>(null) }
+    var targetOffsetX by remember { mutableFloatStateOf(0f) }
+    var targetOffsetY by remember { mutableFloatStateOf(0f) }
+    var contentWidth by remember { mutableFloatStateOf(1f) }
+    var contentHeight by remember { mutableFloatStateOf(1f) }
+    var systemBackJustCompleted by remember { mutableStateOf(false) }
 
-    // Animate offset with spring when released
-    val animatedOffsetX by animateFloatAsState(
-        targetValue = offsetX,
-        animationSpec = FieldMindMotion.swipeBackSpring,
-        label = "swipeOffset",
-        finishedListener = {
-            // Reset to 0 after completion (happens when snapped back or released)
+    // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
+    PredictiveBackHandler(enabled = !reduceMotion) { progressFlow ->
+        try {
+            progressFlow.collect { backEvent ->
+                targetOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
+            }
+            // Flow completed → gesture committed; system handles back navigation
+            systemBackJustCompleted = true
+        } catch (_: CancellationException) {
+            // Gesture cancelled — snap back via spring animation
+            targetOffsetX = 0f
         }
+    }
+
+    val animatedOffsetX by animateFloatAsState(
+        targetValue = targetOffsetX,
+        animationSpec = FieldMindMotion.swipeBackSpring,
+        label = "swipeX"
+    )
+    val animatedOffsetY by animateFloatAsState(
+        targetValue = targetOffsetY,
+        animationSpec = FieldMindMotion.swipeBackSpring,
+        label = "swipeY"
     )
 
-    // Scrim alpha — darkens the content behind as swipe progresses
-    val scrimAlpha = if (contentWidth > 0f && offsetX > 0f) {
-        (offsetX / contentWidth).coerceIn(0f, 0.35f)
-    } else 0f
+    val maxExtent = when (activeDirection) {
+        SwipeDirection.Horizontal -> contentWidth
+        SwipeDirection.Vertical -> contentHeight
+        null -> 1f
+    }
+    val currentOffset = when (activeDirection) {
+        SwipeDirection.Horizontal -> animatedOffsetX
+        SwipeDirection.Vertical -> animatedOffsetY
+        null -> 0f
+    }
+    val progress = (currentOffset / maxExtent).coerceIn(0f, 1f)
+    val scrimAlpha = progress * FieldMindMotion.swipeScrimAlpha
+    val contentScale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
+    val swipeElevation = progress * FieldMindMotion.swipeShadowElevationDp
+    val swipeCornerRadius = (progress * FieldMindMotion.swipeCornerRadiusDp).dp
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .onGloballyPositioned { coordinates ->
-                contentWidth = coordinates.size.width.toFloat()
+            .onGloballyPositioned { coords ->
+                contentWidth = coords.size.width.toFloat().coerceAtLeast(1f)
+                contentHeight = coords.size.height.toFloat().coerceAtLeast(1f)
             }
     ) {
-        // Scrim overlay — shown behind the content as it slides
-        if (scrimAlpha > 0.01f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = scrimAlpha))
-            )
+        if (progress > 0.01f) {
+            when (activeDirection) {
+                SwipeDirection.Horizontal -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = scrimAlpha * 0.9f),
+                                        Color.Black.copy(alpha = scrimAlpha * 0.4f),
+                                        Color.Transparent
+                                    ),
+                                    startX = 0f,
+                                    endX = contentWidth * 0.5f
+                                )
+                            )
+                    )
+                }
+                SwipeDirection.Vertical -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = scrimAlpha * 0.9f),
+                                        Color.Black.copy(alpha = scrimAlpha * 0.4f),
+                                        Color.Transparent
+                                    ),
+                                    startY = 0f,
+                                    endY = contentHeight * 0.5f
+                                )
+                            )
+                    )
+                }
+                null -> {}
+            }
         }
 
-        // Swipeable content with drag gesture
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .offset { IntOffset(x = animatedOffsetX.roundToInt(), y = 0) }
+                .clip(RoundedCornerShape(swipeCornerRadius))
+                .graphicsLayer {
+                    val ox = animatedOffsetX.roundToInt()
+                    val oy = animatedOffsetY.roundToInt()
+                    translationX = ox.toFloat()
+                    translationY = oy.toFloat()
+                    scaleX = contentScale
+                    scaleY = contentScale
+                    this.shadowElevation = swipeElevation
+                    transformOrigin = TransformOrigin(if (ox > 0) 0f else 0.5f, if (oy > 0) 0f else 0.5f)
+                    clip = true
+                }
                 .then(
                     if (!reduceMotion) {
                         Modifier.pointerInput(Unit) {
-                            detectHorizontalDragGestures(
-                                onDragEnd = {
-                                    // If past 30% threshold, trigger back navigation
-                                    if (offsetX > contentWidth * 0.30f) {
-                                        scope.launch {
-                                            // Animate to full width then call back
-                                            offsetX = contentWidth
-                                            onBack()
-                                        }
-                                    } else {
-                                        // Snap back
-                                        offsetX = 0f
+                            detectDragGestures(
+                                onDragStart = { startPos ->
+                                    if (startPos.x <= FieldMindMotion.swipeEdgeWidthDp) {
+                                        activeDirection = SwipeDirection.Horizontal
+                                    } else if (startPos.y <= FieldMindMotion.swipeEdgeHeightDp) {
+                                        activeDirection = SwipeDirection.Vertical
                                     }
                                 },
-                                onHorizontalDrag = { _, dragAmount ->
-                                    offsetX = (offsetX + dragAmount).coerceAtLeast(0f)
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    when (activeDirection) {
+                                        SwipeDirection.Horizontal -> {
+                                            targetOffsetX = (targetOffsetX + dragAmount.x).coerceAtLeast(0f)
+                                            targetOffsetY = 0f
+                                        }
+                                        SwipeDirection.Vertical -> {
+                                            targetOffsetY = (targetOffsetY + dragAmount.y).coerceAtLeast(0f)
+                                            targetOffsetX = 0f
+                                        }
+                                        null -> {
+                                            val dx = dragAmount.x
+                                            val dy = dragAmount.y
+                                            if (abs(dx) > abs(dy) && dx > 0) {
+                                                activeDirection = SwipeDirection.Horizontal
+                                                targetOffsetX = (targetOffsetX + dx).coerceAtLeast(0f)
+                                            } else if (abs(dy) > abs(dx) && dy > 0) {
+                                                activeDirection = SwipeDirection.Vertical
+                                                targetOffsetY = (targetOffsetY + dy).coerceAtLeast(0f)
+                                            }
+                                        }
+                                    }
+                                },
+                                onDragEnd = {
+                                    val maxVal = when (activeDirection) {
+                                        SwipeDirection.Horizontal -> contentWidth
+                                        SwipeDirection.Vertical -> contentHeight
+                                        null -> Float.MAX_VALUE
+                                    }
+                                    val currentVal = when (activeDirection) {
+                                        SwipeDirection.Horizontal -> targetOffsetX
+                                        SwipeDirection.Vertical -> targetOffsetY
+                                        null -> 0f
+                                    }
+                                    if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
+                                        if (systemBackJustCompleted) {
+                                            // System back gesture already committed; just clean up local state
+                                            systemBackJustCompleted = false
+                                            activeDirection = null
+                                            targetOffsetX = 0f
+                                            targetOffsetY = 0f
+                                        } else {
+                                            // Custom drag committed
+                                            haptics.confirm()
+                                            scope.launch {
+                                                when (activeDirection) {
+                                                    SwipeDirection.Horizontal -> targetOffsetX = contentWidth
+                                                    SwipeDirection.Vertical -> targetOffsetY = contentHeight
+                                                    null -> {}
+                                                }
+                                                onBack()
+                                            }
+                                        }
+                                    } else {
+                                        activeDirection = null
+                                        targetOffsetX = 0f
+                                        targetOffsetY = 0f
+                                    }
+                                },
+                                onDragCancel = {
+                                    activeDirection = null
+                                    targetOffsetX = 0f
+                                    targetOffsetY = 0f
                                 }
                             )
                         }
@@ -455,25 +642,31 @@ fun SwipeBackHost(
         ) {
             content()
 
-            // Back indicator — appears on left edge during drag
-            if (offsetX > contentWidth * 0.05f) {
+            if (activeDirection == SwipeDirection.Horizontal && currentOffset > contentWidth * 0.05f) {
                 Box(
                     modifier = Modifier
                         .padding(start = 4.dp)
                         .align(Alignment.CenterStart)
                         .size(40.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)
-                        ),
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        icon = FieldMindIcons.Back,
-                        contentDescription = "Swipe back",
-                        size = 22.dp,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Icon(FieldMindIcons.ChevronLeft, "Swipe back", size = 22.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            if (activeDirection == SwipeDirection.Vertical && currentOffset > contentHeight * 0.05f) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .align(Alignment.TopCenter)
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(FieldMindIcons.ChevronDown, "Swipe down to dismiss", size = 22.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

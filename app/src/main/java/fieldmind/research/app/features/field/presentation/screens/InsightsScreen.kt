@@ -7,12 +7,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -236,7 +238,7 @@ fun InsightsScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(Modifier.fillMaxSize()) {
-            val insightsScrollState = rememberLazyListState()
+            val insightsScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
             LazyColumn(
                 state = insightsScrollState,
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -463,21 +465,21 @@ fun InsightsScreen(
             // ═══════════ SECTION 9: Open Questions & Active Projects ═══════════
             if (questions.isNotEmpty()) {
                 item { SectionHeader("Open questions", "${questions.count { it.status != "Answered" }} unanswered") }
-                items(questions.filter { it.status != "Answered" }.take(5)) { q ->
-                    EntityCard(q.questionText, "question", meta = listOf(q.status, q.priority), onClick = { onOpenDetail("question", q.id) })
+                itemsIndexed(questions.filter { it.status != "Answered" }.take(5)) { i, q ->
+                    EntityCard(q.questionText, "question", meta = listOf(q.status, q.priority), onClick = { onOpenDetail("question", q.id) }, index = i, animate = true)
                 }
             }
             if (projects.isNotEmpty()) {
                 item { SectionHeader("Active projects", "${projects.count { it.status == "Active" }} active") }
-                items(projects.filter { it.status == "Active" }.take(4)) { p ->
-                    EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status, p.topicType), onClick = { onOpenDetail("project", p.id) })
+                itemsIndexed(projects.filter { it.status == "Active" }.take(4)) { i, p ->
+                    EntityCard(p.title, "project", body = p.objective.ifBlank { p.researchQuestion }, meta = listOf(p.status, p.topicType), onClick = { onOpenDetail("project", p.id) }, index = i, animate = true)
                 }
             }
 
             // ═══════════ Data Records Table ═══════════
             if (dataRecords.isNotEmpty()) {
                 item { SectionHeader("Data records", "${dataRecords.size} entries") }
-                items(dataRecords.take(8)) { record -> DataRecordInsightCard(record) { onOpenDetail("data", record.id) } }
+                itemsIndexed(dataRecords.take(8)) { _, record -> DataRecordInsightCard(record, onClick = { onOpenDetail("data", record.id) }) }
             }
 
             item { Spacer(Modifier.height(24.dp)) }
@@ -588,7 +590,7 @@ private fun ResearchHealthSummary(dataQualityScore: Triple<Int, List<Pair<String
 
 @Composable
 private fun DataRecordInsightCard(record: DataRecordEntity, onClick: () -> Unit) {
-    EntityCard(record.label.ifBlank { record.toolType }, "data", body = "Value: ${record.value} ${record.unit}\nNotes: ${record.notes}", meta = listOf(record.toolType, SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(record.timestamp))), onClick = onClick)
+    EntityCard(record.label.ifBlank { record.toolType }, "data", body = "Value: ${record.value} ${record.unit}\nNotes: ${record.notes}", meta = listOf(record.toolType, SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(record.timestamp))), onClick = onClick, animate = true)
 }
 
 // ══════════════════════════════════════════════════════════════════════

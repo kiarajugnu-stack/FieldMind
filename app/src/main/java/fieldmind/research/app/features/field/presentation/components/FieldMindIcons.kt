@@ -37,6 +37,9 @@ object FieldMindIcons {
     val Select = MaterialSymbolIcon("check_box")
     val Back = MaterialSymbolIcon("arrow_back")
     val Forward = MaterialSymbolIcon("chevron_right")
+    // iOS-style chevron icons for swipe-back gesture
+    val ChevronLeft = MaterialSymbolIcon("chevron_left")
+    val ChevronDown = MaterialSymbolIcon("keyboard_arrow_down")
     val Up = MaterialSymbolIcon("expand_less")
     val Down = MaterialSymbolIcon("expand_more")
     val Camera = MaterialSymbolIcon("photo_camera")

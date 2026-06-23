@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -765,7 +766,7 @@ private fun ObservationsTab(
             }
         }
         
-        items(sorted) { obs ->
+        itemsIndexed(sorted) { i, obs ->
             EntityCard(
                 title = obs.subject.ifBlank { "Observation" },
                 kind = "observation",
@@ -781,7 +782,9 @@ private fun ObservationsTab(
                     } else {
                         onOpenDetail("observation", obs.id)
                     }
-                }
+                },
+                index = i,
+                animate = true
             )
         }
         if (sorted.isEmpty()) {
@@ -908,13 +911,13 @@ private fun HypothesesTab(
             }
         }
         if (hypotheses.isEmpty()) item { EmptyState("No hypotheses yet", "Predict what evidence would show, then test it.", icon = FieldMindIcons.Hypothesis) }
-        items(hypotheses.sortedByDescending { it.createdAt }) { h ->
+        itemsIndexed(hypotheses.sortedByDescending { it.createdAt }) { i, h ->
             val supportColor = when (h.resultStatus.lowercase()) {
                 "supported" -> FieldMindTheme.colors.positive
                 "refuted" -> MaterialTheme.colorScheme.error
                 else -> MaterialTheme.colorScheme.onSurfaceVariant
             }
-            EntityCard(h.prediction, "hypothesis", body = h.reasoning.take(120), meta = listOf("${h.confidencePercent}%", h.resultStatus), onClick = { onOpenDetail("hypothesis", h.id) })
+            EntityCard(h.prediction, "hypothesis", body = h.reasoning.take(120), meta = listOf("${h.confidencePercent}%", h.resultStatus), onClick = { onOpenDetail("hypothesis", h.id) }, index = i, animate = true)
         }
     }
     // Inline dialog outside LazyColumn
@@ -954,7 +957,7 @@ private fun DataTab(
             }
         }
         if (data.isEmpty()) item { EmptyState("No data records yet", "Measure, count, compare, or log with offline tools.", icon = FieldMindIcons.Data) }
-        items(data.sortedByDescending { it.timestamp }) { d -> EntityCard(d.label, "data", body = "${d.value} ${d.unit}", meta = listOf(d.toolType, d.datasetKind), onClick = { onOpenDetail("data", d.id) }) }
+        itemsIndexed(data.sortedByDescending { it.timestamp }) { i, d -> EntityCard(d.label, "data", body = "${d.value} ${d.unit}", meta = listOf(d.toolType, d.datasetKind), onClick = { onOpenDetail("data", d.id) }, index = i, animate = true) }
     }
     // Inline dialog outside LazyColumn
     if (showNewDataDialog) {
@@ -990,7 +993,7 @@ private fun ReportsTab(
             }
         }
         if (reports.isEmpty()) item { EmptyState("No reports yet", "Write up your findings with background, methods, results, and conclusions.", icon = FieldMindIcons.Report) }
-        items(reports.sortedByDescending { it.createdAt }) { r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }) }
+        itemsIndexed(reports.sortedByDescending { it.createdAt }) { i, r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }, index = i, animate = true) }
     }
     // Inline dialog outside LazyColumn
     if (showNewReportDialog) {

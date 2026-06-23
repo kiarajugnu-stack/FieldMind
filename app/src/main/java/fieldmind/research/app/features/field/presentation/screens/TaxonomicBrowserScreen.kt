@@ -7,10 +7,13 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,6 +25,7 @@ import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import kotlinx.coroutines.launch
+import fieldmind.research.app.features.field.presentation.components.ClickableCard
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -68,8 +72,8 @@ fun TaxonomicBrowserScreen(
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
 
-    var breadcrumbs by remember { mutableStateOf<List<Breadcrumb>>(emptyList()) }
-    var currentLevel by remember { mutableStateOf(TaxoLevel.Kingdom) }
+    var breadcrumbs by rememberSaveable { mutableStateOf<List<Breadcrumb>>(emptyList()) }
+    var currentLevel by rememberSaveable { mutableStateOf(TaxoLevel.Kingdom) }
     var siblings by remember { mutableStateOf<List<String>>(emptyList()) }
     var speciesList by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -175,7 +179,10 @@ fun TaxonomicBrowserScreen(
         currentLevel = targetLevel
     }
 
+    val taxonListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+
     Scaffold(
+        modifier = Modifier.statusBarsPadding(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Surface(
@@ -286,7 +293,8 @@ fun TaxonomicBrowserScreen(
                 }
             } else {
                 LazyColumn(
-                    Modifier.fillMaxSize().padding(padding),
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    state = taxonListState,
                     contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -317,7 +325,8 @@ fun TaxonomicBrowserScreen(
                 }
             } else {
                 LazyColumn(
-                    Modifier.fillMaxSize().padding(padding),
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    state = taxonListState,
                     contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -354,14 +363,13 @@ private fun TaxoLevelCard(
 ) {
     val accent = levelColor(level)
 
-    Card(
+    ClickableCard(
+        onClick = onClick,
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
-            .fillMaxWidth()
             .animateContentSize()
-            .clickable(onClick = onClick)
     ) {
         Row(
             Modifier.fillMaxWidth().padding(16.dp),
