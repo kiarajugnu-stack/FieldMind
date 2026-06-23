@@ -1,5 +1,6 @@
 package fieldmind.research.app.features.field.presentation.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -21,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +46,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 import androidx.activity.BackEventCompat
 import androidx.activity.ExperimentalActivityApi
@@ -484,11 +486,12 @@ fun SwipeBackHost(
     content: @Composable () -> Unit
 ) {
     val reduceMotion = FieldMindMotion.isReduceMotion()
+    val scope = rememberCoroutineScope()
     val haptics = rememberFieldMindHaptics()
 
     var activeDirection by remember { mutableStateOf<SwipeDirection?>(null) }
-    var targetOffsetX by remember { mutableFloatStateOf(0f) }
-    var targetOffsetY by remember { mutableFloatStateOf(0f) }
+    val animX = remember { Animatable(0f) }
+    val animY = remember { Animatable(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
     var contentHeight by remember { mutableFloatStateOf(1f) }
 
@@ -507,9 +510,10 @@ fun SwipeBackHost(
     PredictiveBackHandler(enabled = !reduceMotion && !isImeVisible) { progressFlow ->
         try {
             var hadProgress = false
+            // Inside PredictiveBackHandler coroutine — snapTo is suspend, call directly
             progressFlow.collect { backEvent ->
                 hadProgress = true
-                targetOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
+                animX.snapTo((contentWidth * backEvent.progress).coerceAtLeast(0f))
             }
             // Flow completed → gesture committed
             // Navigate immediately for both gesture swipes AND hardware button presses.
@@ -519,20 +523,9 @@ fun SwipeBackHost(
             onBack()
         } catch (_: CancellationException) {
             // Gesture cancelled — snap back via spring animation
-            targetOffsetX = 0f
+            animX.snapTo(0f)
         }
     }
-
-    val animatedOffsetX by animateFloatAsState(
-        targetValue = targetOffsetX,
-        animationSpec = FieldMindMotion.swipeBackSpring,
-        label = "swipeX"
-    )
-    val animatedOffsetY by animateFloatAsState(
-        targetValue = targetOffsetY,
-        animationSpec = FieldMindMotion.swipeBackSpring,
-        label = "swipeY"
-    )
 
     val maxExtent = when (activeDirection) {
         SwipeDirection.Horizontal -> contentWidth
@@ -540,8 +533,8 @@ fun SwipeBackHost(
         null -> 1f
     }
     val currentOffset = when (activeDirection) {
-        SwipeDirection.Horizontal -> animatedOffsetX
-        SwipeDirection.Vertical -> animatedOffsetY
+        SwipeDirection.Horizontal -> animX.value
+        SwipeDirection.Vertical -> animY.value
         null -> 0f
     }
     val progress = (currentOffset / maxExtent).coerceIn(0f, 1f)
@@ -603,8 +596,8 @@ fun SwipeBackHost(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(swipeCornerRadius))
                 .graphicsLayer {
-                    val ox = animatedOffsetX.roundToInt()
-                    val oy = animatedOffsetY.roundToInt()
+                    val ox = animX.value.roundToInt()
+                    val oy = animY.value.roundToInt()
                     translationX = ox.toFloat()
                     translationY = oy.toFloat()
                     scaleX = contentScale
@@ -628,22 +621,22 @@ fun SwipeBackHost(
                                     change.consume()
                                     when (activeDirection) {
                                         SwipeDirection.Horizontal -> {
-                                            targetOffsetX = (targetOffsetX + dragAmount.x).coerceAtLeast(0f)
-                                            targetOffsetY = 0f
+                                            val newX = (animX.value + dragAmount.x).coerceAtLeast(0f)
+                                            scope.launch { animX.snapTo(newX) }
                                         }
                                         SwipeDirection.Vertical -> {
-                                            targetOffsetY = (targetOffsetY + dragAmount.y).coerceAtLeast(0f)
-                                            targetOffsetX = 0f
+                                            val newY = (animY.value + dragAmount.y).coerceAtLeast(0f)
+                                            scope.launch { animY.snapTo(newY) }
                                         }
                                         null -> {
                                             val dx = dragAmount.x
                                             val dy = dragAmount.y
                                             if (abs(dx) > abs(dy) && dx > 0) {
                                                 activeDirection = SwipeDirection.Horizontal
-                                                targetOffsetX = (targetOffsetX + dx).coerceAtLeast(0f)
+                                                scope.launch { animX.snapTo(dx.coerceAtLeast(0f)) }
                                             } else if (abs(dy) > abs(dx) && dy > 0) {
                                                 activeDirection = SwipeDirection.Vertical
-                                                targetOffsetY = (targetOffsetY + dy).coerceAtLeast(0f)
+                                                scope.launch { animY.snapTo(dy.coerceAtLeast(0f)) }
                                             }
                                         }
                                     }
@@ -655,23 +648,37 @@ fun SwipeBackHost(
                                         null -> Float.MAX_VALUE
                                     }
                                     val currentVal = when (activeDirection) {
-                                        SwipeDirection.Horizontal -> targetOffsetX
-                                        SwipeDirection.Vertical -> targetOffsetY
+                                        SwipeDirection.Horizontal -> animX.value
+                                        SwipeDirection.Vertical -> animY.value
                                         null -> 0f
                                     }
                                     if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
                                         haptics.confirm()
-                                        onBack()
+                                        // Animate to full extent then navigate — await completion, no delay()
+                                        scope.launch {
+                                            if (activeDirection == SwipeDirection.Horizontal) {
+                                                animX.animateTo(contentWidth, FieldMindMotion.swipeBackSpring)
+                                            } else {
+                                                animY.animateTo(contentHeight, FieldMindMotion.swipeBackSpring)
+                                            }
+                                            activeDirection = null
+                                            onBack()
+                                        }
                                     } else {
+                                        // Snap back to 0
                                         activeDirection = null
-                                        targetOffsetX = 0f
-                                        targetOffsetY = 0f
+                                        scope.launch {
+                                            animX.snapTo(0f)
+                                            animY.snapTo(0f)
+                                        }
                                     }
                                 },
                                 onDragCancel = {
                                     activeDirection = null
-                                    targetOffsetX = 0f
-                                    targetOffsetY = 0f
+                                    scope.launch {
+                                        animX.snapTo(0f)
+                                        animY.snapTo(0f)
+                                    }
                                 }
                             )
                         }
