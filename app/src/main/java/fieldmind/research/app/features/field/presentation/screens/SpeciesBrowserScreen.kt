@@ -7,6 +7,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -80,9 +81,9 @@ fun SpeciesBrowserScreen(
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
 
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
-    var selectedContinent by remember { mutableStateOf<String?>(null) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var selectedCategory by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedContinent by rememberSaveable { mutableStateOf<String?>(null) }
     var categories by remember { mutableStateOf<List<Pair<String, Int>>>(emptyList()) }
     var continents by remember { mutableStateOf<List<String>>(emptyList()) }
     var species by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
@@ -101,7 +102,7 @@ fun SpeciesBrowserScreen(
         "Kingdom (A-Z)",
         "Category (A-Z)"
     )
-    val speciesListState = rememberLazyListState()
+    val speciesListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     var selectedSort by rememberSaveable { mutableStateOf(sortOptions[0]) }
     var showSortDropdown by remember { mutableStateOf(false) }
 
@@ -167,6 +168,7 @@ fun SpeciesBrowserScreen(
     }
 
     Scaffold(
+        modifier = Modifier.statusBarsPadding(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Surface(
