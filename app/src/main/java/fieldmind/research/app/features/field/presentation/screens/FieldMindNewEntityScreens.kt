@@ -24,6 +24,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.activity.compose.BackHandler
 
 // ══════════════════════════════════════════════════════════════════════
 //  NEW PROJECT SCREEN — Full-screen creation form
@@ -32,6 +33,7 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NewProjectScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    BackHandler(enabled = true) { onBack() }
     var title by remember { mutableStateOf("") }
     var topic by remember { mutableStateOf("Biology") }
     var objective by remember { mutableStateOf("") }
@@ -102,6 +104,7 @@ fun NewProjectScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 @Composable
 fun NewQuestionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    BackHandler(enabled = true) { onBack() }
     var question by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Other") }
     var source by remember { mutableStateOf("Observation") }
@@ -152,6 +155,7 @@ fun NewQuestionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 @Composable
 fun NewHypothesisScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    BackHandler(enabled = true) { onBack() }
     val questions by viewModel.questions.collectAsState()
     var prediction by remember { mutableStateOf("") }
     var reasoning by remember { mutableStateOf("") }
@@ -221,6 +225,7 @@ fun NewHypothesisScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 @Composable
 fun NewDataRecordScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    BackHandler(enabled = true) { onBack() }
     var tool by remember { mutableStateOf("Counter") }
     var label by remember { mutableStateOf("") }
     var value by remember { mutableStateOf("0") }
@@ -280,6 +285,7 @@ fun NewDataRecordScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 @Composable
 fun NewReportScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    BackHandler(enabled = true) { onBack() }
     var type by remember { mutableStateOf("Field Report") }
     var title by remember { mutableStateOf("") }
     var background by remember { mutableStateOf("") }
