@@ -14,6 +14,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.shared.SharedTransitionLayout
+import androidx.compose.animation.shared.SharedTransitionScope
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -872,62 +874,73 @@ private fun FieldMindNavHost(
         } else null
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = "field_today",
-        modifier = modifier,
-        enterTransition = { routeEnterTransition() },
-        exitTransition = { routeExitTransition() },
-        popEnterTransition = { routePopEnterTransition() },
-        popExitTransition = { routePopExitTransition() }
-    ) {
+    SharedTransitionLayout(modifier = modifier) { sharedTransitionScope ->
+        NavHost(
+            navController = navController,
+            startDestination = "field_today",
+            modifier = Modifier,
+            enterTransition = { routeEnterTransition() },
+            exitTransition = { routeExitTransition() },
+            popEnterTransition = { routePopEnterTransition() },
+            popExitTransition = { routePopExitTransition() }
+        ) {
         composable(FieldMindScreen.Home.route) {
-            val host = this
-            if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                TabSwipeHost(
-                    onSwipeBack = onSwipeToPrevTab ?: {},
-                    onSwipeForward = onSwipeToNextTab ?: {}
-                ) {
+            WithSharedTransitionScope(sharedTransitionScope) {
+                val host = this
+                if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
+                    TabSwipeHost(
+                        onSwipeBack = onSwipeToPrevTab ?: {},
+                        onSwipeForward = onSwipeToNextTab ?: {}
+                    ) {
+                        HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader, onOpenCanvas = { viewModel.addNote(title = "Canvas", body = "", category = "Other", tags = "canvas") { noteId -> navController.navigateToDestination("field_canvas/$noteId") } })
+                    }
+                } else {
                     HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader, onOpenCanvas = { viewModel.addNote(title = "Canvas", body = "", category = "Other", tags = "canvas") { noteId -> navController.navigateToDestination("field_canvas/$noteId") } })
                 }
-            } else {
-                HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader, onOpenCanvas = { viewModel.addNote(title = "Canvas", body = "", category = "Other", tags = "canvas") { noteId -> navController.navigateToDestination("field_canvas/$noteId") } })
             }
         }
         composable(FieldMindScreen.Observe.route) {
-            if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+            WithSharedTransitionScope(sharedTransitionScope) {
+                if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
+                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+                        ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail)
+                    }
+                } else {
                     ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail)
                 }
-            } else {
-                ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail)
             }
         }
         composable(FieldMindScreen.Projects.route) {
-            if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+            WithSharedTransitionScope(sharedTransitionScope) {
+                if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
+                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+                        ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }, onNavigate = { navController.navigateToDestination(it.route) })
+                    }
+                } else {
                     ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }, onNavigate = { navController.navigateToDestination(it.route) })
                 }
-            } else {
-                ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }, onNavigate = { navController.navigateToDestination(it.route) })
             }
         }
         composable(FieldMindScreen.Library.route) {
-            if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+            WithSharedTransitionScope(sharedTransitionScope) {
+                if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
+                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+                        KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader)
+                    }
+                } else {
                     KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader)
                 }
-            } else {
-                KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader)
             }
         }
         composable(FieldMindScreen.Insights.route) {
-            if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+            WithSharedTransitionScope(sharedTransitionScope) {
+                if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
+                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+                        InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail)
+                    }
+                } else {
                     InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail)
                 }
-            } else {
-                InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail)
             }
         }
         composable(FieldMindScreen.Learn.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { FieldMindLearnScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenReader = openReader) } }
@@ -947,6 +960,7 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.ResearchSession.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { ResearchSessionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail) } }
         composable(FieldMindScreen.WeatherDatabase.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { WeatherDatabaseScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.SettingsWeather.route) }, onOpenDetail = openDetail) } }
         composable(FieldMindScreen.Settings.route) {
+            WithSharedTransitionScope(sharedTransitionScope) {
             SwipeBackHost(onBack = { navController.popBackStack() }) {
                 FieldMindSettingsScreen(
                     viewModel = viewModel,
@@ -974,6 +988,7 @@ private fun FieldMindNavHost(
                 )
             }
         }
+        }
         composable(FieldMindScreen.SettingsProfile.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { ProfileSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
         composable(FieldMindScreen.SettingsAppearance.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { AppearanceSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
         composable(FieldMindScreen.SettingsCapture.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { CaptureDefaultsSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
@@ -996,12 +1011,14 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.SettingsMap.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { MapSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
         composable(FieldMindScreen.SettingsDataIntegrity.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { DataIntegritySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
         composable(FieldMindScreen.SettingsDeveloper.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { DeveloperSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
-        composable(FieldMindScreen.SpeciesBrowser.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { SpeciesBrowserScreen(onBack = { navController.popBackStack() }, onOpenDetail = { id -> navController.navigateToDestination("field_species_detail/$id") }) } }
-        composable(FieldMindScreen.TaxonomicBrowser.route) { SwipeBackHost(onBack = { navController.popBackStack() }) { TaxonomicBrowserScreen(onBack = { navController.popBackStack() }, onOpenDetail = { id -> navController.navigateToDestination("field_species_detail/$id") }) } }
+        composable(FieldMindScreen.SpeciesBrowser.route) { WithSharedTransitionScope(sharedTransitionScope) { SwipeBackHost(onBack = { navController.popBackStack() }) { SpeciesBrowserScreen(onBack = { navController.popBackStack() }, onOpenDetail = { id -> navController.navigateToDestination("field_species_detail/$id") }) } } }
+        composable(FieldMindScreen.TaxonomicBrowser.route) { WithSharedTransitionScope(sharedTransitionScope) { SwipeBackHost(onBack = { navController.popBackStack() }) { TaxonomicBrowserScreen(onBack = { navController.popBackStack() }, onOpenDetail = { id -> navController.navigateToDestination("field_species_detail/$id") }) } } }
         composable("field_species_detail/{speciesId}") { entry ->
             val speciesId = entry.arguments?.getString("speciesId") ?: ""
-            SwipeBackHost(onBack = { navController.popBackStack() }) {
-                SpeciesDetailScreen(speciesId = speciesId, onBack = { navController.popBackStack() })
+            WithSharedTransitionScope(sharedTransitionScope) {
+                SwipeBackHost(onBack = { navController.popBackStack() }) {
+                    SpeciesDetailScreen(speciesId = speciesId, onBack = { navController.popBackStack() })
+                }
             }
         }
         composable(FieldMindScreen.SettingsSpeciesPacks.route) { SpeciesPackSettingsPage(onBack = { navController.popBackStack() }) }
@@ -1023,35 +1040,54 @@ private fun FieldMindNavHost(
         composable(FieldMindScreen.TimerTool.route) { TimerToolScreen(onBack = { navController.popBackStack() }) }
         composable("field_canvas/{noteId}") { entry ->
             val noteId = entry.arguments?.getString("noteId")?.toLongOrNull() ?: 0L
-            CanvasScreen(
-                noteId = noteId,
-                fieldViewModel = viewModel,
-                onBack = { navController.popBackStack() },
-                onOpenLinkedEntity = { kind, id ->
-                    navController.navigateToDestination("field_detail/$kind/$id")
-                }
-            )
+            WithSharedTransitionScope(sharedTransitionScope) {
+                CanvasScreen(
+                    noteId = noteId,
+                    fieldViewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onOpenLinkedEntity = { kind, id ->
+                        navController.navigateToDestination("field_detail/$kind/$id")
+                    }
+                )
+            }
         }
-        composable(FieldMindScreen.FieldLog.route) { FieldLogScreen(
+        composable(FieldMindScreen.FieldLog.route) { WithSharedTransitionScope(sharedTransitionScope) { FieldLogScreen(
             viewModel = viewModel,
             onBack = { navController.popBackStack() },
             onOpenDetail = openDetail,
             onOpenExport = { navController.navigateToDestination(FieldMindScreen.ExportStudio.route) }
-        ) }
+        ) } }
         composable("field_detail/{kind}/{id}") { entry ->
             val kind = entry.arguments?.getString("kind") ?: "observation"
             val id = entry.arguments?.getString("id")?.toLongOrNull() ?: 0L
-            DetailScreen(
-                kind = kind, id = id,
-                viewModel = viewModel,
-                onBack = { navController.popBackStack() },
-                onOpenDetail = openDetail,
-                onOpenReader = openReader,
-                onOpenCanvas = { noteId ->
-                    navController.navigateToDestination("field_canvas/$noteId")
-                }
-            )
+            WithSharedTransitionScope(sharedTransitionScope) {
+                DetailScreen(
+                    kind = kind, id = id,
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onOpenDetail = openDetail,
+                    onOpenReader = openReader,
+                    onOpenCanvas = { noteId ->
+                        navController.navigateToDestination("field_canvas/$noteId")
+                    }
+                )
+            }
+        }
         }
     }
+}
+
+/**
+ * Composable helper to make a [SharedTransitionScope] available as a receiver
+ * inside the [content] lambda. Screens that need [Modifier.sharedElement] or
+ * [Modifier.sharedBounds] should be wrapped with this.
+ */
+@Composable
+private fun WithSharedTransitionScope(
+    scope: SharedTransitionScope,
+    content: @Composable SharedTransitionScope.() -> Unit
+) {
+    @Suppress("FunctionName")
+    content(scope)
 }
 

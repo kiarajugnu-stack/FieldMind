@@ -55,13 +55,14 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.launch
 import java.util.Locale
+import androidx.compose.animation.shared.SharedTransitionScope
 
 // ══════════════════════════════════════════════════════════════════════
 //  Detail Screen — Entity-specific rich layouts
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun DetailScreen(
+fun SharedTransitionScope.DetailScreen(
     kind: String,
     id: Long,
     viewModel: FieldMindViewModel,

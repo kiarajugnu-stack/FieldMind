@@ -31,6 +31,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlinx.coroutines.delay
+import androidx.compose.animation.shared.SharedTransitionScope
 
 // ── Category accent colors ──
 @Composable
@@ -555,7 +556,7 @@ internal fun SpeciesCard(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun SpeciesDetailScreen(
+fun SharedTransitionScope.SpeciesDetailScreen(
     speciesId: String,
     onBack: () -> Unit
 ) {

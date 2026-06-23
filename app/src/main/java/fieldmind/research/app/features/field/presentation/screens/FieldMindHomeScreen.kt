@@ -71,6 +71,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import fieldmind.research.app.features.field.presentation.components.ObservationStatsDashboard
+import androidx.compose.animation.shared.SharedTransitionScope
 
 /**
  * Loads a PNG image from Android assets folder as an ImageBitmap for display.
@@ -97,7 +98,7 @@ internal fun rememberAssetImage(assetPath: String?): androidx.compose.ui.graphic
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun HomeScreen(
+fun SharedTransitionScope.HomeScreen(
     viewModel: FieldMindViewModel,
     onOpenSettings: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit,

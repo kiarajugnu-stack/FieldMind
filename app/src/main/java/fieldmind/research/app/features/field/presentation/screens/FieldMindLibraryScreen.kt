@@ -78,12 +78,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import kotlinx.coroutines.delay
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.shared.SharedTransitionScope
 // ══════════════════════════════════════════════════════════════════════
 //  Library (Sources / Reading / Flashcards / Learn)
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun KnowledgeLibraryScreen(
+fun SharedTransitionScope.KnowledgeLibraryScreen(
     viewModel: FieldMindViewModel,
     onNavigate: (FieldMindScreen) -> Unit = {},
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
