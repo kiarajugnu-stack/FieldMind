@@ -82,16 +82,18 @@ fun ImageBlock(
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                 .then(
                     if (imageUri.isNotBlank()) {
-                        // Double-tap to open full-screen viewer when image exists
-                        // Use clickable as a simple tap handler
+                        // Tap to open full-screen viewer when image exists
                         Modifier.clickable { showImageViewer = true }
-                    } else Modifier
+                    } else {
+                        // Click placeholder to launch image picker
+                        Modifier.clickable { imagePicker.launch("image/*") }
+                    }
                 ),
             contentAlignment = Alignment.Center
         ) {
             when {
                 imageUri.isBlank() -> {
-                    // No image — show placeholder with picker button
+                    // No image — show placeholder with picker trigger on tap
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp),

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +31,9 @@ import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlin.math.roundToInt
+
+// Below this zoom threshold, hide block tools (minimize button, resize handle, link badge)
+private const val TOOL_HIDE_ZOOM_THRESHOLD = 0.3f
 
 /**
  * A single block on the infinite canvas, rendered in the Compose overlay layer.
@@ -77,6 +81,10 @@ fun CanvasBlock(
     // If collapsed, show minimal preview instead of full content
     val displayWidth = if (isCollapsed) 120f else block.width
     val displayHeight = if (isCollapsed) 100f else block.height
+
+    // Whether to show block tools (minimize, resize handle, link badge)
+    // Hide at very low zoom levels to avoid visual clutter
+    val showTools = canvasState.zoom >= TOOL_HIDE_ZOOM_THRESHOLD && !isCollapsed
     
     // Block size at current zoom
     val scaledWidth = displayWidth * canvasState.zoom
@@ -108,15 +116,17 @@ fun CanvasBlock(
             // Background
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
-            // Drag to move
+            // Long-press + drag to move (taps pass through to child composables)
             .pointerInput(block.id) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    // Convert drag from screen-space to canvas-space
-                    val canvasDx = dragAmount.x / canvasState.zoom
-                    val canvasDy = dragAmount.y / canvasState.zoom
-                    onMoved(block.positionX + canvasDx, block.positionY + canvasDy)
-                }
+                detectDragGesturesAfterLongPress(
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        // Convert drag from screen-space to canvas-space
+                        val canvasDx = dragAmount.x / canvasState.zoom
+                        val canvasDy = dragAmount.y / canvasState.zoom
+                        onMoved(block.positionX + canvasDx, block.positionY + canvasDy)
+                    }
+                )
             }
     ) {
         if (isCollapsed) {
@@ -147,18 +157,19 @@ fun CanvasBlock(
             }
         }
 
-        // Minimize button (top-left corner, when selected)
-        if (isSelected && !isCollapsed) {
+        // Minimize button (top-left corner, when selected and zoom allows)
+        if (isSelected && showTools) {
+            val buttonSize = (20f * canvasState.zoom).coerceIn(10f, 24f).dp
+            val iconSize = (10f * canvasState.zoom).coerceIn(6f, 14f).dp
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        start = (4f / canvasState.zoom).dp,
-                        top = (4f / canvasState.zoom).dp
+                        start = (4f * canvasState.zoom).coerceAtLeast(2f).dp,
+                        top = (4f * canvasState.zoom).coerceAtLeast(2f).dp
                     ),
                 contentAlignment = Alignment.TopStart
             ) {
-                val buttonSize = (20f / canvasState.zoom).coerceAtLeast(16f).dp
                 Box(
                     modifier = Modifier
                         .size(buttonSize)
@@ -174,7 +185,7 @@ fun CanvasBlock(
                     Icon(
                         MaterialSymbolIcon("unfold_less"),
                         "Minimize",
-                        size = (10f / canvasState.zoom).coerceAtLeast(6f).dp,
+                        size = iconSize,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -182,7 +193,7 @@ fun CanvasBlock(
         }
 
         // Link badge overlay (top-right corner)
-        if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
+        if (showTools && block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -194,7 +205,7 @@ fun CanvasBlock(
             ) {
                 Box(
                     modifier = Modifier
-                        .size((16f / canvasState.zoom).coerceAtLeast(12f).dp)
+                        .size((16f * canvasState.zoom).coerceIn(10f, 20f).dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
@@ -202,7 +213,7 @@ fun CanvasBlock(
                     Icon(
                         MaterialSymbolIcon("link"),
                         "Linked to ${block.linkedEntityType}",
-                        size = (10f / canvasState.zoom).coerceAtLeast(6f).dp,
+                        size = (10f * canvasState.zoom).coerceIn(6f, 14f).dp,
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
@@ -210,7 +221,7 @@ fun CanvasBlock(
         }
 
         // Resize handle (bottom-right corner, when selected)
-        if (isSelected && !isCollapsed) {
+        if (isSelected && showTools) {
             ResizeHandle(
                 modifier = Modifier.align(Alignment.BottomEnd),
                 onResize = { dx, dy ->
@@ -233,7 +244,8 @@ private fun ResizeHandle(
     onResize: (Float, Float) -> Unit,
     canvasState: CanvasState
 ) {
-    val handleSize = 16.dp
+    // Scale handle size with zoom so it stays proportionally visible
+    val handleSize = (16f * canvasState.zoom).coerceIn(8f, 24f).dp
     Box(
         modifier = modifier
             .size(handleSize)

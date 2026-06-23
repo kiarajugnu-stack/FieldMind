@@ -896,11 +896,12 @@ private fun TextBlockContent(
 ) {
     // Parse contentJson: stored as {"text":"..."} or raw Markdown string
     val text = remember(contentJson) {
-        if (contentJson.isNotBlank()) {
+        if (contentJson.isNotBlank() && contentJson != "{}") {
             try {
                 // Try {"text":"..."} format first
                 val obj = JSONObject(contentJson)
-                obj.optString("text", contentJson)
+                val t = obj.optString("text", null)
+                if (t != null) t else contentJson
             } catch (_: Exception) {
                 // Fallback: try JSON string literal, else use raw
                 if (contentJson.startsWith("\"")) {
