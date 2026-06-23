@@ -117,17 +117,33 @@ fun InfiniteCanvas(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Layer 2: Compose block overlay
+        // Layer 2: Compose block overlay (with viewport culling for performance)
         SubcomposeLayout(
             modifier = Modifier.fillMaxSize()
         ) { constraints ->
-            val placeables = blocks.map { block ->
+            // Only render blocks that are visible in the current viewport
+            val visibleBlocks = blocks.filter { block ->
+                val screenPos = canvasState.canvasToScreen(block.positionX, block.positionY)
+                val screenSize = Size(block.width * canvasState.zoom, block.height * canvasState.zoom)
+                
+                // Check if block is within viewport (with 100px padding for smooth scrolling)
+                val padding = 100f
+                screenPos.x + screenSize.width > -padding &&
+                screenPos.x < constraints.maxWidth + padding &&
+                screenPos.y + screenSize.height > -padding &&
+                screenPos.y < constraints.maxHeight + padding
+            }
+            
+            val placeables = visibleBlocks.map { block ->
                 subcompose("block_${block.id}") {
                     val isSelected = block.id in canvasState.selectedBlockIds
+                    val isCollapsed = block.id in canvasState.collapsedBlockIds
                     CanvasBlock(
                         block = block,
                         canvasState = canvasState,
                         isSelected = isSelected,
+                        isCollapsed = isCollapsed,
+                        onToggleCollapse = { canvasState.toggleBlockCollapse(block.id) },
                         onMoved = { x, y -> onBlockMoved?.invoke(block.id, x, y) },
                         onResized = { w, h -> onBlockResized?.invoke(block.id, w, h) },
                         onTapped = { id ->
@@ -142,7 +158,7 @@ fun InfiniteCanvas(
 
             layout(constraints.maxWidth, constraints.maxHeight) {
                 placeables.forEachIndexed { index, placeable ->
-                    val block = blocks[index]
+                    val block = visibleBlocks[index]
                     val screenPos = canvasState.canvasToScreen(block.positionX, block.positionY)
 
                     placeable.place(

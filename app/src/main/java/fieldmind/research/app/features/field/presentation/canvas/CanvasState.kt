@@ -42,6 +42,10 @@ class CanvasState(
     var lastTappedBlockId: Long? by mutableStateOf(null)
         private set
 
+    /** Set of collapsed block IDs (minimized to small preview cards). */
+    var collapsedBlockIds: Set<Long> by mutableStateOf(emptySet())
+        private set
+
     // ── Clamp values ──
 
     companion object {
@@ -128,6 +132,20 @@ class CanvasState(
     fun clearSelection() {
         selectedBlockIds = emptySet()
         lastTappedBlockId = null
+    }
+
+    /** Toggle collapse state of a block. */
+    fun toggleBlockCollapse(id: Long) {
+        collapsedBlockIds = if (id in collapsedBlockIds) {
+            collapsedBlockIds - id
+        } else {
+            collapsedBlockIds + id
+        }
+    }
+
+    /** Expand a collapsed block. */
+    fun expandBlock(id: Long) {
+        collapsedBlockIds = collapsedBlockIds - id
     }
 
     // ── Coordinate transforms ──

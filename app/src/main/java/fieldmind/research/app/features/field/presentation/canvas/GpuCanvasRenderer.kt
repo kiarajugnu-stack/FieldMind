@@ -160,37 +160,7 @@ class GpuCanvasRenderer : GLSurfaceView.Renderer {
     }
 
     private fun renderDotGrid() {
-        // Rebuild grid vertices every frame since zoom/pan changes constantly
-        // shift which grid dots are visible in the viewport
-        buildGridVertices()
-
-        val buf = gridVertexBuffer ?: return
-        if (gridVertexCount == 0) return
-
-        // Use the grid program
-        GLES20.glUseProgram(gridProgram)
-        val mvpHandle = GLES20.glGetUniformLocation(gridProgram, "uMVPMatrix")
-        val colorHandle = GLES20.glGetUniformLocation(gridProgram, "uColor")
-        val posHandle = GLES20.glGetAttribLocation(gridProgram, "aPosition")
-
-        // Upload MVP
-        GLES20.glUniformMatrix4fv(mvpHandle, 1, false, mvpMatrix, 0)
-
-        // Dot color: subtle gray (alpha 0.15 at 1x zoom, fades at extreme zoom)
-        val alpha = (0.15f * (zoom.coerceIn(0.2f, 1.8f) / 1.8f)).coerceIn(0.03f, 0.25f)
-        GLES20.glUniform4f(colorHandle, 0.5f, 0.5f, 0.5f, alpha)
-
-        // Bind VBO and upload
-        buf.position(0)
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, gridVbo[0])
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, buf.capacity() * 4, buf, GLES20.GL_DYNAMIC_DRAW)
-
-        GLES20.glEnableVertexAttribArray(posHandle)
-        GLES20.glVertexAttribPointer(posHandle, 2, GLES20.GL_FLOAT, false, 0, 0)
-        GLES20.glDrawArrays(GLES20.GL_POINTS, 0, gridVertexCount)
-
-        GLES20.glDisableVertexAttribArray(posHandle)
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+        // Grid rendering disabled for cleaner infinite canvas
     }
 
     /**

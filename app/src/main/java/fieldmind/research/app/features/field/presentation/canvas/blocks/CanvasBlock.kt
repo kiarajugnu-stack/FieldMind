@@ -6,10 +6,13 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,11 +23,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
-import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlin.math.roundToInt
 
@@ -54,6 +57,8 @@ fun CanvasBlock(
     block: CanvasBlockEntity,
     canvasState: CanvasState,
     isSelected: Boolean,
+    isCollapsed: Boolean = false,
+    onToggleCollapse: (Long) -> Unit = { _ -> },
     onMoved: (Float, Float) -> Unit = { _, _ -> },
     onResized: (Float, Float) -> Unit = { _, _ -> },
     onTapped: (Long) -> Unit = {},
@@ -69,9 +74,13 @@ fun CanvasBlock(
         label = "blockElevation"
     )
 
+    // If collapsed, show minimal preview instead of full content
+    val displayWidth = if (isCollapsed) 120f else block.width
+    val displayHeight = if (isCollapsed) 100f else block.height
+    
     // Block size at current zoom
-    val scaledWidth = block.width * canvasState.zoom
-    val scaledHeight = block.height * canvasState.zoom
+    val scaledWidth = displayWidth * canvasState.zoom
+    val scaledHeight = displayHeight * canvasState.zoom
 
     Box(
         modifier = Modifier
@@ -110,9 +119,65 @@ fun CanvasBlock(
                 }
             }
     ) {
-        // Content fills the entire area
-        Box(Modifier.fillMaxSize()) {
-            content()
+        if (isCollapsed) {
+            // Collapsed state: show preview with expand button
+            Column(
+                modifier = Modifier.fillMaxSize().padding(8.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    MaterialSymbolIcon("unfold_more"),
+                    "Expand",
+                    tint = MaterialTheme.colorScheme.primary,
+                    size = 20.dp
+                )
+                Text(
+                    "${block.blockType}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        } else {
+            // Full content display
+            Box(Modifier.fillMaxSize()) {
+                content()
+            }
+        }
+
+        // Minimize button (top-left corner when selected)
+        if (isSelected && !isCollapsed) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        start = (4f / canvasState.zoom).dp,
+                        top = (4f / canvasState.zoom).dp
+                    ),
+                contentAlignment = Alignment.TopStart
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size((20f / canvasState.zoom).coerceAtLeast(16f).dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .pointerInput(Unit) {
+                            detectTapGestures {
+                                onToggleCollapse(block.id)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        MaterialSymbolIcon("unfold_less"),
+                        "Minimize",
+                        size = (10f / canvasState.zoom).coerceAtLeast(6f).dp,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
 
         // Link badge overlay (top-right corner)
