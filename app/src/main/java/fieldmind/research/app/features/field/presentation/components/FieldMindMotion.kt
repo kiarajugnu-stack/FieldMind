@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -352,8 +353,16 @@ fun TabSwipeHost(
     var contentWidth by remember { mutableFloatStateOf(1f) }
     var systemBackJustCompleted by remember { mutableStateOf(false) }
 
-    // Disable swipe gestures when keyboard is open (user is editing text)
-    val isImeVisible = WindowInsets.isImeVisible
+    // Detect keyboard visibility reactively via InputMethodManager
+    val context = LocalContext.current
+    var isImeVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            isImeVisible = imm?.isAcceptingText ?: false
+            delay(100)
+        }
+    }
     
     // Check if swipe directions are available
     val canSwipeBack = onSwipeBack != null
@@ -509,8 +518,16 @@ fun SwipeBackHost(
     var contentHeight by remember { mutableFloatStateOf(1f) }
     var systemBackJustCompleted by remember { mutableStateOf(false) }
 
-    // Disable swipe gestures when keyboard is open (user is editing text)
-    val isImeVisible = WindowInsets.isImeVisible
+    // Detect keyboard visibility reactively via InputMethodManager
+    val context = LocalContext.current
+    var isImeVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            isImeVisible = imm?.isAcceptingText ?: false
+            delay(100)
+        }
+    }
 
     // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
     PredictiveBackHandler(enabled = !reduceMotion && !isImeVisible) { progressFlow ->
