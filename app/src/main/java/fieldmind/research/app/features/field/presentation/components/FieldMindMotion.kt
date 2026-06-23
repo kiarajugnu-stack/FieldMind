@@ -177,6 +177,7 @@ object FieldMindMotion {
     const val swipeScrimAlpha = 0.35f
     const val swipeShadowElevationDp = 24f
     const val swipeCornerRadiusDp = 22f
+    const val swipeBaseCornerRadiusDp = 4f
 
     // -- Utility --
 
@@ -401,7 +402,7 @@ fun TabSwipeHost(
     val progress = abs(animatedOffsetX / contentWidth).coerceIn(0f, 1f)
     val scrimAlpha = progress * 0.25f
     val scale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
-    val swipeCornerRadius = (progress * FieldMindMotion.swipeCornerRadiusDp).dp
+    val swipeCornerRadius = (FieldMindMotion.swipeBaseCornerRadiusDp + progress * (FieldMindMotion.swipeCornerRadiusDp - FieldMindMotion.swipeBaseCornerRadiusDp)).dp
 
     Box(
         modifier = modifier
@@ -578,7 +579,7 @@ fun SwipeBackHost(
     val scrimAlpha = progress * FieldMindMotion.swipeScrimAlpha
     val contentScale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
     val swipeElevation = progress * FieldMindMotion.swipeShadowElevationDp
-    val swipeCornerRadius = (progress * FieldMindMotion.swipeCornerRadiusDp).dp
+    val swipeCornerRadius = (FieldMindMotion.swipeBaseCornerRadiusDp + progress * (FieldMindMotion.swipeCornerRadiusDp - FieldMindMotion.swipeBaseCornerRadiusDp)).dp
 
     Box(
         modifier = modifier
