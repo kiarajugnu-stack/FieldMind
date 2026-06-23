@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
@@ -85,6 +86,35 @@ fun CanvasBlock(
     val displayWidth = if (isCollapsed) 120f else (liveSize?.width ?: block.width)
     val displayHeight = if (isCollapsed) 100f else (liveSize?.height ?: block.height)
 
+    // Track content's measured size for auto-expand
+    var contentSize by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
+
+    // Determine display height: auto-expand if natural content is taller than entity height.
+    // contentSize is in px, displayHeight is in logical px.
+    val contentHeightLogical = if (contentSize.height > 0) contentSize.height / density.density else 0f
+    val autoHeight = if (!isCollapsed && contentHeightLogical > displayHeight + 15f) {
+        contentHeightLogical + 10f // extra padding so text isn't flush with border
+    } else {
+        displayHeight
+    }
+
+    // Sync auto-expanded height to entity (via live size override + onResized)
+    LaunchedEffect(autoHeight) {
+        if (!isCollapsed && autoHeight > displayHeight && autoHeight - displayHeight > 15f) {
+            canvasState.setLiveBlockSize(block.id, displayWidth, autoHeight)
+            onResized(displayWidth, autoHeight)
+        }
+    }
+
+    // Clean up live size when entity catches up
+    LaunchedEffect(block.id, block.width, block.height) {
+        val live = canvasState.liveBlockSizes[block.id]
+        if (live != null && live.width == block.width && live.height == block.height) {
+            canvasState.removeLiveBlockSize(block.id)
+        }
+    }
+
     // Animated tool alpha: fades from 1.0 at zoom >= FADE_START to 0.0 at zoom <= FADE_END
     val rawToolAlpha = ((canvasState.zoom - TOOL_FADE_END_ZOOM) /
         (TOOL_FADE_START_ZOOM - TOOL_FADE_END_ZOOM)).coerceIn(0f, 1f)
@@ -93,18 +123,17 @@ fun CanvasBlock(
         animationSpec = spring(stiffness = Spring.StiffnessLow),
         label = "toolAlpha"
     )
-    
+
     // Block size at current zoom
     val scaledWidth = displayWidth * canvasState.zoom
-    val scaledHeight = displayHeight * canvasState.zoom
+    val scaledMinHeight = displayHeight * canvasState.zoom
 
     Box(
         modifier = Modifier
-            // Block dimensions (screen-space, derived from canvas-space at current zoom)
-            .size(
-                width = with(LocalDensity.current) { scaledWidth.toDp() },
-                height = with(LocalDensity.current) { scaledHeight.toDp() }
-            )
+            // Block dimensions — width is fixed, height has a minimum but grows with content
+            .width(with(density) { scaledWidth.toDp() })
+            .heightIn(min = with(density) { scaledMinHeight.toDp() })
+            .wrapContentHeight()
             // Selection border
             .then(
                 if (isSelected) {
@@ -183,8 +212,8 @@ fun CanvasBlock(
             if (livePos != null && livePos.x == block.positionX && livePos.y == block.positionY) {
                 canvasState.removeLiveBlockPosition(block.id)
             }
-            val liveSize = canvasState.liveBlockSizes[block.id]
-            if (liveSize != null && liveSize.width == block.width && liveSize.height == block.height) {
+            val liveSz = canvasState.liveBlockSizes[block.id]
+            if (liveSz != null && liveSz.width == block.width && liveSz.height == block.height) {
                 canvasState.removeLiveBlockSize(block.id)
             }
         }
@@ -211,8 +240,15 @@ fun CanvasBlock(
                 )
             }
         } else {
-            // Full content display
-            Box(Modifier.fillMaxSize()) {
+            // Full content display — measure natural content height for auto-expand
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .onGloballyPositioned { coords ->
+                        contentSize = coords.size
+                    }
+            ) {
                 content()
             }
         }

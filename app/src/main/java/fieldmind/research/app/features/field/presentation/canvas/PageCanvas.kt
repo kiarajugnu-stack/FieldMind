@@ -27,8 +27,10 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 import fieldmind.research.app.features.field.data.canvas.DrawingEntity
@@ -268,6 +270,7 @@ fun PageCanvas(
                                     onBlockMovedFinal?.invoke(block.id, startX, docStartY, finalX, docFinalY)
                                 },
                                 onResized = { w, h ->
+                                    canvasState.setLiveBlockSize(block.id, w, h)
                                     onBlockResized?.invoke(block.id, w, h)
                                 }
                             ) {
@@ -743,13 +746,30 @@ private fun PageBlock(
     val density = LocalDensity.current
     val zoom = canvasState.zoom
 
+    // Auto-expand: track content height, grow block if content is taller
+    var contentSize by remember { mutableStateOf(IntSize.Zero) }
+    val contentHeightLogical = if (contentSize.height > 0) contentSize.height / density.density else 0f
+    val liveSz = canvasState.liveBlockSizes[block.id]
+    val defaultHeight = liveSz?.height ?: block.height
+    val autoHeight = if (contentHeightLogical > defaultHeight + 15f) {
+        contentHeightLogical + 10f
+    } else {
+        defaultHeight
+    }
+
+    // Sync auto-expanded height to entity
+    LaunchedEffect(autoHeight) {
+        if (autoHeight > defaultHeight && autoHeight - defaultHeight > 15f) {
+            onResized(block.width, autoHeight)
+        }
+    }
+
     Box(
         modifier = Modifier
             .offset { IntOffset((pageX * zoom).roundToInt(), (pageY * zoom).roundToInt()) }
-            .size(
-                width = with(density) { (block.width * zoom).toDp() },
-                height = with(density) { (block.height * zoom).toDp() }
-            )
+            .width(with(density) { (block.width * zoom).toDp() })
+            .heightIn(min = with(density) { (defaultHeight * zoom).toDp() })
+            .wrapContentHeight()
             .then(
                 if (isSelected) {
                     Modifier.border(
@@ -804,14 +824,21 @@ private fun PageBlock(
             if (livePos != null && livePos.x == block.positionX && livePos.y == block.positionY) {
                 canvasState.removeLiveBlockPosition(block.id)
             }
-            val liveSize = canvasState.liveBlockSizes[block.id]
-            if (liveSize != null && liveSize.width == block.width && liveSize.height == block.height) {
+            val liveSz = canvasState.liveBlockSizes[block.id]
+            if (liveSz != null && liveSz.width == block.width && liveSz.height == block.height) {
                 canvasState.removeLiveBlockSize(block.id)
             }
         }
 
-        // Block content
-        Box(Modifier.fillMaxSize()) {
+        // Block content — measure natural height for auto-expand
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .onGloballyPositioned { coords ->
+                    contentSize = coords.size
+                }
+        ) {
             content()
         }
 
