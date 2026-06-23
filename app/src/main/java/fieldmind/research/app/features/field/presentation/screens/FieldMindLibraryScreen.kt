@@ -1794,8 +1794,9 @@ private fun ResearchMilestoneCard(milestone: ResearchMilestone, onOpenReader: (S
 private fun GuidedPathCard(path: GuidedPath, onOpenReader: (String, String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val accent = FieldMindTheme.colors.accentFor("learn")
-    Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize().clickable { expanded = !expanded },
+    ClickableCard(
+        onClick = { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
