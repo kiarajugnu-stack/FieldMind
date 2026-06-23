@@ -212,7 +212,7 @@ fun InfiniteCanvas(
             selectedBlock = selectedBlock,
             canvasState = canvasState,
             onToggleCollapse = { blockId ->
-                canvasState.toggleCollapse(blockId)
+                canvasState.toggleBlockCollapse(blockId)
             },
             onDelete = {
                 selectedBlock?.let { onBlockDelete?.invoke(it.id) }
