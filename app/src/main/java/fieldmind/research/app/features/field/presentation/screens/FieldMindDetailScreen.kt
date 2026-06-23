@@ -57,6 +57,7 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import kotlinx.coroutines.launch
 import java.util.Locale
 import androidx.compose.animation.shared.SharedTransitionScope
+import androidx.compose.runtime.saveable.rememberSaveable
 
 // ══════════════════════════════════════════════════════════════════════
 //  Detail Screen — Entity-specific rich layouts
@@ -2835,7 +2836,7 @@ private fun deleteEntityByKind(kind: String, id: Long, viewModel: FieldMindViewM
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════��═══════════════════════════════════
 //  Source Detail Content — Sectioned layout with proper visual hierarchy
 // ══════════════════════════════════════════════════════════════════════
 
