@@ -584,7 +584,7 @@ fun SwipeBackHost(
         if (progress > 0.01f && previousScreen != null && isHorizontalPeek) {
             val previewWidth = contentWidth * 0.85f
             // Parallax: previous screen moves slower than current screen
-            val previewOffset = animX.value * 0.7f - previewWidth
+            val previewOffset = animX.value - previewWidth
             val previewScale = 0.94f + (1f - 0.94f) * (1f - progress)  // scale from 0.94 to 1.0 as progress increases
 
             Box(

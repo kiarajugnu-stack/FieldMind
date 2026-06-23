@@ -45,6 +45,47 @@ internal data class FieldMindChangelogEntry(
 
 private val fieldMindChangelog = listOf(
     FieldMindChangelogEntry(
+        version = "1.5.2-predictive-back-canvas",
+        date = "2026-06-23",
+        title = "Predictive Back Peek Animation & Canvas Improvements",
+        importance = "Patch",
+        tags = listOf("Navigation", "Canvas", "Animation", "Fixes"),
+        sections = listOf(
+            "🔙 Predictive Back Peek Animation" to listOf(
+                "Previous screen preview with parallax, label, and back-arrow icon slides in from the left during the back gesture — shows exactly where you're navigating to before you commit.",
+                "Fixed blank/black screen appearing when the back gesture commits — offset is now reset to 0 before navigation triggers, preventing the graphicsLayer translation from shifting the exit transition off-screen.",
+                "Swipe-back spring stiffness increased from 300 to 800 for a fast, fluid feel — no more sluggish settings back gesture.",
+                "TabSwipeHost refactored from laggy animateFloatAsState to Animatable with snapTo for instant per-frame finger tracking during tab swipes.",
+                "Edge tabs (Home, Library) use SwipeBackHost instead of TabSwipeHost — no more swiping into a non-existent screen from the first/last tab.",
+                "PreviousScreenInfo wired to all 40+ SwipeBackHost calls — every screen with swipe-back shows the correct previous destination badge."
+            ),
+            "🖱️ Canvas Drag & Resize Stability" to listOf(
+                "Fixed drag snap when re-dragging a block before Room finishes writing the previous position — onDragStart now captures from liveBlockPosition (if active) instead of the stale entity position.",
+                "Fixed resize handle jumping to the old size on next gesture — resize now bases on displayWidth (which reads the live size) instead of block.width (entity, could be stale).",
+                "Fixed visual snap at drag/resize end — setLiveBlockPosition/setLiveBlockSize now keeps the override active until Room emits the updated entity, with LaunchedEffect cleanup that removes the override when entity values match.",
+                "Same drag/resize snap fixes applied to both InfiniteCanvas and PageCanvas modes."
+            ),
+            "📄 Text & Image Block Simplification" to listOf(
+                "TextBlock redesigned: removed FormattingToolbar, CommandMenu, and LinkInsertDialog (~250 lines). Clean outline border when selected, no filled background, auto-expand height, placeholder text.",
+                "ImageBlock simplified: removed inline caption editing and caption display bar. Tap image for full-screen viewer, tap empty for picker. Minimal, clean design."
+            ),
+            "🔍 Page Zoom & Per-Page Drawing" to listOf(
+                "PageCanvas no longer forces zoomTo(1f) — pages now scale with the ZoomSlider (0.1x–5x) like InfiniteCanvas.",
+                "Block positions and sizes scale by zoom; drag and resize deltas divided by zoom for correct document-space movement.",
+                "ZoomSlider always visible in page mode; zoom controls in the top bar work in both modes.",
+                "Drawing overlay moved from behind the scrollable pages to INSIDE each page Surface — strokes render on the page, not the gray background.",
+                "Per-page drawing uses correct coordinate transforms (page-local ↔ document with zoom scaling) and filters saved drawings by Y range.",
+                "All drawing tools supported per-page: pen, highlighter, shapes, eraser."
+            ),
+            "🔄 Viewport Culling Performance" to listOf(
+                "InfiniteCanvas viewport culling padding increased from 100px to 300px — 3× wider recycling buffer keeps blocks composed during rapid scrolling, reducing composition/disposal churn.",
+                "Block visibility computation moved from inline SubcomposeLayout filter to derivedStateOf outside the measurement pass, tracked reactively via zoom/pan/liveBlockPositions changes.",
+                "Viewport size tracked via onSizeChanged for accurate culling; remember keys only on blocks list (not camera values that change every frame) to avoid recreating derivedStateOf.",
+                "Manual BlockToolbar offset positioning in PageCanvas replaced with direct BlockToolbar using canvasToScreen() for correct zoom-aware placement."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
         version = "1.5.1-weather-crash-ui-polish",
         date = "2026-06-16",
         title = "Weather Animation Polish, Crash Fixes & Back Navigation",

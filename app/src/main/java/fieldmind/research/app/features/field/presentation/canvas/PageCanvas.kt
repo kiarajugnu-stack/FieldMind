@@ -115,13 +115,13 @@ fun PageCanvas(
     // ── Scroll state ──
     val scrollState = rememberScrollState()
 
-    // Sync canvasState panY with scroll + zoom for BlockToolbar transforms
-    LaunchedEffect(scrollState.value, zoom) {
-        canvasState.setPan(
-            (viewportSize.width - pageWidthPx) / 2f,
-            -scrollState.value.toFloat()
-        )
-    }
+    // Sync canvasState panX/panY with scroll + zoom for BlockToolbar transforms
+    // Computed synchronously (not in LaunchedEffect) to avoid one-frame delay:
+    // when scroll or zoom changes, blocks move immediately via the scroll Column,
+    // and BlockToolbar needs panX/panY updated on the same frame for correct positioning.
+    val computedPanX = (viewportSize.width - pageWidthPx) / 2f
+    val computedPanY = -scrollState.value.toFloat()
+    canvasState.setPan(computedPanX, computedPanY)
 
     // ── Compute pages from block positions ──
     data class PageInfo(
@@ -283,8 +283,24 @@ fun PageCanvas(
         }
 
         // ── Layer 2: BlockToolbar (uses canvasToScreen internally) ──
-        val selectedBlock = remember(blocks, canvasState.selectedBlockIds) {
-            blocks.firstOrNull { it.id in canvasState.selectedBlockIds }
+        // Use derivedStateOf so snapshot reads inside (liveBlockPositions[entity.id] etc.)
+        // are tracked at the key level and recompute reactively on every drag/resize frame.
+        val selectedBlock by remember(blocks, canvasState.selectedBlockIds) {
+            derivedStateOf {
+                val entity = blocks.firstOrNull { it.id in canvasState.selectedBlockIds } ?: return@derivedStateOf null
+                val livePos = canvasState.liveBlockPositions[entity.id]
+                val liveSize = canvasState.liveBlockSizes[entity.id]
+                if (livePos != null || liveSize != null) {
+                    entity.copy(
+                        positionX = livePos?.x ?: entity.positionX,
+                        positionY = livePos?.y ?: entity.positionY,
+                        width = liveSize?.width ?: entity.width,
+                        height = liveSize?.height ?: entity.height
+                    )
+                } else {
+                    entity
+                }
+            }
         }
         BlockToolbar(
             selectedBlock = selectedBlock,
