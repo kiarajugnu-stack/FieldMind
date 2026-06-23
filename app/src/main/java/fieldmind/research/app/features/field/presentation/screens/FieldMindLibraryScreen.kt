@@ -28,7 +28,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -162,11 +161,11 @@ fun SharedTransitionScope.KnowledgeLibraryScreen(
             }
         ) {
             // Hoist scroll states to preserve position across tab switches
-            val sourceScrollState = rememberLazyListState()
-            val noteScrollState = rememberLazyListState()
-            val readingScrollState = rememberLazyListState()
-            val flashcardScrollState = rememberLazyListState()
-            val learnScrollState = rememberLazyListState()
+            val sourceScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+            val noteScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+            val readingScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+            val flashcardScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+            val learnScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
             when (tab) {
                 0 -> SourcePanel(viewModel, sources, onOpenDetail, scrollState = sourceScrollState)
                 1 -> NotePanel(viewModel, notes, onOpenDetail, scrollState = noteScrollState)

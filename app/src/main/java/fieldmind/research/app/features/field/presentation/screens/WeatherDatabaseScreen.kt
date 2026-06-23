@@ -5,8 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -775,7 +775,7 @@ private fun ForecastDashboard(
     colors: fieldmind.research.app.features.field.presentation.theme.FieldMindColors
 ) {
     var expandedIdx by remember { mutableIntStateOf(-1) }
-    val scrollState = rememberLazyListState()
+    val scrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     val allTemps = forecasts.map { it.temperatureMax }
     val globalMax = allTemps.maxOrNull() ?: 30.0
     val globalMin = allTemps.minOrNull() ?: 0.0
