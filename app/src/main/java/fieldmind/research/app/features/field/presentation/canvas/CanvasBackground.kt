@@ -16,13 +16,13 @@ import kotlin.math.*
  *
  * Replaces the OpenGL ES 2.0 [GpuCanvasSurface] with a simpler, more stable
  * Compose Canvas that renders:
- * 1. Subtle dot grid (40px spacing, light gray dots)
+ * 1. Subtle dot grid (40px spacing, light gray dots) — toggleable
  * 2. Block selection highlights (semi-transparent rounded rectangles)
  *
  * Performance is achieved through Compose's built-in hardware acceleration
  * (Canvas renders via Skia on the GPU) — no NDK or OpenGL boilerplate needed.
  *
- * @param canvasState shared camera state (zoom, pan)
+ * @param canvasState shared camera state (zoom, pan, showGrid)
  * @param selectedBlockRects block rectangles to highlight
  * @param modifier standard Compose modifier
  */
@@ -33,7 +33,9 @@ fun CanvasBackground(
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier.fillMaxSize()) {
-        drawDotGrid(canvasState)
+        if (canvasState.showGrid) {
+            drawDotGrid(canvasState)
+        }
         drawSelectionHighlights(selectedBlockRects, canvasState)
     }
 }

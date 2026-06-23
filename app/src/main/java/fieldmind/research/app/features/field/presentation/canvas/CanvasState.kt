@@ -51,6 +51,10 @@ class CanvasState(
     var collapsedBlockIds: Set<Long> by mutableStateOf(emptySet())
         private set
 
+    /** Whether to show the dot grid background. */
+    var showGrid: Boolean by mutableStateOf(true)
+        private set
+
     /** Canvas mode: infinite or page-by-page. */
     var canvasMode: CanvasMode by mutableStateOf(CanvasMode.INFINITE)
         private set
@@ -155,6 +159,11 @@ class CanvasState(
     /** Expand a collapsed block. */
     fun expandBlock(id: Long) {
         collapsedBlockIds = collapsedBlockIds - id
+    }
+
+    /** Toggle the dot grid visibility. */
+    fun toggleGrid() {
+        showGrid = !showGrid
     }
 
     /** Toggle between infinite and page-by-page modes. */

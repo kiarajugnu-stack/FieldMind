@@ -177,7 +177,9 @@ fun CanvasScreen(
                     currentPage = currentPage,
                     totalPages = totalPages,
                     showDrawingToolbar = canvasViewModel.drawingState.showToolbar,
-                    onToggleDrawing = { canvasViewModel.drawingState.toggleToolbar() }
+                    onToggleDrawing = { canvasViewModel.drawingState.toggleToolbar() },
+                    showGrid = canvasViewModel.canvasState.showGrid,
+                    onToggleGrid = { canvasViewModel.canvasState.toggleGrid() }
                 )
 
             // ── Canvas body (Infinite or Pages mode) ──
@@ -467,7 +469,9 @@ private fun CanvasTopBar(
     currentPage: Int = 0,
     totalPages: Int = 1,
     showDrawingToolbar: Boolean = false,
-    onToggleDrawing: () -> Unit = {}
+    onToggleDrawing: () -> Unit = {},
+    showGrid: Boolean = true,
+    onToggleGrid: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -607,6 +611,27 @@ private fun CanvasTopBar(
                         tint = if (showDrawingToolbar) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurface
                     )
+                }
+            }
+
+            // Grid toggle (Infinite mode only)
+            if (canvasMode != CanvasMode.PAGES) {
+                Surface(
+                    onClick = onToggleGrid,
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (showGrid) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            MaterialSymbolIcon(if (showGrid) "grid_on" else "grid_off"),
+                            if (showGrid) "Hide grid" else "Show grid",
+                            size = 18.dp,
+                            tint = if (showGrid) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
 
