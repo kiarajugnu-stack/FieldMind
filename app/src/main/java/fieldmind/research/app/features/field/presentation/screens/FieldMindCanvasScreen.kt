@@ -111,14 +111,17 @@ fun CanvasScreen(
         if (canUndo) hasEdits = true
     }
 
-    // Handle back: show confirmation if edits pending
-    BackHandler(enabled = true) {
+    // Shared back handler: show confirmation if edits pending
+    val handleBack = {
         if (hasEdits && !showExitConfirm) {
             showExitConfirm = true
         } else {
             onBack()
         }
     }
+
+    // Handle device back button
+    BackHandler(enabled = true) { handleBack() }
 
     if (showExitConfirm) {
         SwipeableAlertDialog(
@@ -231,7 +234,7 @@ fun CanvasScreen(
                     redoLabel = redoLabel,
                     zoom = canvasViewModel.canvasState.zoom,
                     canvasMode = canvasViewModel.canvasState.canvasMode,
-                    onBack = onBack,
+                    onBack = { handleBack() },
                     onUndo = { haptics.light(); canvasViewModel.undo() },
                     onRedo = { haptics.light(); canvasViewModel.redo() },
                     onZoomIn = { canvasViewModel.canvasState.applyZoom(1.2f, androidx.compose.ui.geometry.Offset(100f, 100f)) },
