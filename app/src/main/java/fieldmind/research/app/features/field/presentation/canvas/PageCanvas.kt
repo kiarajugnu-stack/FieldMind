@@ -117,9 +117,9 @@ fun PageCanvas(
     val pageHeightPx = with(density) { PAGE_HEIGHT_DP.toPx() }
     val gapPx = with(density) { 20.dp.toPx() }
 
-    // ── Compute content-relative dimensions (document coords) ──
-    val docWidth = pageWidthPx / zoom
-    val docHeight = pageHeightPx / zoom
+    // ── Page dimensions in document (logical) coords — FIXED, independent of zoom ──
+    // Zoom only scales content rendering, not page boundaries.
+    val docHeight = pageHeightPx
 
     // ── Scroll state ──
     val scrollState = rememberScrollState()
