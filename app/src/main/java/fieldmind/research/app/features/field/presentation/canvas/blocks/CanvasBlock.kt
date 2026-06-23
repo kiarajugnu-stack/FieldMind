@@ -135,10 +135,12 @@ fun CanvasBlock(
 
                 detectDragGesturesAfterLongPress(
                     onDragStart = {
-                        // Capture starting position and reset cumulative offset
-                        // on each new drag gesture
-                        dragStartX = block.positionX
-                        dragStartY = block.positionY
+                        // Capture starting position from live override (if active) or entity.
+                        // Using live position prevents snap when a new drag starts before
+                        // Room finishes writing the previous drag's final position.
+                        val livePos = canvasState.liveBlockPositions[block.id]
+                        dragStartX = livePos?.x ?: block.positionX
+                        dragStartY = livePos?.y ?: block.positionY
                         cumulativeDx = 0f
                         cumulativeDy = 0f
                     },
@@ -157,10 +159,13 @@ fun CanvasBlock(
                         )
                     },
                     onDragEnd = {
-                        // Flush final position to Room once and clear live override
+                        // Flush final position to Room once.
+                        // Keep live position until Room emits the updated entity
+                        // to prevent visual snap (removeLiveBlockPosition is handled
+                        // by LaunchedEffect cleanup below).
                         val finalX = dragStartX + cumulativeDx
                         val finalY = dragStartY + cumulativeDy
-                        canvasState.removeLiveBlockPosition(block.id)
+                        canvasState.setLiveBlockPosition(block.id, finalX, finalY)
                         onMoved(finalX, finalY)
                     },
                     onDragCancel = {
@@ -170,6 +175,20 @@ fun CanvasBlock(
                 )
             }
     ) {
+        // ── Clean up stale live overrides when entity catches up ──
+        // Prevents visual snap: live position/size stays until Room emits
+        // the updated entity, then this removes the override silently.
+        LaunchedEffect(block.id, block.positionX, block.positionY, block.width, block.height) {
+            val livePos = canvasState.liveBlockPositions[block.id]
+            if (livePos != null && livePos.x == block.positionX && livePos.y == block.positionY) {
+                canvasState.removeLiveBlockPosition(block.id)
+            }
+            val liveSize = canvasState.liveBlockSizes[block.id]
+            if (liveSize != null && liveSize.width == block.width && liveSize.height == block.height) {
+                canvasState.removeLiveBlockSize(block.id)
+            }
+        }
+
         if (isCollapsed) {
             // Collapsed state: show preview with expand button
             Column(
@@ -271,15 +290,18 @@ fun CanvasBlock(
                     modifier = Modifier.align(Alignment.BottomEnd),
                     onResize = { cumulativeDx, cumulativeDy ->
                         // Update in-memory live size — no Room write
-                        val newW = (block.width + cumulativeDx).coerceAtLeast(60f)
-                        val newH = (block.height + cumulativeDy).coerceAtLeast(60f)
+                        val newW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
+                        val newH = (displayHeight + cumulativeDy).coerceAtLeast(60f)
                         canvasState.setLiveBlockSize(block.id, newW, newH)
                     },
                     onResizeEnd = { cumulativeDx, cumulativeDy ->
-                        // Flush final size to Room once and clear live override
-                        val finalW = (block.width + cumulativeDx).coerceAtLeast(60f)
-                        val finalH = (block.height + cumulativeDy).coerceAtLeast(60f)
-                        canvasState.removeLiveBlockSize(block.id)
+                        // Flush final size to Room once.
+                        // Keep live size until Room emits the updated entity
+                        // to prevent visual snap (removeLiveBlockSize is handled
+                        // by LaunchedEffect cleanup below).
+                        val finalW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
+                        val finalH = (displayHeight + cumulativeDy).coerceAtLeast(60f)
+                        canvasState.setLiveBlockSize(block.id, finalW, finalH)
                         onResized(finalW, finalH)
                     },
                     canvasState = canvasState

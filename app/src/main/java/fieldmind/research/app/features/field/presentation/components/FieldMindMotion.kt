@@ -113,7 +113,7 @@ object FieldMindMotion {
 
     val swipeBackSpring = spring<Float>(
         dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = 300f
+        stiffness = 800f
     )
 
     val sharedElementSpring = spring<Float>(
@@ -347,9 +347,10 @@ fun TabSwipeHost(
     content: @Composable () -> Unit
 ) {
     val reduceMotion = FieldMindMotion.isReduceMotion()
+    val scope = rememberCoroutineScope()
     val haptics = rememberFieldMindHaptics()
 
-    var tabOffsetX by remember { mutableFloatStateOf(0f) }
+    val animX = remember { Animatable(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
 
     // Detect keyboard visibility reactively via InputMethodManager
@@ -362,38 +363,36 @@ fun TabSwipeHost(
             delay(100)
         }
     }
-    
+
     // Check if swipe directions are available
     val canSwipeBack = onSwipeBack != null
     val canSwipeForward = onSwipeForward != null
 
     // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
+    // Note: snapTo is called directly (not via scope.launch) because PredictiveBackHandler's
+    // lambda is already a suspend context, matching SwipeBackHost's implementation.
     PredictiveBackHandler(enabled = !reduceMotion && onBack != null && !isImeVisible) { progressFlow ->
         try {
-            var hadProgress = false
             progressFlow.collect { backEvent ->
-                hadProgress = true
-                tabOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
+                val offset = (contentWidth * backEvent.progress).coerceAtLeast(0f)
+                animX.snapTo(offset)
             }
             // Flow completed → gesture committed
+            // Reset offset before navigating to prevent blank/offset screen
+            // during the pop exit transition.
+            animX.snapTo(0f)
             // Navigate immediately for both gesture swipes AND hardware button presses.
             // Note: detectDragGestures.onDragEnd does NOT fire for system back gestures,
             // so we must navigate here directly rather than deferring to onDragEnd.
             haptics.confirm()
             onBack?.invoke()
         } catch (_: CancellationException) {
-            // Gesture cancelled — snap back via spring animation
-            tabOffsetX = 0f
+            // Gesture cancelled — snap back instantly
+            animX.snapTo(0f)
         }
     }
 
-    val animatedOffsetX by animateFloatAsState(
-        targetValue = tabOffsetX,
-        animationSpec = FieldMindMotion.swipeBackSpring,
-        label = "tabSwipeX"
-    )
-
-    val progress = abs(animatedOffsetX / contentWidth).coerceIn(0f, 1f)
+    val progress = abs(animX.value / contentWidth).coerceIn(0f, 1f)
     val scrimAlpha = progress * 0.25f
     val scale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
     val swipeCornerRadius = (FieldMindMotion.swipeBaseCornerRadiusDp + progress * (FieldMindMotion.swipeCornerRadiusDp - FieldMindMotion.swipeBaseCornerRadiusDp)).dp
@@ -409,7 +408,7 @@ fun TabSwipeHost(
         if (progress > 0.01f) {
             Box(
                 modifier = Modifier.fillMaxSize().background(
-                    if (animatedOffsetX > 0) {
+                    if (animX.value > 0) {
                         Brush.horizontalGradient(
                             colors = listOf(Color.Black.copy(alpha = scrimAlpha * 0.9f), Color.Black.copy(alpha = scrimAlpha * 0.4f), Color.Transparent),
                             startX = 0f, endX = contentWidth * 0.5f
@@ -429,7 +428,7 @@ fun TabSwipeHost(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(swipeCornerRadius))
                 .graphicsLayer {
-                    translationX = animatedOffsetX
+                    translationX = animX.value
                     scaleX = scale
                     scaleY = scale
                     clip = true
@@ -443,23 +442,24 @@ fun TabSwipeHost(
                                     change.consume()
                                     // Only allow drag in directions that have valid callbacks
                                     if ((dragAmount.x > 0 && canSwipeBack) || (dragAmount.x < 0 && canSwipeForward)) {
-                                        tabOffsetX = (tabOffsetX + dragAmount.x).coerceIn(-contentWidth * 0.4f, contentWidth * 0.4f)
+                                        val newX = (animX.value + dragAmount.x).coerceIn(-contentWidth * 0.4f, contentWidth * 0.4f)
+                                        scope.launch { animX.snapTo(newX) }
                                     }
                                 },
                                 onDragEnd = {
                                     val threshold = contentWidth * 0.20f
-                                    if (tabOffsetX > threshold && canSwipeBack) {
+                                    if (animX.value > threshold && canSwipeBack) {
                                         haptics.confirm()
                                         onSwipeBack?.invoke()
-                                    } else if (tabOffsetX < -threshold && canSwipeForward) {
+                                    } else if (animX.value < -threshold && canSwipeForward) {
                                         haptics.confirm()
                                         onSwipeForward?.invoke()
                                     } else {
-                                        tabOffsetX = 0f
+                                        scope.launch { animX.snapTo(0f) }
                                     }
                                 },
                                 onDragCancel = {
-                                    tabOffsetX = 0f
+                                    scope.launch { animX.snapTo(0f) }
                                 }
                             )
                         }
@@ -478,11 +478,25 @@ fun TabSwipeHost(
 
 private enum class SwipeDirection { Horizontal, Vertical }
 
+/**
+ * Previous screen peek state for the navigation peek animation.
+ * Passed from the navigation layer (e.g., NavHost) to show which
+ * destination is behind the current screen during the back gesture.
+ *
+ * @param label Human-readable name of the previous destination
+ * @param route Route string of the previous destination (for matching icons)
+ */
+data class PreviousScreenInfo(
+    val label: String,
+    val route: String = ""
+)
+
 @OptIn(ExperimentalActivityApi::class)
 @Composable
 fun SwipeBackHost(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    previousScreen: PreviousScreenInfo? = null,
     content: @Composable () -> Unit
 ) {
     val reduceMotion = FieldMindMotion.isReduceMotion()
@@ -516,6 +530,10 @@ fun SwipeBackHost(
                 animX.snapTo((contentWidth * backEvent.progress).coerceAtLeast(0f))
             }
             // Flow completed → gesture committed
+            // Reset offset before navigating to prevent blank/offset screen
+            // during the pop exit transition.
+            animX.snapTo(0f)
+            animY.snapTo(0f)
             // Navigate immediately for both gesture swipes AND hardware button presses.
             // Note: detectDragGestures.onDragEnd does NOT fire for system back gestures,
             // so we must navigate here directly rather than deferring to onDragEnd.
@@ -527,17 +545,17 @@ fun SwipeBackHost(
         }
     }
 
-    val maxExtent = when (activeDirection) {
-        SwipeDirection.Horizontal -> contentWidth
-        SwipeDirection.Vertical -> contentHeight
-        null -> 1f
+    // ── Unified progress computation ──
+    // PredictiveBackHandler drives animX but leaves activeDirection=null.
+    // Manual drag sets activeDirection. We compute progress from whichever
+    // source has positive offset.
+    val horizontalProgress = (abs(animX.value) / contentWidth).coerceIn(0f, 1f)
+    val verticalProgress = (abs(animY.value) / contentHeight).coerceIn(0f, 1f)
+    val (progress, isHorizontalPeek) = when (activeDirection) {
+        SwipeDirection.Horizontal -> Pair(horizontalProgress, true)
+        SwipeDirection.Vertical -> Pair(verticalProgress, false)
+        null -> Pair(horizontalProgress.coerceAtLeast(verticalProgress), horizontalProgress >= verticalProgress)
     }
-    val currentOffset = when (activeDirection) {
-        SwipeDirection.Horizontal -> animX.value
-        SwipeDirection.Vertical -> animY.value
-        null -> 0f
-    }
-    val progress = (currentOffset / maxExtent).coerceIn(0f, 1f)
     val scrimAlpha = progress * FieldMindMotion.swipeScrimAlpha
     val contentScale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
     val swipeElevation = progress * FieldMindMotion.swipeShadowElevationDp
@@ -550,47 +568,115 @@ fun SwipeBackHost(
                 contentWidth = coords.size.width.toFloat().coerceAtLeast(1f)
                 contentHeight = coords.size.height.toFloat().coerceAtLeast(1f)
             }
+            .background(Color.Transparent) // ensure transparent background so previous screen preview is visible
     ) {
-        if (progress > 0.01f) {
-            when (activeDirection) {
-                SwipeDirection.Horizontal -> {
-                    Box(
+        // ── Layer 1: Previous screen peek preview ──
+        // Slides in from the left behind the current content.
+        // Uses parallax (70% speed) for depth layering effect.
+        if (progress > 0.01f && previousScreen != null && isHorizontalPeek) {
+            val previewWidth = contentWidth * 0.85f
+            // Parallax: previous screen moves slower than current screen
+            val previewOffset = animX.value * 0.7f - previewWidth
+            val previewScale = 0.94f + (1f - 0.94f) * (1f - progress)  // scale from 0.94 to 1.0 as progress increases
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset { IntOffset(previewOffset.roundToInt(), 0) }
+                    .width(previewWidth.toDp())
+                    .fillMaxHeight()
+                    .graphicsLayer {
+                        scaleX = previewScale
+                        scaleY = previewScale
+                        transformOrigin = TransformOrigin(1f, 0.5f) // scale from right edge
+                    }
+            ) {
+                // Decorative primary-colored strip on the left edge
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(4.dp)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .align(Alignment.CenterStart)
+                )
+
+                // Main preview surface
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 4.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp),
+                    tonalElevation = 3.dp,
+                    shadowElevation = 12.dp
+                ) {
+                    Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(
-                                        Color.Black.copy(alpha = scrimAlpha * 0.9f),
-                                        Color.Black.copy(alpha = scrimAlpha * 0.4f),
-                                        Color.Transparent
-                                    ),
-                                    startX = 0f,
-                                    endX = contentWidth * 0.5f
-                                )
-                            )
-                    )
+                            .padding(start = 24.dp, end = 16.dp),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            FieldMindIcons.ChevronLeft,
+                            "Back",
+                            size = 32.dp,
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            previousScreen.label,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Swipe to go back",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
                 }
-                SwipeDirection.Vertical -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Black.copy(alpha = scrimAlpha * 0.9f),
-                                        Color.Black.copy(alpha = scrimAlpha * 0.4f),
-                                        Color.Transparent
-                                    ),
-                                    startY = 0f,
-                                    endY = contentHeight * 0.5f
-                                )
-                            )
-                    )
-                }
-                null -> {}
             }
         }
 
+        // ── Layer 2: Scrim (dark gradient on reveal side) ──
+        if (progress > 0.01f && isHorizontalPeek) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = scrimAlpha * 0.85f),
+                                Color.Black.copy(alpha = scrimAlpha * 0.35f),
+                                Color.Transparent
+                            ),
+                            startX = 0f,
+                            endX = contentWidth * 0.5f
+                        )
+                    )
+            )
+        } else if (progress > 0.01f) {
+            // Vertical scrim for downward swipe
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = scrimAlpha * 0.85f),
+                                Color.Black.copy(alpha = scrimAlpha * 0.35f),
+                                Color.Transparent
+                            ),
+                            startY = 0f,
+                            endY = contentHeight * 0.5f
+                        )
+                    )
+            )
+        }
+
+        // ── Layer 3: Current screen content (transformed) ──
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -603,7 +689,10 @@ fun SwipeBackHost(
                     scaleX = contentScale
                     scaleY = contentScale
                     this.shadowElevation = swipeElevation
-                    transformOrigin = TransformOrigin(if (ox > 0) 0f else 0.5f, if (oy > 0) 0f else 0.5f)
+                    transformOrigin = TransformOrigin(
+                        if (ox > 0) 0f else 0.5f,
+                        if (oy > 0) 0f else 0.5f
+                    )
                     clip = true
                 }
                 .then(
@@ -662,6 +751,11 @@ fun SwipeBackHost(
                                                 animY.animateTo(contentHeight, FieldMindMotion.swipeBackSpring)
                                             }
                                             activeDirection = null
+                                            // Reset offset before navigating to prevent blank screen
+                                            // during the pop exit transition (graphicsLayer translation
+                                            // would otherwise shift content off-screen).
+                                            animX.snapTo(0f)
+                                            animY.snapTo(0f)
                                             onBack()
                                         }
                                     } else {
@@ -690,7 +784,8 @@ fun SwipeBackHost(
         ) {
             content()
 
-            if (activeDirection == SwipeDirection.Horizontal && currentOffset > contentWidth * 0.05f) {
+            // ── Back arrow indicator ──
+            if (isHorizontalPeek && animX.value > contentWidth * 0.05f) {
                 Box(
                     modifier = Modifier
                         .padding(start = 4.dp)
@@ -704,7 +799,8 @@ fun SwipeBackHost(
                 }
             }
 
-            if (activeDirection == SwipeDirection.Vertical && currentOffset > contentHeight * 0.05f) {
+            // ── Downward swipe indicator ──
+            if (!isHorizontalPeek && animY.value > contentHeight * 0.05f) {
                 Box(
                     modifier = Modifier
                         .padding(top = 4.dp)

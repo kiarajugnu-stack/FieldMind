@@ -220,33 +220,32 @@ fun PageCanvas(
                             val posX = livePos?.x ?: block.positionX
                             val posY = livePos?.y ?: block.positionY
                             val pageRelativeY = posY - page.startY
-                            val isSelected = block.id in canvasState.selectedBlockIds
-
-                            PageBlock(
-                                block = block,
-                                pageX = posX,
-                                pageY = pageRelativeY,
-                                isSelected = isSelected,
-                                onTapped = { id ->
-                                    canvasState.selectBlock(id)
-                                    onBlockTapped?.invoke(id)
-                                },
-                                onMoved = { newX, newY ->
-                                    // Convert page-relative coords back to document coords
-                                    val docY = newY + page.startY
-                                    onBlockMoved?.invoke(block.id, newX, docY)
-                                },
-                                onMovedFinal = { startX, startY, finalX, finalY ->
-                                    val docStartY = startY + page.startY
-                                    val docFinalY = finalY + page.startY
-                                    onBlockMovedFinal?.invoke(block.id, startX, docStartY, finalX, docFinalY)
-                                },
-                                onResized = { w, h ->
-                                    onBlockResized?.invoke(block.id, w, h)
-                                }
-                            ) {
-                                blockContent(block, isSelected)
-                            }
+                            val isSelected = block.id in canvasState.selectedBlockIds    PageBlock(
+        block = block,
+        pageX = posX,
+        pageY = pageRelativeY,
+        isSelected = isSelected,
+        canvasState = canvasState,
+        onTapped = { id ->
+            canvasState.selectBlock(id)
+            onBlockTapped?.invoke(id)
+        },
+        onMoved = { newX, newY ->
+            // Convert page-relative coords back to document coords
+            val docY = newY + page.startY
+            onBlockMoved?.invoke(block.id, newX, docY)
+        },
+        onMovedFinal = { startX, startY, finalX, finalY ->
+            val docStartY = startY + page.startY
+            val docFinalY = finalY + page.startY
+            onBlockMovedFinal?.invoke(block.id, startX, docStartY, finalX, docFinalY)
+        },
+        onResized = { w, h ->
+            onBlockResized?.invoke(block.id, w, h)
+        }
+    ) {
+        blockContent(block, isSelected)
+    }
                         }
 
                         // ── Empty page hint ──
@@ -362,6 +361,7 @@ private fun PageBlock(
     pageX: Float,
     pageY: Float,
     isSelected: Boolean,
+    canvasState: CanvasState,
     onTapped: (Long) -> Unit,
     onMoved: (Float, Float) -> Unit,
     onMovedFinal: ((Float, Float, Float, Float) -> Unit)? = null,
@@ -390,6 +390,18 @@ private fun PageBlock(
             // Background
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
+            // ── Clean up stale live overrides when entity catches up ──
+            LaunchedEffect(block.id, block.positionX, block.positionY, block.width, block.height) {
+                val livePos = canvasState.liveBlockPositions[block.id]
+                if (livePos != null && livePos.x == block.positionX && livePos.y == block.positionY) {
+                    canvasState.removeLiveBlockPosition(block.id)
+                }
+                val liveSize = canvasState.liveBlockSizes[block.id]
+                if (liveSize != null && liveSize.width == block.width && liveSize.height == block.height) {
+                    canvasState.removeLiveBlockSize(block.id)
+                }
+            }
+
             // Combined tap + drag gesture (single pointerInput to avoid conflicts)
             .pointerInput(block.id) {
                 // Track cumulative drag offset locally for smooth movement
@@ -411,6 +423,8 @@ private fun PageBlock(
                         cumulativeDy += dragAmount.y
                         val newX = (startX + cumulativeDx).coerceAtLeast(0f)
                         val newY = startY + cumulativeDy
+                        // Use live position for smooth visual feedback
+                        canvasState.setLiveBlockPosition(block.id, newX, newY)
                         onMoved(newX, newY)
                     },
                     onDragEnd = {
@@ -418,9 +432,12 @@ private fun PageBlock(
                         // since intermediate DB writes have already updated the entity)
                         val finalX = (startX + cumulativeDx).coerceAtLeast(0f)
                         val finalY = startY + cumulativeDy
+                        canvasState.setLiveBlockPosition(block.id, finalX, finalY)
                         onMovedFinal?.invoke(startX, startY, finalX, finalY)
                     },
-                    onDragCancel = {}
+                    onDragCancel = {
+                        canvasState.removeLiveBlockPosition(block.id)
+                    }
                 )
             }
             // Tap to select (on a separate pointerInput — Compose handles
@@ -437,6 +454,9 @@ private fun PageBlock(
 
         // Resize handle (bottom-right, when selected)
         if (isSelected) {
+            val liveSize = canvasState.liveBlockSizes[block.id]
+            val displayWidth = liveSize?.width ?: block.width
+            val displayHeight = liveSize?.height ?: block.height
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
@@ -446,12 +466,32 @@ private fun PageBlock(
                         RoundedCornerShape(topStart = 4.dp)
                     )
                     .pointerInput(block.id) {
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
-                            val newW = (block.width + dragAmount.x).coerceAtLeast(60f)
-                            val newH = (block.height + dragAmount.y).coerceAtLeast(60f)
-                            onResized(newW, newH)
-                        }
+                        var cumulativeDx = 0f
+                        var cumulativeDy = 0f
+                        detectDragGestures(
+                            onDragStart = {
+                                cumulativeDx = 0f
+                                cumulativeDy = 0f
+                            },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                cumulativeDx += dragAmount.x
+                                cumulativeDy += dragAmount.y
+                                val newW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
+                                val newH = (displayHeight + cumulativeDy).coerceAtLeast(60f)
+                                canvasState.setLiveBlockSize(block.id, newW, newH)
+                                onResized(newW, newH)
+                            },
+                            onDragEnd = {
+                                val finalW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
+                                val finalH = (displayHeight + cumulativeDy).coerceAtLeast(60f)
+                                canvasState.setLiveBlockSize(block.id, finalW, finalH)
+                                onResized(finalW, finalH)
+                            },
+                            onDragCancel = {
+                                canvasState.removeLiveBlockSize(block.id)
+                            }
+                        )
                     }
             )
         }
