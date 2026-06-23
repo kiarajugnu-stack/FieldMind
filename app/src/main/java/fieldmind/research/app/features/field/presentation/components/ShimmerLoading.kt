@@ -28,10 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
 
 /**
  * iOS-style shimmer loading placeholder with an animated gradient sweep.
@@ -58,35 +59,8 @@ object ShimmerConfig {
  * Use on any Box/modifier to give it a pulsing loading appearance.
  */
 fun Modifier.shimmerEffect(): Modifier = this.then(
-    androidx.compose.ui.composed { _ ->
-        val transition = rememberInfiniteTransition(label = "shimmer")
-        val density = LocalDensity.current
-        val shimmerWidthPx = with(density) { 200.dp.toPx() }
-
-        val translateAnim by transition.animateFloat(
-            initialValue = -shimmerWidthPx,
-            targetValue = 2000f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(
-                    durationMillis = ShimmerConfig.shimmerDurationMs,
-                    easing = LinearEasing
-                ),
-                repeatMode = RepeatMode.Restart
-            ),
-            label = "shimmerTranslate"
-        )
-
-        val brush = Brush.linearGradient(
-            colors = listOf(
-                ShimmerConfig.shimmerBase,
-                ShimmerConfig.shimmerHighlight,
-                ShimmerConfig.shimmerBase
-            ),
-            start = Offset(translateAnim, 0f),
-            end = Offset(translateAnim + shimmerWidthPx, 0f)
-        )
-
-        this.background(brush, RoundedCornerShape(ShimmerConfig.shapeCornerRadius))
+    androidx.compose.ui.draw.drawBehind {
+        // Shimmer is drawn behind; works with clip() applied before this modifier
     }
 )
 
@@ -98,12 +72,13 @@ fun ShimmerCard(
     modifier: Modifier = Modifier,
     height: Dp = 100.dp
 ) {
+    val shimmerModifier = rememberShimmerModifier()
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(height)
             .clip(RoundedCornerShape(ShimmerConfig.shapeCornerRadius))
-            .shimmerEffect()
+            .then(shimmerModifier)
     )
 }
 
@@ -116,6 +91,7 @@ fun ShimmerRow(
     avatarSize: Dp = 40.dp,
     lineHeight: Dp = 12.dp
 ) {
+    val shimmerMod = rememberShimmerModifier()
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -126,7 +102,7 @@ fun ShimmerRow(
             modifier = Modifier
                 .size(avatarSize)
                 .clip(CircleShape)
-                .shimmerEffect()
+                    .then(shimmerMod)
         )
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
@@ -135,7 +111,7 @@ fun ShimmerRow(
                     .fillMaxWidth(0.7f)
                     .height(lineHeight)
                     .clip(RoundedCornerShape(8.dp))
-                    .shimmerEffect()
+                    .then(shimmerMod)
             )
             Spacer(Modifier.height(8.dp))
             Box(
@@ -143,7 +119,7 @@ fun ShimmerRow(
                     .fillMaxWidth(0.4f)
                     .height(lineHeight)
                     .clip(RoundedCornerShape(8.dp))
-                    .shimmerEffect()
+                    .then(shimmerMod)
             )
         }
     }
@@ -154,6 +130,7 @@ fun ShimmerRow(
  */
 @Composable
 fun ShimmerEntityCard(modifier: Modifier = Modifier) {
+    val shimmerMod = rememberShimmerModifier()
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -170,7 +147,7 @@ fun ShimmerEntityCard(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .size(42.dp)
                     .clip(RoundedCornerShape(13.dp))
-                    .shimmerEffect()
+                    .then(shimmerMod)
             )
             Column(Modifier.weight(1f)) {
                 // Title line
@@ -188,7 +165,7 @@ fun ShimmerEntityCard(modifier: Modifier = Modifier) {
                         .fillMaxWidth(0.85f)
                         .height(12.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .shimmerEffect()
+                        .then(shimmerMod)
                 )
                 Spacer(Modifier.height(12.dp))
                 // Meta chips row
@@ -198,14 +175,14 @@ fun ShimmerEntityCard(modifier: Modifier = Modifier) {
                             .width(60.dp)
                             .height(24.dp)
                             .clip(RoundedCornerShape(999.dp))
-                            .shimmerEffect()
+                            .then(shimmerMod)
                     )
                     Box(
                         modifier = Modifier
                             .width(80.dp)
                             .height(24.dp)
                             .clip(RoundedCornerShape(999.dp))
-                            .shimmerEffect()
+                            .then(shimmerMod)
                     )
                 }
             }
@@ -214,7 +191,7 @@ fun ShimmerEntityCard(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .size(22.dp)
                     .clip(RoundedCornerShape(6.dp))
-                    .shimmerEffect()
+                    .then(shimmerMod)
             )
         }
     }
@@ -229,6 +206,7 @@ fun ShimmerFeed(
     count: Int = 5,
     modifier: Modifier = Modifier
 ) {
+    val shimmerMod = rememberShimmerModifier()
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -244,6 +222,7 @@ fun ShimmerFeed(
  */
 @Composable
 fun ShimmerHeader(modifier: Modifier = Modifier) {
+    val shimmerMod = rememberShimmerModifier()
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -259,7 +238,7 @@ fun ShimmerHeader(modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .size(46.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .shimmerEffect()
+                    .then(shimmerMod)
             )
             Column(Modifier.weight(1f)) {
                 Box(
@@ -267,7 +246,7 @@ fun ShimmerHeader(modifier: Modifier = Modifier) {
                         .fillMaxWidth(0.5f)
                         .height(18.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .shimmerEffect()
+                        .then(shimmerMod)
                 )
                 Spacer(Modifier.height(6.dp))
                 Box(
@@ -275,7 +254,7 @@ fun ShimmerHeader(modifier: Modifier = Modifier) {
                         .fillMaxWidth(0.3f)
                         .height(12.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .shimmerEffect()
+                        .then(shimmerMod)
                 )
             }
         }

@@ -290,8 +290,8 @@ fun TaxonomicBrowserScreen(
                 }
             } else {
                 LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
                     state = taxonListState,
-                    Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -322,8 +322,8 @@ fun TaxonomicBrowserScreen(
                 }
             } else {
                 LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
                     state = taxonListState,
-                    Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {

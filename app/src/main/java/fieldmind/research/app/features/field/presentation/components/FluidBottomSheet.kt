@@ -96,7 +96,7 @@ fun FluidBottomSheet(
     val dragProgress = (sheetOffset / dismissThreshold).coerceIn(0f, 1f)
     val scrimAlpha = if (visible) (1f - dragProgress * 0.6f).coerceIn(0f, 1f) else 0f
     val contentScale = 1f - dragProgress * 0.05f
-    val cornerRadius = (28 - dragProgress * 12).coerceAtLeast(16)
+    val cornerRadius = (28 - dragProgress * 12).coerceAtLeast(16f)
 
     AnimatedVisibility(
         visible = visible,
@@ -144,7 +144,7 @@ fun FluidBottomSheet(
                                     onDragStart = {
                                         isDragging = true
                                     },
-                                    onDrag = { change, dragAmount ->
+                                    onVerticalDrag = { change: androidx.compose.ui.input.pointer.PointerInputChange, dragAmount: Float ->
                                         change.consume()
                                         val newOffset = sheetOffset + dragAmount
                                         // iOS-style rubber band: resistance increases with downward drag

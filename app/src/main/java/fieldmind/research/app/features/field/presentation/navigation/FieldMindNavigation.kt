@@ -57,6 +57,7 @@ import fieldmind.research.app.features.field.presentation.components.FieldMindMo
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
 import fieldmind.research.app.features.field.presentation.components.liquidGlassRefraction
+import fieldmind.research.app.features.field.presentation.components.TabSwipeHost
 import androidx.compose.runtime.CompositionLocalProvider
 
 import dev.chrisbanes.haze.HazeState

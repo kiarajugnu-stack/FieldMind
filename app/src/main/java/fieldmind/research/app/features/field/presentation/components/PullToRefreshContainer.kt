@@ -72,7 +72,7 @@ fun PullToRefreshBox(
     var hasTriggered by remember { mutableStateOf(false) }
     var showRefreshIndicator by remember { mutableStateOf(false) }
 
-    val maxPullPx = with(density) { maxPullDp.toPx() }
+    val maxPullPx = with(density) { maxPullDp.dp.toPx() }
     val thresholdPx = contentHeight * thresholdFraction
 
     // Animate the pull offset with spring for iOS-style bounce-back
@@ -102,12 +102,11 @@ fun PullToRefreshBox(
                 .offset { IntOffset(0, animatedPull.roundToInt()) }
                 .then(
                     if (enabled && !reduceMotion) {
-                        Modifier.pointerInput(Unit) {
-                            detectVerticalDragGestures(
+                        Modifier.pointerInput(Unit) {                                detectVerticalDragGestures(
                                 onDragStart = {
                                     hasTriggered = false
                                 },
-                                onDrag = { change, dragAmount ->
+                                onVerticalDrag = { change: androidx.compose.ui.input.pointer.PointerInputChange, dragAmount: Float ->
                                     change.consume()
                                     // Apply rubber-band resistance: the further you pull,
                                     // the harder it gets (iOS-style diminishing returns)
