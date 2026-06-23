@@ -362,11 +362,21 @@ fun TabSwipeHost(
     // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
     PredictiveBackHandler(enabled = !reduceMotion && onBack != null && !isImeVisible) { progressFlow ->
         try {
+            var hadProgress = false
             progressFlow.collect { backEvent ->
+                hadProgress = true
                 tabOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
             }
-            // Flow completed → gesture committed; call onBack
-            systemBackJustCompleted = true
+            // Flow completed → gesture committed
+            if (hadProgress) {
+                // Gesture swipe — onDragEnd will handle navigation with full-sweep animation
+                systemBackJustCompleted = true
+            } else {
+                // Hardware back button pressed (no progress events) — navigate immediately
+                systemBackJustCompleted = false
+                haptics.confirm()
+                onBack?.invoke()
+            }
         } catch (_: CancellationException) {
             // Gesture cancelled — snap back via spring animation
             tabOffsetX = 0f
@@ -505,11 +515,21 @@ fun SwipeBackHost(
     // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
     PredictiveBackHandler(enabled = !reduceMotion && !isImeVisible) { progressFlow ->
         try {
+            var hadProgress = false
             progressFlow.collect { backEvent ->
+                hadProgress = true
                 targetOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
             }
-            // Flow completed → gesture committed; system handles back navigation
-            systemBackJustCompleted = true
+            // Flow completed → gesture committed
+            if (hadProgress) {
+                // Gesture swipe — onDragEnd will handle navigation with full-sweep animation
+                systemBackJustCompleted = true
+            } else {
+                // Hardware back button pressed (no progress events) — navigate immediately
+                systemBackJustCompleted = false
+                haptics.confirm()
+                onBack()
+            }
         } catch (_: CancellationException) {
             // Gesture cancelled — snap back via spring animation
             targetOffsetX = 0f
