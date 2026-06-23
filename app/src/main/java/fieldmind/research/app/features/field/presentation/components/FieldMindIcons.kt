@@ -92,6 +92,7 @@ object FieldMindIcons {
     val FlipCamera = MaterialSymbolIcon("flip_camera_android")
     val Replay = MaterialSymbolIcon("replay")
     val Timer = MaterialSymbolIcon("timer")
+    val Hourglass = MaterialSymbolIcon("hourglass_bottom")
     val Session = MaterialSymbolIcon("stop_circle")
     val List = MaterialSymbolIcon("list")
     val Line = MaterialSymbolIcon("show_chart")
