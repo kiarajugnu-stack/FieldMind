@@ -294,12 +294,12 @@ fun PageCanvas(
             val toolBarY = docBlockY - scrollState.value
 
             // Compute toolbar offset in Dp for a stable positioning
-            val toolbarOffsetDpX = with(density) {
+            val toolbarOffsetDpX: Dp = with(density) {
                 (paddingHoriPx + selectedBlock.positionX).toDp()
             }
-            val toolbarOffsetDpY = with(density) {
-                ((toolBarY - 48.dp.toPx()).coerceAtLeast(0f)).toDp()
-            }
+            val yPixels: Float = toolBarY - with(density) { 48.dp.toPx() }
+            val clampedPixels: Float = yPixels.coerceAtLeast(0f)
+            val toolbarOffsetDpY: Dp = with(density) { clampedPixels.toDp() }
 
             Box(
                 modifier = Modifier
