@@ -10,7 +10,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -28,6 +27,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
+import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlin.math.roundToInt
 
@@ -129,11 +129,11 @@ fun CanvasBlock(
                 Icon(
                     MaterialSymbolIcon("unfold_more"),
                     "Expand",
-                    tint = MaterialTheme.colorScheme.primary,
-                    size = 20.dp
+                    size = 20.dp,
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    "${block.blockType}",
+                    block.type,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -158,9 +158,10 @@ fun CanvasBlock(
                     ),
                 contentAlignment = Alignment.TopStart
             ) {
+                val buttonSize = (20f / canvasState.zoom).coerceAtLeast(16f).dp
                 Box(
                     modifier = Modifier
-                        .size((20f / canvasState.zoom).coerceAtLeast(16f).dp)
+                        .size(buttonSize)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .pointerInput(Unit) {
