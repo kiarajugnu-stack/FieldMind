@@ -329,13 +329,17 @@ fun Modifier.pressCardScale(): Modifier = composed {
  *
  * Swipe left → calls [onSwipeForward] (next tab)
  * Swipe right → calls [onSwipeBack] (previous tab)
+ * System back gesture (edge) → drives predictive peek animation via [PredictiveBackHandler];
+ * on commit, navigates back via [onBack].
  *
  * Shows visual feedback (offset, scale, gradient scrim) during the swipe.
  */
+@OptIn(ExperimentalActivityApi::class)
 @Composable
 fun TabSwipeHost(
     onSwipeBack: (() -> Unit)?,
     onSwipeForward: (() -> Unit)?,
+    onBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -345,10 +349,25 @@ fun TabSwipeHost(
 
     var tabOffsetX by remember { mutableFloatStateOf(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
+    var systemBackJustCompleted by remember { mutableStateOf(false) }
     
     // Check if swipe directions are available
     val canSwipeBack = onSwipeBack != null
     val canSwipeForward = onSwipeForward != null
+
+    // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
+    PredictiveBackHandler(enabled = !reduceMotion && onBack != null) { progressFlow ->
+        try {
+            progressFlow.collect { backEvent ->
+                tabOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
+            }
+            // Flow completed → gesture committed; call onBack
+            systemBackJustCompleted = true
+        } catch (_: CancellationException) {
+            // Gesture cancelled — snap back via spring animation
+            tabOffsetX = 0f
+        }
+    }
 
     val animatedOffsetX by animateFloatAsState(
         targetValue = tabOffsetX,
@@ -411,7 +430,13 @@ fun TabSwipeHost(
                                 },
                                 onDragEnd = {
                                     val threshold = contentWidth * 0.20f
-                                    if (tabOffsetX > threshold && canSwipeBack) {
+                                    if (systemBackJustCompleted) {
+                                        // System back gesture already committed; call onBack immediately
+                                        systemBackJustCompleted = false
+                                        tabOffsetX = 0f
+                                        haptics.confirm()
+                                        scope.launch { onBack?.invoke() }
+                                    } else if (tabOffsetX > threshold && canSwipeBack) {
                                         haptics.confirm()
                                         scope.launch { tabOffsetX = contentWidth; onSwipeBack?.invoke() }
                                     } else if (tabOffsetX < -threshold && canSwipeForward) {
