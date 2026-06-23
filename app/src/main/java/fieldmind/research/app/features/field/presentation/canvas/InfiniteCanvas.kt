@@ -118,7 +118,7 @@ fun InfiniteCanvas(
     // ── Memoized visible blocks computation ──
     // Uses derivedStateOf for reactivity: only recalculates when zoom, pan, viewport,
     // or blocks change. 300px padding provides a smooth recycling buffer.
-    val visibleBlocks by remember(blocks) {
+    val rawVisibleBlocks by remember(blocks) {
         derivedStateOf {
             val vw = viewportWidth.coerceAtLeast(1f)
             val vh = viewportHeight.coerceAtLeast(1f)
@@ -138,6 +138,26 @@ fun InfiniteCanvas(
                 screenPos.y + screenSize.height > -padding &&
                 screenPos.y < vh + padding
             }
+        }
+    }
+
+    // ── Stabilize visible blocks list ──
+    // rawVisibleBlocks produces a NEW list on every gesture frame (zoom/pan change).
+    // This causes SubcomposeLayout to re-measure ALL visible blocks on every frame.
+    // By stabilizing to only emit a NEW list when the set of visible block IDs changes,
+    // we prevent unnecessary re-measurement during gestures.
+    val visibleBlocks = remember { mutableStateListOf<CanvasBlockEntity>() }
+    var lastVisibleIds by remember { mutableStateOf(setOf<Long>()) }
+    // SideEffect runs synchronously after every composition — avoids coroutine
+    // overhead (LaunchedEffect would cancel/relaunch a coroutine every frame
+    // during gestures). Only updates visibleBlocks when the set of visible
+    // block IDs actually changes.
+    SideEffect {
+        val newIds = rawVisibleBlocks.map { it.id }.toSet()
+        if (newIds != lastVisibleIds || visibleBlocks.size != rawVisibleBlocks.size) {
+            lastVisibleIds = newIds
+            visibleBlocks.clear()
+            visibleBlocks.addAll(rawVisibleBlocks)
         }
     }
 
