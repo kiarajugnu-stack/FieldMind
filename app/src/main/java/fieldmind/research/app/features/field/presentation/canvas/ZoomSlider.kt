@@ -123,7 +123,8 @@ fun ZoomSlider(
                         // Invert: top of slider (y=0) = max zoom, bottom = min zoom
                         val fraction = 1f - (tapOffset.y / sliderHeightPx).coerceIn(0f, 1f)
                         val newZoom = mapFractionToZoom(fraction)
-                        canvasState.zoomTo(newZoom)
+                        val focus = Offset(viewportSize.width / 2f, viewportSize.height / 2f)
+                        canvasState.zoomTo(newZoom, focus)
                         showLabel = true
                     }
                 }
@@ -132,7 +133,8 @@ fun ZoomSlider(
                         change.consume()
                         val fraction = 1f - (change.position.y / sliderHeightPx).coerceIn(0f, 1f)
                         val newZoom = mapFractionToZoom(fraction)
-                        canvasState.zoomTo(newZoom)
+                        val focus = Offset(viewportSize.width / 2f, viewportSize.height / 2f)
+                        canvasState.zoomTo(newZoom, focus)
                         showLabel = true
                     }
                 },
