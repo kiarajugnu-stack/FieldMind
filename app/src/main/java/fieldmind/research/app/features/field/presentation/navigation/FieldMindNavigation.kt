@@ -731,7 +731,8 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.routeEnterTransiti
         }
         fromCat == RouteCategory.Tab && toCat in listOf(
             RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
-            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation,
+            RouteCategory.Other
         ) -> slideInHorizontally(slideSpec) { it / 4 } + fadeIn(fadeSpec)
         fromCat == RouteCategory.SettingsHub && toCat == RouteCategory.SettingsSubPage ->
             fadeIn(animationSpec = FieldMindMotion.expressiveFloat)
@@ -764,10 +765,11 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.routeExitTransitio
         }
         fromCat == RouteCategory.Tab && toCat in listOf(
             RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
-            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation,
+            RouteCategory.Other
         ) -> {
             val slideSpec = tween<IntOffset>(FieldMindMotion.durationStandard, easing = FastOutSlowInEasing)
-            slideOutHorizontally(slideSpec) { -it / 5 } + fadeOut(fadeSpec)
+            slideOutHorizontally(slideSpec) { -it / 4 } + fadeOut(fadeSpec)
         }
         fromCat == RouteCategory.SettingsHub && toCat == RouteCategory.SettingsSubPage ->
             fadeOut(fadeSpec)
@@ -800,7 +802,8 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.routePopEnterTrans
         }
         toCat == RouteCategory.Tab && fromCat in listOf(
             RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
-            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation,
+            RouteCategory.Other
         ) -> {
             // Previous screen (tab) slides in from the left at full width — iOS predictive peek
             slideInHorizontally(slideSpec) { -it } + fadeIn(animationSpec = fadeSpec)
@@ -827,14 +830,16 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.routePopExitTransi
         }
         fromCat == RouteCategory.Tab && toCat in listOf(
             RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
-            RouteCategory.Tool, RouteCategory.Detail
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation,
+            RouteCategory.Other
         ) -> {
             // Current screen (tab) slides out to the right at full width
             slideOutHorizontally(slideSpec) { it } + fadeOut(animationSpec = fadeSpec)
         }
         toCat == RouteCategory.Tab && fromCat in listOf(
             RouteCategory.SettingsHub, RouteCategory.SettingsSubPage,
-            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation
+            RouteCategory.Tool, RouteCategory.Detail, RouteCategory.Creation,
+            RouteCategory.Other
         ) -> {
             // Current screen (sub-screen) slides out to the right at full width — iOS predictive
             slideOutHorizontally(slideSpec) { it } + fadeOut(animationSpec = fadeSpec)
