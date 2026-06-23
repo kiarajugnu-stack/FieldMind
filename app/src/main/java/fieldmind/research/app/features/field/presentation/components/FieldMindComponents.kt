@@ -1,7 +1,6 @@
 package fieldmind.research.app.features.field.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -698,7 +697,7 @@ fun BackButton(
 
 // ──────────────────────────────────────────────────────────────────────
 //  Badges & chips
-// ──────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────���──────────────────────────────────
 
 /** Pill badge for an entity kind, colored by its semantic accent and prefixed with its icon. */
 @Composable
@@ -834,12 +833,6 @@ fun EntityCard(
         Card(
             modifier = modifier
                 .fillMaxWidth()
-                .animateContentSize(
-                    animationSpec = spring(
-                        dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy,
-                        stiffness = androidx.compose.animation.core.Spring.StiffnessLow
-                    )
-                )
                 .then(
                     if (onClick != null) Modifier.expressiveCardPress(liftDp = 1.5f, scaleDown = 0.985f)
                     else Modifier
