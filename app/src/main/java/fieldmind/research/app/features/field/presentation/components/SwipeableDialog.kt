@@ -108,6 +108,7 @@ fun SwipeableAlertDialog(
     val scrimAlpha = (1f - dragProgress * 0.6f).coerceIn(0f, 1f)
     val contentScale = 1f - dragProgress * 0.06f
     val contentAlpha = 1f - dragProgress * 0.3f
+    val swipeCornerRadius = (dragProgress * FieldMindMotion.swipeCornerRadiusDp).dp
 
     // Dismiss the dialog after the dismiss animation completes
     LaunchedEffect(isAnimatingAway) {
@@ -146,6 +147,7 @@ fun SwipeableAlertDialog(
                     .onGloballyPositioned { coords ->
                         dialogWidth = coords.size.width.toFloat().coerceAtLeast(1f)
                     }
+                    .clip(RoundedCornerShape(swipeCornerRadius))
                     .graphicsLayer {
                         translationX = animatedDragOffset
                         scaleX = contentScale.coerceIn(0.7f, 1f)
