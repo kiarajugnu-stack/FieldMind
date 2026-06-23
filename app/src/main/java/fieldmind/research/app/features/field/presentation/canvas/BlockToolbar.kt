@@ -54,6 +54,7 @@ import kotlin.math.roundToInt
 fun BlockToolbar(
     selectedBlock: CanvasBlockEntity?,
     canvasState: CanvasState,
+    onToggleCollapse: (Long) -> Unit = { _ -> },
     onDelete: () -> Unit = {},
     onDuplicate: () -> Unit = {},
     onMoveForward: () -> Unit = {},
@@ -98,6 +99,10 @@ fun BlockToolbar(
         BlockToolbarContent(
             onDelete = onDelete,
             onDuplicate = onDuplicate,
+            onCollapse = {
+                selectedBlock?.let { onToggleCollapse(it.id) }
+            },
+            isCollapsed = selectedBlock?.let { it.id in canvasState.collapsedBlockIds } ?: false,
             onMoveForward = onMoveForward,
             onMoveBackward = onMoveBackward,
             onCopy = onCopy,
@@ -115,6 +120,8 @@ fun BlockToolbar(
 private fun BlockToolbarContent(
     onDelete: () -> Unit,
     onDuplicate: () -> Unit,
+    onCollapse: () -> Unit = {},
+    isCollapsed: Boolean = false,
     onMoveForward: () -> Unit,
     onMoveBackward: () -> Unit,
     onCopy: () -> Unit,
@@ -143,6 +150,12 @@ private fun BlockToolbarContent(
                 label = "Delete",
                 onClick = onDelete,
                 tint = MaterialTheme.colorScheme.error
+            )
+            ToolbarDivider()
+            ToolbarAction(
+                icon = if (isCollapsed) MaterialSymbolIcon("unfold_more") else MaterialSymbolIcon("unfold_less"),
+                label = if (isCollapsed) "Expand" else "Minimize",
+                onClick = onCollapse
             )
             ToolbarDivider()
             ToolbarAction(

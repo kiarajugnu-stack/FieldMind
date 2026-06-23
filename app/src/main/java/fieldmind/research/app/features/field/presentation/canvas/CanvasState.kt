@@ -51,6 +51,10 @@ class CanvasState(
     var collapsedBlockIds: Set<Long> by mutableStateOf(emptySet())
         private set
 
+    /** Whether to show the dot grid background. */
+    var showGrid: Boolean by mutableStateOf(true)
+        private set
+
     /** Canvas mode: infinite or page-by-page. */
     var canvasMode: CanvasMode by mutableStateOf(CanvasMode.INFINITE)
         private set
@@ -91,10 +95,23 @@ class CanvasState(
     }
 
     /**
-     * Zoom to a specific level centered on screen center (or a focus point).
+     * Zoom to a specific level, keeping [focus] (screen coordinates) stationary.
+     * If [focus] is not provided, defaults to the viewport center (caller should
+     * always pass [focus] for correct behavior — see [ZoomSlider]).
      */
-    fun zoomTo(newZoom: Float) {
-        zoom = newZoom.coerceIn(minZoom, maxZoom)
+    fun zoomTo(newZoom: Float, focus: Offset = Offset.Zero) {
+        val clampedZoom = newZoom.coerceIn(minZoom, maxZoom)
+        if (clampedZoom == zoom) return
+
+        // Convert focus point to canvas coords BEFORE zoom
+        val canvasFocusX = (focus.x - panX) / zoom
+        val canvasFocusY = (focus.y - panY) / zoom
+
+        zoom = clampedZoom
+
+        // Adjust pan so focus stays at the same canvas point
+        panX = focus.x - canvasFocusX * zoom
+        panY = focus.y - canvasFocusY * zoom
     }
 
     // ── Pan ──
@@ -155,6 +172,11 @@ class CanvasState(
     /** Expand a collapsed block. */
     fun expandBlock(id: Long) {
         collapsedBlockIds = collapsedBlockIds - id
+    }
+
+    /** Toggle the dot grid visibility. */
+    fun toggleGrid() {
+        showGrid = !showGrid
     }
 
     /** Toggle between infinite and page-by-page modes. */

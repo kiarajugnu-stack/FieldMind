@@ -13,12 +13,13 @@ import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
+import fieldmind.research.app.features.field.data.canvas.DrawingEntity
 
 /**
  * The main infinite canvas composable.
  *
  * Architecture (bottom → top):
- * 1. [GpuCanvasSurface] — OpenGL ES 2.0 surface rendering dot-grid + block outlines
+ * 1. [CanvasBackground] — Compose Canvas rendering dot-grid + selection highlights
  * 2. [SubcomposeLayout] — Positions [CanvasBlock] composables in a Compose overlay
  * 3. [BlockToolbar] — Floating action bar above the selected block
  * 4. Gesture layer — Pan, zoom, and tap detection
@@ -44,6 +45,10 @@ import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
  * @param showMinimap whether the minimap widget is visible
  * @param onToggleMinimap called when the minimap visibility should be toggled
  * @param viewportSize the current viewport size in screen pixels (needed by minimap)
+ * @param drawingState shared drawing tool state (null = no drawing enabled)
+ * @param drawings saved drawing entities for rendering
+ * @param onStrokeComplete called when user finishes a stroke
+ * @param onEraseDrawing called when user taps a stroke with eraser
  */
 @Composable
 fun InfiniteCanvas(
@@ -63,14 +68,18 @@ fun InfiniteCanvas(
     onBlockOpenLinkedEntity: ((Long) -> Unit)? = null,
     showMinimap: Boolean = true,
     onToggleMinimap: (() -> Unit)? = null,
-    viewportSize: Size = Size(0f, 0f)
+    viewportSize: Size = Size(0f, 0f),
+    drawingState: DrawingState? = null,
+    drawings: List<DrawingEntity> = emptyList(),
+    onStrokeComplete: (InProgressStroke) -> Unit = {},
+    onEraseDrawing: (Long) -> Unit = {}
 ) {
-    // Convert selected blocks to BlockRect for GPU highlight rendering
+    // Convert selected blocks to BlockRect for background highlight rendering
     val selectedBlockRects = remember(blocks, canvasState.selectedBlockIds) {
         blocks
             .filter { it.id in canvasState.selectedBlockIds }
             .map { block ->
-                GpuCanvasRenderer.BlockRect(
+                BlockRect(
                     x = block.positionX,
                     y = block.positionY,
                     w = block.width,
@@ -79,6 +88,9 @@ fun InfiniteCanvas(
                 )
             }
     }
+
+    // Zoom slider visibility — shown only in Infinite mode
+    val showZoomSlider = canvasState.canvasMode == CanvasMode.INFINITE
 
     /**
      * Returns the topmost block at the given canvas-space coordinate, or null.
@@ -110,14 +122,26 @@ fun InfiniteCanvas(
                 }
             )
     ) {
-        // Layer 1: GPU surface for grid + block outlines
-        GpuCanvasSurface(
+        // Layer 1: Canvas background (dot grid + selection highlights)
+        CanvasBackground(
             canvasState = canvasState,
             selectedBlockRects = selectedBlockRects,
             modifier = Modifier.fillMaxSize()
         )
 
-        // Layer 2: Compose block overlay (with viewport culling for performance)
+        // Layer 2: Drawing overlay (pen, highlighter, shapes, eraser)
+        if (drawingState != null) {
+            DrawingOverlay(
+                canvasState = canvasState,
+                drawingState = drawingState,
+                drawings = drawings,
+                onStrokeComplete = onStrokeComplete,
+                onEraseStroke = onEraseDrawing,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Layer 3: Compose block overlay (with viewport culling for performance)
         SubcomposeLayout(
             modifier = Modifier.fillMaxSize()
         ) { constraints ->
@@ -169,13 +193,16 @@ fun InfiniteCanvas(
             }
         }
 
-        // Layer 3: BlockToolbar (floating action bar above selected block)
+        // Layer 4: BlockToolbar (floating action bar above selected block)
         val selectedBlock = remember(blocks, canvasState.selectedBlockIds) {
             blocks.firstOrNull { it.id in canvasState.selectedBlockIds }
         }
         BlockToolbar(
             selectedBlock = selectedBlock,
             canvasState = canvasState,
+            onToggleCollapse = { blockId ->
+                canvasState.toggleBlockCollapse(blockId)
+            },
             onDelete = {
                 selectedBlock?.let { onBlockDelete?.invoke(it.id) }
             },
@@ -199,7 +226,7 @@ fun InfiniteCanvas(
             }
         )
 
-        // Layer 4: Pan/Zoom gesture layer (sits above everything)
+        // Layer 5: Pan/Zoom gesture layer (sits above everything)
         // Only activates for touches that do NOT start on a block
         PanZoomLayer(
             canvasState = canvasState,
@@ -207,7 +234,17 @@ fun InfiniteCanvas(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Layer 5: CanvasMinimap (floating widget, bottom-right)
+        // Layer 6: ZoomSlider (floating widget, right-center)
+        ZoomSlider(
+            canvasState = canvasState,
+            viewportSize = viewportSize,
+            show = showZoomSlider,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 8.dp)
+        )
+
+        // Layer 7: CanvasMinimap (floating widget, bottom-right)
         CanvasMinimap(
             blocks = blocks,
             canvasState = canvasState,

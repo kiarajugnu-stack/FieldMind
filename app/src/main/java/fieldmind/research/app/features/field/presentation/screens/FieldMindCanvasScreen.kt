@@ -40,6 +40,10 @@ import fieldmind.research.app.features.field.presentation.canvas.*
 import fieldmind.research.app.features.field.presentation.canvas.CanvasMode
 import fieldmind.research.app.features.field.presentation.canvas.FigureSidePanel
 import fieldmind.research.app.features.field.presentation.canvas.LinkToEntityDialog
+import fieldmind.research.app.features.field.presentation.canvas.PdfBlock
+import fieldmind.research.app.features.field.presentation.canvas.DrawingBlock
+import fieldmind.research.app.features.field.presentation.canvas.VoiceBlock
+import fieldmind.research.app.features.field.presentation.canvas.EquationBlock
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -91,6 +95,7 @@ fun CanvasScreen(
     val undoLabel by canvasViewModel.undoRedo.undoDescription.collectAsState()
     val redoLabel by canvasViewModel.undoRedo.redoDescription.collectAsState()
     val lastAddedBlockId by canvasViewModel.lastAddedBlockId.collectAsState()
+    val drawings by canvasViewModel.drawings.collectAsState()
 
     // Get the note title from FieldMindViewModel
     val notes by fieldViewModel.notes.collectAsState()
@@ -120,6 +125,10 @@ fun CanvasScreen(
 
     // ── Figure gallery state ──
     var showFigureGallery by remember { mutableStateOf(false) }
+
+    // ── PAGES mode: track current page ──
+    var currentPage by remember { mutableStateOf(0) }
+    var totalPages by remember { mutableStateOf(1) }
 
     // ── Canvas viewport with keyboard shortcuts ──
     Box(
@@ -164,10 +173,16 @@ fun CanvasScreen(
                     onZoomOut = { canvasViewModel.canvasState.applyZoom(0.83f, androidx.compose.ui.geometry.Offset(100f, 100f)) },
                     onZoomReset = { canvasViewModel.canvasState.resetView() },
                     onToggleCanvasMode = { canvasViewModel.canvasState.toggleCanvasMode() },
-                    onToggleGallery = { showFigureGallery = !showFigureGallery }
+                    onToggleGallery = { showFigureGallery = !showFigureGallery },
+                    currentPage = currentPage,
+                    totalPages = totalPages,
+                    showDrawingToolbar = canvasViewModel.drawingState.showToolbar,
+                    onToggleDrawing = { canvasViewModel.drawingState.toggleToolbar() },
+                    showGrid = canvasViewModel.canvasState.showGrid,
+                    onToggleGrid = { canvasViewModel.canvasState.toggleGrid() }
                 )
 
-            // ── Infinite canvas ──
+            // ── Canvas body (Infinite or Pages mode) ──
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -178,70 +193,125 @@ fun CanvasScreen(
                         }
                     }
             ) {
-                InfiniteCanvas(
-                    canvasState = canvasViewModel.canvasState,
-                    blocks = blocks,
-                    modifier = Modifier.fillMaxSize(),
-                    blockContent = { block: CanvasBlockEntity, isSelected: Boolean ->
-                        CanvasBlockContent(
-                            block = block,
-                            isSelected = isSelected,
-                            onContentChanged = { contentJson ->
-                                canvasViewModel.updateBlockContent(block.id, contentJson)
-                            },
-                            onInsertBlock = { type ->
-                                // Insert a new block below the current text block
-                                canvasViewModel.addBlock(
-                                    type = type,
-                                    positionX = block.positionX,
-                                    positionY = block.positionY + block.height + 16f,
-                                    width = 300f,
-                                    height = 200f
-                                )
-                            }
-                        )
-                    },
-                    onBlockMoved = { id, x, y -> canvasViewModel.moveBlock(id, x, y) },
-                    onBlockResized = { id, w, h -> canvasViewModel.resizeBlock(id, w, h) },
-                    onBlockTapped = { id ->
-                        canvasViewModel.selectBlock(id)
-                        // Open FigureSidePanel for image/figure/pdf blocks
-                        val block = blocks.firstOrNull { it.id == id }
-                        if (block != null && block.type in listOf("image", "figure", "pdf")) {
-                            figurePanelBlockId = id
-                        }
-                    },
-                    onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
-                    onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
-                    onBlockMoveForward = { id -> canvasViewModel.moveBlockForward(id) },
-                    onBlockMoveBackward = { id -> canvasViewModel.moveBlockBackward(id) },
-                    onBlockCopy = { id ->
-                        val block = blocks.firstOrNull { it.id == id }
-                        if (block != null) {
-                            clipboard.setText(AnnotatedString(block.contentJson))
-                            haptics.confirm()
-                        }
-                    },
-                    onBlockLinkToEntity = { id ->
-                        linkDialogBlockId = id
-                    },
-                    onBlockOpenLinkedEntity = { id ->
-                        // Navigate to the linked entity's detail screen
-                        val block = blocks.firstOrNull { it.id == id }
-                        if (block != null && block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
-                            onOpenLinkedEntity?.invoke(block.linkedEntityType, block.linkedEntityId!!)
-                        }
-                    },
-                    showMinimap = true,
-                    viewportSize = viewportSize
-                )
+                // ── Shared block content callback (used by both modes) ──
+                val blockContentCallback: @Composable (CanvasBlockEntity, Boolean) -> Unit = { block, isSelected ->
+                    CanvasBlockContent(
+                        block = block,
+                        isSelected = isSelected,
+                        onContentChanged = { contentJson ->
+                            canvasViewModel.updateBlockContent(block.id, contentJson)
+                        },
+                        onInsertBlock = { type ->
+                            canvasViewModel.addBlock(
+                                type = type,
+                                positionX = block.positionX,
+                                positionY = block.positionY + block.height + 16f,
+                                width = 300f,
+                                height = 200f
+                            )
+                        },
+                        canvasViewModel = canvasViewModel
+                    )
+                }
 
-                // ── Signal pan/zoom persistence when viewport changes ──
-                LaunchedEffect(viewportSize, canvasViewModel.canvasState.zoom, canvasViewModel.canvasState.panX, canvasViewModel.canvasState.panY) {
-                    if (viewportSize != Size.Zero) {
-                        canvasViewModel.onCanvasViewChanged()
+                // ── Shared block tap callback ──
+                val onBlockTappedCallback: (Long) -> Unit = { id ->
+                    canvasViewModel.selectBlock(id)
+                    val b = blocks.firstOrNull { it.id == id }
+                    if (b != null && b.type in listOf("image", "figure", "pdf")) {
+                        figurePanelBlockId = id
                     }
                 }
+
+                // ── Shared block copy callback ──
+                val onBlockCopyCallback: (Long) -> Unit = { id ->
+                    val b = blocks.firstOrNull { it.id == id }
+                    if (b != null) {
+                        clipboard.setText(AnnotatedString(b.contentJson))
+                        haptics.confirm()
+                    }
+                }
+
+                // ── Shared open linked entity callback ──
+                val onBlockOpenLinkedCallback: (Long) -> Unit = { id ->
+                    val b = blocks.firstOrNull { it.id == id }
+                    if (b != null && b.linkedEntityType.isNotBlank() && b.linkedEntityId != null) {
+                        onOpenLinkedEntity?.invoke(b.linkedEntityType, b.linkedEntityId!!)
+                    }
+                }
+
+                val drawingState = canvasViewModel.drawingState
+
+                if (canvasViewModel.canvasState.canvasMode == CanvasMode.PAGES) {
+                    PageCanvas(
+                        canvasState = canvasViewModel.canvasState,
+                        blocks = blocks,
+                        modifier = Modifier.fillMaxSize(),
+                        blockContent = blockContentCallback,
+                        onBlockMoved = { id, x, y -> canvasViewModel.moveBlock(id, x, y) },
+                        onBlockResized = { id, w, h -> canvasViewModel.resizeBlock(id, w, h) },
+                        onBlockTapped = onBlockTappedCallback,
+                        onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
+                        onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
+                        onBlockMoveForward = { id -> canvasViewModel.moveBlockForward(id) },
+                        onBlockMoveBackward = { id -> canvasViewModel.moveBlockBackward(id) },
+                        onBlockCopy = onBlockCopyCallback,
+                        onBlockLinkToEntity = { id -> linkDialogBlockId = id },
+                        onBlockOpenLinkedEntity = onBlockOpenLinkedCallback,
+                        currentPage = { page -> currentPage = page },
+                        totalPages = { pages -> totalPages = pages },
+                        viewportSize = viewportSize,
+                        drawingState = drawingState,
+                        drawings = drawings,
+                        onStrokeComplete = { stroke -> canvasViewModel.saveStroke(stroke) },
+                        onEraseDrawing = { id -> canvasViewModel.eraseDrawing(id) }
+                    )
+                } else {
+                    InfiniteCanvas(
+                        canvasState = canvasViewModel.canvasState,
+                        blocks = blocks,
+                        modifier = Modifier.fillMaxSize(),
+                        blockContent = blockContentCallback,
+                        onBlockMoved = { id, x, y -> canvasViewModel.moveBlock(id, x, y) },
+                        onBlockResized = { id, w, h -> canvasViewModel.resizeBlock(id, w, h) },
+                        onBlockTapped = onBlockTappedCallback,
+                        onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
+                        onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
+                        onBlockMoveForward = { id -> canvasViewModel.moveBlockForward(id) },
+                        onBlockMoveBackward = { id -> canvasViewModel.moveBlockBackward(id) },
+                        onBlockCopy = onBlockCopyCallback,
+                        onBlockLinkToEntity = { id -> linkDialogBlockId = id },
+                        onBlockOpenLinkedEntity = onBlockOpenLinkedCallback,
+                        showMinimap = true,
+                        viewportSize = viewportSize,
+                        drawingState = drawingState,
+                        drawings = drawings,
+                        onStrokeComplete = { stroke -> canvasViewModel.saveStroke(stroke) },
+                        onEraseDrawing = { id -> canvasViewModel.eraseDrawing(id) }
+                    )
+
+                    // ── Signal pan/zoom persistence when viewport changes ──
+                    LaunchedEffect(viewportSize, canvasViewModel.canvasState.zoom, canvasViewModel.canvasState.panX, canvasViewModel.canvasState.panY) {
+                        if (viewportSize != Size.Zero) {
+                            canvasViewModel.onCanvasViewChanged()
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Drawing toolbar (floating, bottom-center) ──
+        if (canvasViewModel.drawingState.showToolbar) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 24.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                DrawingToolbar(
+                    drawingState = canvasViewModel.drawingState,
+                    onDismiss = { canvasViewModel.drawingState.hideToolbar() }
+                )
             }
         }
 
@@ -395,7 +465,13 @@ private fun CanvasTopBar(
     onZoomOut: () -> Unit = {},
     onZoomReset: () -> Unit = {},
     onToggleCanvasMode: () -> Unit = {},
-    onToggleGallery: (() -> Unit)? = null
+    onToggleGallery: (() -> Unit)? = null,
+    currentPage: Int = 0,
+    totalPages: Int = 1,
+    showDrawingToolbar: Boolean = false,
+    onToggleDrawing: () -> Unit = {},
+    showGrid: Boolean = true,
+    onToggleGrid: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -519,56 +595,128 @@ private fun CanvasTopBar(
                 }
             }
 
-            // Zoom controls
-            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                // Zoom out
+            // Drawing tool toggle
+            Surface(
+                onClick = onToggleDrawing,
+                shape = RoundedCornerShape(12.dp),
+                color = if (showDrawingToolbar) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        MaterialSymbolIcon("draw"),
+                        if (showDrawingToolbar) "Hide drawing tools" else "Show drawing tools",
+                        size = 18.dp,
+                        tint = if (showDrawingToolbar) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            // Grid toggle (Infinite mode only) — fades in/out on mode switch
+            AnimatedVisibility(
+                visible = canvasMode != CanvasMode.PAGES,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 Surface(
-                    onClick = onZoomOut,
+                    onClick = onToggleGrid,
                     shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    color = if (showGrid) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier.size(36.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            MaterialSymbolIcon("zoom_out"),
-                            "Zoom out",
+                            MaterialSymbolIcon(if (showGrid) "grid_on" else "grid_off"),
+                            if (showGrid) "Hide grid" else "Show grid",
                             size = 18.dp,
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = if (showGrid) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
-                
-                // Zoom level display
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .clickable { onZoomReset() }
-                        .padding(horizontal = 8.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        "${(zoom * 100).toInt()}%",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(4.dp)
-                    )
-                }
+            }
 
-                // Zoom in
+            // Page indicator (PAGES mode only)
+            if (canvasMode == CanvasMode.PAGES) {
                 Surface(
-                    onClick = onZoomIn,
                     shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.size(36.dp)
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Icon(
-                            MaterialSymbolIcon("zoom_in"),
-                            "Zoom in",
-                            size = 18.dp,
-                            tint = MaterialTheme.colorScheme.onSurface
+                            MaterialSymbolIcon("description"),
+                            "Pages",
+                            size = 14.dp,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Text(
+                            "${currentPage + 1} / $totalPages",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
+            // Zoom controls (hides in PAGES mode where zoom is fixed at 1x)
+            if (canvasMode != CanvasMode.PAGES) {
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    // Zoom out
+                    Surface(
+                        onClick = onZoomOut,
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                MaterialSymbolIcon("zoom_out"),
+                                "Zoom out",
+                                size = 18.dp,
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                
+                    // Zoom level display
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                            .clickable { onZoomReset() }
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            "${(zoom * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(4.dp)
+                        )
+                    }
+
+                    // Zoom in
+                    Surface(
+                        onClick = onZoomIn,
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                MaterialSymbolIcon("zoom_in"),
+                                "Zoom in",
+                                size = 18.dp,
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
             }
@@ -641,7 +789,8 @@ private fun CanvasBlockContent(
     block: CanvasBlockEntity,
     isSelected: Boolean,
     onContentChanged: (String) -> Unit,
-    onInsertBlock: (String) -> Unit
+    onInsertBlock: (String) -> Unit,
+    canvasViewModel: CanvasViewModel? = null
 ) {
     when (block.type) {
         "text" -> {
@@ -677,6 +826,52 @@ private fun CanvasBlockContent(
                 onContentChanged = onContentChanged
             )
         }
+        "pdf" -> {
+            PdfBlock(
+                contentJson = block.contentJson,
+                onContentChanged = onContentChanged,
+                isSelected = isSelected
+            )
+        }
+        "drawing" -> {
+            val vm = canvasViewModel
+            if (vm != null) {
+                val blockDrawings by vm.observeBlockDrawings(block.id)
+                    .collectAsState(initial = emptyList())
+                DrawingBlock(
+                    blockId = block.id,
+                    drawings = blockDrawings,
+                    onContentChanged = onContentChanged,
+                    isSelected = isSelected,
+                    onSaveDrawing = { id, json -> vm.saveBlockDrawing(id, json) }
+                )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Drawing block",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                }
+            }
+        }
+        "voice" -> {
+            VoiceBlock(
+                contentJson = block.contentJson,
+                onContentChanged = onContentChanged,
+                isSelected = isSelected
+            )
+        }
+        "equation" -> {
+            EquationBlock(
+                contentJson = block.contentJson,
+                onContentChanged = onContentChanged,
+                isSelected = isSelected
+            )
+        }
         else -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -703,29 +898,36 @@ private fun TextBlockContent(
     onContentChanged: (String) -> Unit,
     onInsertBlock: (String) -> Unit
 ) {
-    // The contentJson is the Markdown text itself (stored as a JSON string)
+    // Parse contentJson: stored as {"text":"..."} or raw Markdown string
     val text = remember(contentJson) {
-        if (contentJson.isNotBlank() && contentJson.startsWith("\"")) {
+        if (contentJson.isNotBlank() && contentJson != "{}") {
             try {
-                org.json.JSONTokener(contentJson).nextValue().toString()
+                // Try {"text":"..."} format first
+                val obj = JSONObject(contentJson)
+                val t = obj.optString("text", null)
+                if (t != null) t else contentJson
             } catch (_: Exception) {
-                contentJson
+                // Fallback: try JSON string literal, else use raw
+                if (contentJson.startsWith("\"")) {
+                    try {
+                        org.json.JSONTokener(contentJson).nextValue().toString()
+                    } catch (_: Exception) {
+                        contentJson
+                    }
+                } else {
+                    contentJson
+                }
             }
         } else {
-            contentJson
+            ""
         }
     }
 
     TextBlock(
         text = text,
         onTextChange = { newText ->
-            // Store as a JSON string to maintain valid contentJson format
-            val json = try {
-                JSONObject().apply { put("text", newText) }.toString()
-            } catch (_: Exception) {
-                "\"$newText\""
-            }
-            onContentChanged(json)
+            // Always store as {"text":"..."} for consistency
+            onContentChanged(JSONObject().apply { put("text", newText) }.toString())
         },
         isSelected = isSelected,
         onInsertBlock = onInsertBlock
@@ -878,7 +1080,11 @@ private fun AddBlockMenu(
         "text" to "Text",
         "image" to "Image",
         "sticky" to "Sticky Note",
-        "table" to "Table"
+        "table" to "Table",
+        "pdf" to "PDF",
+        "drawing" to "Drawing",
+        "voice" to "Voice Note",
+        "equation" to "Equation"
     )
 
     Surface(
@@ -915,6 +1121,10 @@ private fun AddBlockMenu(
                             "image" -> MaterialSymbolIcon("image")
                             "sticky" -> MaterialSymbolIcon("sticky_note_2")
                             "table" -> MaterialSymbolIcon("table")
+                            "pdf" -> MaterialSymbolIcon("picture_as_pdf")
+                            "drawing" -> MaterialSymbolIcon("draw")
+                            "voice" -> MaterialSymbolIcon("mic")
+                            "equation" -> MaterialSymbolIcon("functions")
                             else -> MaterialSymbolIcon("add")
                         }
                         Icon(icon, label, size = 18.dp)

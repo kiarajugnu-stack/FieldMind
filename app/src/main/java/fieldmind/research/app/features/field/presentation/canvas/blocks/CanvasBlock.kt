@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +31,10 @@ import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlin.math.roundToInt
+
+// Fade block tools smoothly as zoom approaches the hide threshold
+private const val TOOL_FADE_START_ZOOM = 0.5f   // tools fully visible above this
+private const val TOOL_FADE_END_ZOOM = 0.3f     // tools fully hidden at this zoom
 
 /**
  * A single block on the infinite canvas, rendered in the Compose overlay layer.
@@ -77,6 +82,15 @@ fun CanvasBlock(
     // If collapsed, show minimal preview instead of full content
     val displayWidth = if (isCollapsed) 120f else block.width
     val displayHeight = if (isCollapsed) 100f else block.height
+
+    // Animated tool alpha: fades from 1.0 at zoom >= FADE_START to 0.0 at zoom <= FADE_END
+    val rawToolAlpha = ((canvasState.zoom - TOOL_FADE_END_ZOOM) /
+        (TOOL_FADE_START_ZOOM - TOOL_FADE_END_ZOOM)).coerceIn(0f, 1f)
+    val toolAlpha by animateFloatAsState(
+        targetValue = if (isCollapsed) 0f else rawToolAlpha,
+        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        label = "toolAlpha"
+    )
     
     // Block size at current zoom
     val scaledWidth = displayWidth * canvasState.zoom
@@ -108,15 +122,17 @@ fun CanvasBlock(
             // Background
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
-            // Drag to move
+            // Long-press + drag to move (taps pass through to child composables)
             .pointerInput(block.id) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    // Convert drag from screen-space to canvas-space
-                    val canvasDx = dragAmount.x / canvasState.zoom
-                    val canvasDy = dragAmount.y / canvasState.zoom
-                    onMoved(block.positionX + canvasDx, block.positionY + canvasDy)
-                }
+                detectDragGesturesAfterLongPress(
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        // Convert drag from screen-space to canvas-space
+                        val canvasDx = dragAmount.x / canvasState.zoom
+                        val canvasDy = dragAmount.y / canvasState.zoom
+                        onMoved(block.positionX + canvasDx, block.positionY + canvasDy)
+                    }
+                )
             }
     ) {
         if (isCollapsed) {
@@ -147,114 +163,85 @@ fun CanvasBlock(
             }
         }
 
-        // Minimize button + Resize handle (when selected)
-        if (isSelected && !isCollapsed) {
+        // ── Tool overlay (fades out smoothly as zoom decreases) ──
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer(alpha = toolAlpha)
+        ) {
             // Minimize button (top-left corner)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        start = (4f / canvasState.zoom).dp,
-                        top = (4f / canvasState.zoom).dp
-                    ),
-                contentAlignment = Alignment.TopStart
-            ) {
-                val buttonSize = (20f / canvasState.zoom).coerceAtLeast(16f).dp
+            if (isSelected && !isCollapsed) {
+                val buttonSize = (20f * canvasState.zoom).coerceIn(10f, 24f).dp
+                val iconSize = (10f * canvasState.zoom).coerceIn(6f, 14f).dp
                 Box(
                     modifier = Modifier
-                        .size(buttonSize)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                onToggleCollapse(block.id)
-                            }
-                        },
-                    contentAlignment = Alignment.Center
+                        .fillMaxSize()
+                        .padding(
+                            start = (4f * canvasState.zoom).coerceAtLeast(2f).dp,
+                            top = (4f * canvasState.zoom).coerceAtLeast(2f).dp
+                        ),
+                    contentAlignment = Alignment.TopStart
                 ) {
-                    Icon(
-                        MaterialSymbolIcon("unfold_less"),
-                        "Minimize",
-                        size = (10f / canvasState.zoom).coerceAtLeast(6f).dp,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(buttonSize)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .pointerInput(Unit) {
+                                detectTapGestures { onToggleCollapse(block.id) }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            MaterialSymbolIcon("unfold_less"),
+                            "Minimize",
+                            size = iconSize,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Link badge overlay (top-right corner)
+            if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            end = (4f / canvasState.zoom).dp,
+                            top = (4f / canvasState.zoom).dp
+                        ),
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size((16f * canvasState.zoom).coerceIn(10f, 20f).dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            MaterialSymbolIcon("link"),
+                            "Linked to ${block.linkedEntityType}",
+                            size = (10f * canvasState.zoom).coerceIn(6f, 14f).dp,
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
             }
 
             // Resize handle (bottom-right corner)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        end = (2f / canvasState.zoom).dp,
-                        bottom = (2f / canvasState.zoom).dp
-                    ),
-                contentAlignment = Alignment.BottomEnd
-            ) {
-                val handleSize = (16f / canvasState.zoom).coerceAtLeast(12f).dp
-                Box(
-                    modifier = Modifier
-                        .size(handleSize)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
-                                // Convert drag from screen-space to canvas-space
-                                val canvasDw = dragAmount.x / canvasState.zoom
-                                val canvasDh = dragAmount.y / canvasState.zoom
-                                val newW = (block.width + canvasDw).coerceAtLeast(60f)
-                                val newH = (block.height + canvasDh).coerceAtLeast(60f)
-                                onResized(newW, newH)
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        MaterialSymbolIcon("unfold_more"),
-                        "Resize",
-                        size = (8f / canvasState.zoom).coerceAtLeast(5f).dp,
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
+            if (isSelected && !isCollapsed) {
+                ResizeHandle(
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    onResize = { dx, dy ->
+                        val newW = (block.width + dx).coerceAtLeast(60f)
+                        val newH = (block.height + dy).coerceAtLeast(60f)
+                        onResized(newW, newH)
+                    },
+                    canvasState = canvasState
+                )
             }
-        }
-
-        // Link badge overlay (top-right corner)
-        if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        end = (4f / canvasState.zoom).dp,
-                        top = (4f / canvasState.zoom).dp
-                    ),
-                contentAlignment = Alignment.TopEnd
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size((16f / canvasState.zoom).coerceAtLeast(12f).dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        MaterialSymbolIcon("link"),
-                        "Linked to ${block.linkedEntityType}",
-                        size = (10f / canvasState.zoom).coerceAtLeast(6f).dp,
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
-        }
-
-        // Resize handle (bottom-right corner)
-        if (isSelected) {
-            ResizeHandle(
-                modifier = Modifier.align(Alignment.BottomEnd),
-                onResize = { dx, dy -> onResized(block.width + dx, block.height + dy) },
-                canvasState = canvasState
-            )
         }
     }
 }
@@ -268,7 +255,8 @@ private fun ResizeHandle(
     onResize: (Float, Float) -> Unit,
     canvasState: CanvasState
 ) {
-    val handleSize = 16.dp
+    // Scale handle size with zoom so it stays proportionally visible
+    val handleSize = (16f * canvasState.zoom).coerceIn(8f, 24f).dp
     Box(
         modifier = modifier
             .size(handleSize)
@@ -282,10 +270,7 @@ private fun ResizeHandle(
                     // Convert drag delta from screen-space to canvas-space
                     val canvasDx = dragAmount.x / canvasState.zoom
                     val canvasDy = dragAmount.y / canvasState.zoom
-                    // Enforce minimum size: blocks can't shrink below 60x40 logical px
-                    val minW = -300f   // prevents width < 0 (base 300 + this delta)
-                    val minH = -160f   // prevents height < 0 (base 200 + this delta)
-                    onResize(canvasDx.coerceAtLeast(minW), canvasDy.coerceAtLeast(minH))
+                    onResize(canvasDx, canvasDy)
                 }
             }
     )
