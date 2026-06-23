@@ -875,7 +875,7 @@ private fun FieldMindNavHost(
         } else null
     }
 
-    SharedTransitionLayout(modifier = modifier) { sharedTransitionScope ->
+    SharedTransitionLayout(modifier = modifier) { sharedTransitionScope: SharedTransitionScope ->
         NavHost(
             navController = navController,
             startDestination = "field_today",
@@ -884,7 +884,7 @@ private fun FieldMindNavHost(
             exitTransition = { routeExitTransition() },
             popEnterTransition = { routePopEnterTransition() },
             popExitTransition = { routePopExitTransition() }
-        ) content@{
+        ) {
             composable(FieldMindScreen.Home.route) {
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
                     TabSwipeHost(

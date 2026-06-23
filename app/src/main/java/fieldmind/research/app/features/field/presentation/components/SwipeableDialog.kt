@@ -75,8 +75,10 @@ fun SwipeableAlertDialog(
     var isAnimatingAway by remember { mutableStateOf(false) }
     var dialogWidth by remember { mutableFloatStateOf(1f) }
 
-    val dismissThreshold
-        get() = dialogWidth * 0.35f
+    val dismissThreshold: Float
+        get() {
+            return dialogWidth * 0.35f
+        }
 
     // Rubber-band: compute the effective (resisted) offset so position,
     // scale, and alpha all respond consistently beyond the threshold.
