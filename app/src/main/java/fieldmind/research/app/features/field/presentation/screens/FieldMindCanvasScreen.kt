@@ -873,9 +873,9 @@ private fun AddBlockMenu(
 
             blockTypes.forEach { (type, label) ->
                 Surface(
-                    onClick = { onSelect(type) },
                     shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.clickable { onSelect(type) }
                 ) {
                     Row(
                         modifier = Modifier
