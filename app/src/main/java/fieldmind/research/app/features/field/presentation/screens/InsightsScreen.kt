@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -478,7 +479,7 @@ fun InsightsScreen(
             // ═══════════ Data Records Table ═══════════
             if (dataRecords.isNotEmpty()) {
                 item { SectionHeader("Data records", "${dataRecords.size} entries") }
-                itemsIndexed(dataRecords.take(8)) { i, record -> DataRecordInsightCard(record, index = i, onClick = { onOpenDetail("data", record.id) }) }
+                itemsIndexed(dataRecords.take(8)) { i, record -> DataRecordInsightCard(record, i = i, onClick = { onOpenDetail("data", record.id) }) }
             }
 
             item { Spacer(Modifier.height(24.dp)) }

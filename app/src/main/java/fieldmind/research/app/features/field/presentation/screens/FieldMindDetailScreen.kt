@@ -2836,7 +2836,7 @@ private fun deleteEntityByKind(kind: String, id: Long, viewModel: FieldMindViewM
     }
 }
 
-// ══════════════════════════════════��═══════════════════════════════════
+// ═════════════════��════════════════��═══════════════════════════════════
 //  Source Detail Content — Sectioned layout with proper visual hierarchy
 // ══════════════════════════════════════════════════════════════════════
 
@@ -3046,7 +3046,7 @@ private fun SourceActionPanel(source: SourceEntity, projects: List<ProjectEntity
             }
             if (source.relatedProjectId != null) {
                 projects.firstOrNull { it.id == source.relatedProjectId }?.let { project ->
-                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project"), onClick = { onOpenDetail("project", project.id) }), animate = true
+                    EntityCard(project.title, "project", body = project.objective.ifBlank { project.researchQuestion }, meta = listOf("Linked project"), onClick = { onOpenDetail("project", project.id) }, animate = true)
                 }
             }
         }
