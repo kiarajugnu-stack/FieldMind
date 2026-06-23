@@ -487,6 +487,32 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     /**
+     * Save a stroke scoped to a specific drawing block (inline drawing within a block).
+     * Uses [DrawingEntity.blockId] to associate the stroke with the canvas block.
+     */
+    fun saveBlockDrawing(blockId: Long, strokeDataJson: String) {
+        val nid = _noteId.value ?: return
+        viewModelScope.launch {
+            val drawing = fieldmind.research.app.features.field.data.canvas.DrawingEntity(
+                noteId = nid,
+                blockId = blockId,
+                strokeDataJson = strokeDataJson,
+                toolType = "pen",
+                color = 0xFF1C1B19,
+                strokeWidth = 3f,
+                layerIndex = 0
+            )
+            repository.upsertDrawing(drawing)
+        }
+    }
+
+    /**
+     * Observe drawings scoped to a specific block.
+     */
+    fun observeBlockDrawings(blockId: Long): kotlinx.coroutines.flow.Flow<List<fieldmind.research.app.features.field.data.canvas.DrawingEntity>> =
+        repository.observeDrawingsForBlock(blockId)
+
+    /**
      * Erase (delete) a drawing by its ID.
      */
     fun eraseDrawing(id: Long) {

@@ -40,6 +40,10 @@ import fieldmind.research.app.features.field.presentation.canvas.*
 import fieldmind.research.app.features.field.presentation.canvas.CanvasMode
 import fieldmind.research.app.features.field.presentation.canvas.FigureSidePanel
 import fieldmind.research.app.features.field.presentation.canvas.LinkToEntityDialog
+import fieldmind.research.app.features.field.presentation.canvas.PdfBlock
+import fieldmind.research.app.features.field.presentation.canvas.DrawingBlock
+import fieldmind.research.app.features.field.presentation.canvas.VoiceBlock
+import fieldmind.research.app.features.field.presentation.canvas.EquationBlock
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -203,7 +207,8 @@ fun CanvasScreen(
                                 width = 300f,
                                 height = 200f
                             )
-                        }
+                        },
+                        canvasViewModel = canvasViewModel
                     )
                 }
 
@@ -755,7 +760,8 @@ private fun CanvasBlockContent(
     block: CanvasBlockEntity,
     isSelected: Boolean,
     onContentChanged: (String) -> Unit,
-    onInsertBlock: (String) -> Unit
+    onInsertBlock: (String) -> Unit,
+    canvasViewModel: CanvasViewModel? = null
 ) {
     when (block.type) {
         "text" -> {
@@ -789,6 +795,52 @@ private fun CanvasBlockContent(
                 contentJson = block.contentJson,
                 isSelected = isSelected,
                 onContentChanged = onContentChanged
+            )
+        }
+        "pdf" -> {
+            PdfBlock(
+                contentJson = block.contentJson,
+                onContentChanged = onContentChanged,
+                isSelected = isSelected
+            )
+        }
+        "drawing" -> {
+            val vm = canvasViewModel
+            if (vm != null) {
+                val blockDrawings by vm.observeBlockDrawings(block.id)
+                    .collectAsState(initial = emptyList())
+                DrawingBlock(
+                    blockId = block.id,
+                    drawings = blockDrawings,
+                    onContentChanged = onContentChanged,
+                    isSelected = isSelected,
+                    onSaveDrawing = { id, json -> vm.saveBlockDrawing(id, json) }
+                )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Drawing block",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                }
+            }
+        }
+        "voice" -> {
+            VoiceBlock(
+                contentJson = block.contentJson,
+                onContentChanged = onContentChanged,
+                isSelected = isSelected
+            )
+        }
+        "equation" -> {
+            EquationBlock(
+                contentJson = block.contentJson,
+                onContentChanged = onContentChanged,
+                isSelected = isSelected
             )
         }
         else -> {
@@ -998,7 +1050,11 @@ private fun AddBlockMenu(
         "text" to "Text",
         "image" to "Image",
         "sticky" to "Sticky Note",
-        "table" to "Table"
+        "table" to "Table",
+        "pdf" to "PDF",
+        "drawing" to "Drawing",
+        "voice" to "Voice Note",
+        "equation" to "Equation"
     )
 
     Surface(
@@ -1035,6 +1091,10 @@ private fun AddBlockMenu(
                             "image" -> MaterialSymbolIcon("image")
                             "sticky" -> MaterialSymbolIcon("sticky_note_2")
                             "table" -> MaterialSymbolIcon("table")
+                            "pdf" -> MaterialSymbolIcon("picture_as_pdf")
+                            "drawing" -> MaterialSymbolIcon("draw")
+                            "voice" -> MaterialSymbolIcon("mic")
+                            "equation" -> MaterialSymbolIcon("functions")
                             else -> MaterialSymbolIcon("add")
                         }
                         Icon(icon, label, size = 18.dp)
