@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
@@ -92,6 +93,10 @@ fun InfiniteCanvas(
     // Zoom slider visibility — shown only in Infinite mode
     val showZoomSlider = canvasState.canvasMode == CanvasMode.INFINITE
 
+    // ── Track viewport size for viewport culling ──
+    var viewportWidth by remember { mutableFloatStateOf(0f) }
+    var viewportHeight by remember { mutableFloatStateOf(0f) }
+
     /**
      * Returns the topmost block at the given canvas-space coordinate, or null.
      * Blocks are evaluated in reverse z-order (highest z-index first).
@@ -110,9 +115,39 @@ fun InfiniteCanvas(
         }
     }
 
+    // ── Memoized visible blocks computation ──
+    // Uses derivedStateOf for reactivity: only recalculates when zoom, pan, viewport,
+    // or blocks change. 300px padding provides a smooth recycling buffer.
+    val visibleBlocks by remember(blocks) {
+        derivedStateOf {
+            val vw = viewportWidth.coerceAtLeast(1f)
+            val vh = viewportHeight.coerceAtLeast(1f)
+            val padding = 300f
+            blocks.filter { block ->
+                val livePos = canvasState.liveBlockPositions[block.id]
+                val liveSize = canvasState.liveBlockSizes[block.id]
+                val posX = livePos?.x ?: block.positionX
+                val posY = livePos?.y ?: block.positionY
+                val w = liveSize?.width ?: block.width
+                val h = liveSize?.height ?: block.height
+                val screenPos = canvasState.canvasToScreen(posX, posY)
+                val screenSize = Size(w * canvasState.zoom, h * canvasState.zoom)
+
+                screenPos.x + screenSize.width > -padding &&
+                screenPos.x < vw + padding &&
+                screenPos.y + screenSize.height > -padding &&
+                screenPos.y < vh + padding
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
+            .onSizeChanged { size ->
+                viewportWidth = size.width.toFloat()
+                viewportHeight = size.height.toFloat()
+            }
             // ── Tap detection (for block selection + deselection) ──
             .then(
                 Modifier.pointerInput(blocks) {
@@ -148,28 +183,14 @@ fun InfiniteCanvas(
             )
         }
 
-        // Layer 3: Compose block overlay (with viewport culling for performance)
+        // Layer 3: Compose block overlay (with viewport culling and block recycling)
+        // visibleBlocks is pre-computed via derivedStateOf above (300px padding buffer)
+        // to minimize composition/disposal churn during rapid pan/zoom.
         SubcomposeLayout(
             modifier = Modifier.fillMaxSize()
         ) { constraints ->
-            // Only render blocks that are visible in the current viewport
-            val visibleBlocks = blocks.filter { block ->
-                val livePos = canvasState.liveBlockPositions[block.id]
-                val liveSize = canvasState.liveBlockSizes[block.id]
-                val posX = livePos?.x ?: block.positionX
-                val posY = livePos?.y ?: block.positionY
-                val w = liveSize?.width ?: block.width
-                val h = liveSize?.height ?: block.height
-                val screenPos = canvasState.canvasToScreen(posX, posY)
-                val screenSize = Size(w * canvasState.zoom, h * canvasState.zoom)
-                
-                // Check if block is within viewport (with 100px padding for smooth scrolling)
-                val padding = 100f
-                screenPos.x + screenSize.width > -padding &&
-                screenPos.x < constraints.maxWidth + padding &&
-                screenPos.y + screenSize.height > -padding &&
-                screenPos.y < constraints.maxHeight + padding
-            }
+            // Read the memoized visible blocks — no inline filter needed
+            // (computed outside the measurement pass via derivedStateOf)
             
             val placeables = visibleBlocks.map { block ->
                 subcompose("block_${block.id}") {
