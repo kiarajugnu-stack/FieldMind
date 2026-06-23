@@ -350,13 +350,16 @@ fun TabSwipeHost(
     var tabOffsetX by remember { mutableFloatStateOf(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
     var systemBackJustCompleted by remember { mutableStateOf(false) }
+
+    // Disable swipe gestures when keyboard is open (user is editing text)
+    val isImeVisible = WindowInsets.isImeVisible
     
     // Check if swipe directions are available
     val canSwipeBack = onSwipeBack != null
     val canSwipeForward = onSwipeForward != null
 
     // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
-    PredictiveBackHandler(enabled = !reduceMotion && onBack != null) { progressFlow ->
+    PredictiveBackHandler(enabled = !reduceMotion && onBack != null && !isImeVisible) { progressFlow ->
         try {
             progressFlow.collect { backEvent ->
                 tabOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
@@ -417,7 +420,7 @@ fun TabSwipeHost(
                     clip = true
                 }
                 .then(
-                    if (!reduceMotion) {
+                    if (!reduceMotion && !isImeVisible) {
                         Modifier.pointerInput(Unit) {
                             detectDragGestures(
                                 onDragStart = { /* swipe anywhere */ },
@@ -484,8 +487,11 @@ fun SwipeBackHost(
     var contentHeight by remember { mutableFloatStateOf(1f) }
     var systemBackJustCompleted by remember { mutableStateOf(false) }
 
+    // Disable swipe gestures when keyboard is open (user is editing text)
+    val isImeVisible = WindowInsets.isImeVisible
+
     // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
-    PredictiveBackHandler(enabled = !reduceMotion) { progressFlow ->
+    PredictiveBackHandler(enabled = !reduceMotion && !isImeVisible) { progressFlow ->
         try {
             progressFlow.collect { backEvent ->
                 targetOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
@@ -589,7 +595,7 @@ fun SwipeBackHost(
                     clip = true
                 }
                 .then(
-                    if (!reduceMotion) {
+                    if (!reduceMotion && !isImeVisible) {
                         Modifier.pointerInput(Unit) {
                             detectDragGestures(
                                 onDragStart = { startPos ->
