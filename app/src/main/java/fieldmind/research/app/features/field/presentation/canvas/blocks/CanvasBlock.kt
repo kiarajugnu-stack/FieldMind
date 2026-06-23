@@ -32,8 +32,9 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlin.math.roundToInt
 
-// Below this zoom threshold, hide block tools (minimize button, resize handle, link badge)
-private const val TOOL_HIDE_ZOOM_THRESHOLD = 0.3f
+// Fade block tools smoothly as zoom approaches the hide threshold
+private const val TOOL_FADE_START_ZOOM = 0.5f   // tools fully visible above this
+private const val TOOL_FADE_END_ZOOM = 0.3f     // tools fully hidden at this zoom
 
 /**
  * A single block on the infinite canvas, rendered in the Compose overlay layer.
@@ -82,9 +83,14 @@ fun CanvasBlock(
     val displayWidth = if (isCollapsed) 120f else block.width
     val displayHeight = if (isCollapsed) 100f else block.height
 
-    // Whether to show block tools (minimize, resize handle, link badge)
-    // Hide at very low zoom levels to avoid visual clutter
-    val showTools = canvasState.zoom >= TOOL_HIDE_ZOOM_THRESHOLD && !isCollapsed
+    // Animated tool alpha: fades from 1.0 at zoom >= FADE_START to 0.0 at zoom <= FADE_END
+    val rawToolAlpha = ((canvasState.zoom - TOOL_FADE_END_ZOOM) /
+        (TOOL_FADE_START_ZOOM - TOOL_FADE_END_ZOOM)).coerceIn(0f, 1f)
+    val toolAlpha by animateFloatAsState(
+        targetValue = if (isCollapsed) 0f else rawToolAlpha,
+        animationSpec = spring(stiffness = Spring.StiffnessLow),
+        label = "toolAlpha"
+    )
     
     // Block size at current zoom
     val scaledWidth = displayWidth * canvasState.zoom
@@ -157,80 +163,85 @@ fun CanvasBlock(
             }
         }
 
-        // Minimize button (top-left corner, when selected and zoom allows)
-        if (isSelected && showTools) {
-            val buttonSize = (20f * canvasState.zoom).coerceIn(10f, 24f).dp
-            val iconSize = (10f * canvasState.zoom).coerceIn(6f, 14f).dp
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        start = (4f * canvasState.zoom).coerceAtLeast(2f).dp,
-                        top = (4f * canvasState.zoom).coerceAtLeast(2f).dp
-                    ),
-                contentAlignment = Alignment.TopStart
-            ) {
+        // ── Tool overlay (fades out smoothly as zoom decreases) ──
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer(alpha = toolAlpha)
+        ) {
+            // Minimize button (top-left corner)
+            if (isSelected && !isCollapsed) {
+                val buttonSize = (20f * canvasState.zoom).coerceIn(10f, 24f).dp
+                val iconSize = (10f * canvasState.zoom).coerceIn(6f, 14f).dp
                 Box(
                     modifier = Modifier
-                        .size(buttonSize)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .pointerInput(Unit) {
-                            detectTapGestures {
-                                onToggleCollapse(block.id)
-                            }
-                        },
-                    contentAlignment = Alignment.Center
+                        .fillMaxSize()
+                        .padding(
+                            start = (4f * canvasState.zoom).coerceAtLeast(2f).dp,
+                            top = (4f * canvasState.zoom).coerceAtLeast(2f).dp
+                        ),
+                    contentAlignment = Alignment.TopStart
                 ) {
-                    Icon(
-                        MaterialSymbolIcon("unfold_less"),
-                        "Minimize",
-                        size = iconSize,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(buttonSize)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .pointerInput(Unit) {
+                                detectTapGestures { onToggleCollapse(block.id) }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            MaterialSymbolIcon("unfold_less"),
+                            "Minimize",
+                            size = iconSize,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
-        }
 
-        // Link badge overlay (top-right corner)
-        if (showTools && block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        end = (4f / canvasState.zoom).dp,
-                        top = (4f / canvasState.zoom).dp
-                    ),
-                contentAlignment = Alignment.TopEnd
-            ) {
+            // Link badge overlay (top-right corner)
+            if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
                 Box(
                     modifier = Modifier
-                        .size((16f * canvasState.zoom).coerceIn(10f, 20f).dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
+                        .fillMaxSize()
+                        .padding(
+                            end = (4f / canvasState.zoom).dp,
+                            top = (4f / canvasState.zoom).dp
+                        ),
+                    contentAlignment = Alignment.TopEnd
                 ) {
-                    Icon(
-                        MaterialSymbolIcon("link"),
-                        "Linked to ${block.linkedEntityType}",
-                        size = (10f * canvasState.zoom).coerceIn(6f, 14f).dp,
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size((16f * canvasState.zoom).coerceIn(10f, 20f).dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            MaterialSymbolIcon("link"),
+                            "Linked to ${block.linkedEntityType}",
+                            size = (10f * canvasState.zoom).coerceIn(6f, 14f).dp,
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
             }
-        }
 
-        // Resize handle (bottom-right corner, when selected)
-        if (isSelected && showTools) {
-            ResizeHandle(
-                modifier = Modifier.align(Alignment.BottomEnd),
-                onResize = { dx, dy ->
-                    val newW = (block.width + dx).coerceAtLeast(60f)
-                    val newH = (block.height + dy).coerceAtLeast(60f)
-                    onResized(newW, newH)
-                },
-                canvasState = canvasState
-            )
+            // Resize handle (bottom-right corner)
+            if (isSelected && !isCollapsed) {
+                ResizeHandle(
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    onResize = { dx, dy ->
+                        val newW = (block.width + dx).coerceAtLeast(60f)
+                        val newH = (block.height + dy).coerceAtLeast(60f)
+                        onResized(newW, newH)
+                    },
+                    canvasState = canvasState
+                )
+            }
         }
     }
 }
