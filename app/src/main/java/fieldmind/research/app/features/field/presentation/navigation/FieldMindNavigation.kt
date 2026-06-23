@@ -902,61 +902,33 @@ private fun FieldMindNavHost(
             popEnterTransition = { routePopEnterTransition() },
             popExitTransition = { routePopExitTransition() }
         ) {
+            // ── 5 bottom tabs — all use TabSwipeHost for left/right tab swiping ──
+            // Edge tabs (Home=first, Library=last) gracefully handle missing directions:
+            // canSwipeBack=false on Home, canSwipeForward=false on Library.
+            // System back gesture (left edge) handled by PredictiveBackHandler with peek preview.
             composable(FieldMindScreen.Home.route) {
-                // Only use TabSwipeHost (carousel) when BOTH adjacent tabs exist.
-                // Edge tabs (Home, Library) use SwipeBackHost for system back only.
-                if (onSwipeToPrevTab != null && onSwipeToNextTab != null) {
-                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }) {
-                        HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader, onOpenCanvas = { viewModel.addNote(title = "Canvas", body = "", category = "Other", tags = "canvas") { noteId -> navController.navigateToDestination("field_canvas/$noteId") } })
-                    }
-                } else {
-                    SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
-                        HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader, onOpenCanvas = { viewModel.addNote(title = "Canvas", body = "", category = "Other", tags = "canvas") { noteId -> navController.navigateToDestination("field_canvas/$noteId") } })
-                    }
+                TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
+                    HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader, onOpenCanvas = { viewModel.addNote(title = "Canvas", body = "", category = "Other", tags = "canvas") { noteId -> navController.navigateToDestination("field_canvas/$noteId") } })
                 }
             }
             composable(FieldMindScreen.Observe.route) {
-                if (onSwipeToPrevTab != null && onSwipeToNextTab != null) {
-                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }) {
-                        ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail)
-                    }
-                } else {
-                    SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
-                        ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail)
-                    }
+                TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
+                    ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail)
                 }
             }
             composable(FieldMindScreen.Projects.route) {
-                if (onSwipeToPrevTab != null && onSwipeToNextTab != null) {
-                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }) {
-                        ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }, onNavigate = { navController.navigateToDestination(it.route) })
-                    }
-                } else {
-                    SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
-                        ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }, onNavigate = { navController.navigateToDestination(it.route) })
-                    }
+                TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
+                    ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }, onNavigate = { navController.navigateToDestination(it.route) })
                 }
             }
             composable(FieldMindScreen.Library.route) {
-                if (onSwipeToPrevTab != null && onSwipeToNextTab != null) {
-                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }) {
-                        KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader)
-                    }
-                } else {
-                    SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
-                        KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader)
-                    }
+                TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
+                    KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader)
                 }
             }
             composable(FieldMindScreen.Insights.route) {
-                if (onSwipeToPrevTab != null && onSwipeToNextTab != null) {
-                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }) {
-                        InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail)
-                    }
-                } else {
-                    SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
-                        InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail)
-                    }
+                TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab, onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
+                    InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail)
                 }
             }
             composable(FieldMindScreen.Learn.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { FieldMindLearnScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenReader = openReader) } }

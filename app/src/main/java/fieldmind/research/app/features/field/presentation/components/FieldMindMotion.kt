@@ -351,6 +351,7 @@ fun TabSwipeHost(
     onSwipeBack: (() -> Unit)?,
     onSwipeForward: (() -> Unit)?,
     onBack: (() -> Unit)? = null,
+    previousScreen: PreviousScreenInfo? = null,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -376,26 +377,24 @@ fun TabSwipeHost(
     val canSwipeBack = onSwipeBack != null
     val canSwipeForward = onSwipeForward != null
 
+    // ── Track whether the current gesture is a system back or tab swipe ──
+    var isSystemBack by remember { mutableStateOf(false) }
+
     // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
-    // Note: snapTo is called directly (not via scope.launch) because PredictiveBackHandler's
-    // lambda is already a suspend context, matching SwipeBackHost's implementation.
     PredictiveBackHandler(enabled = !reduceMotion && onBack != null && !isImeVisible) { progressFlow ->
+        isSystemBack = true
         try {
             progressFlow.collect { backEvent ->
                 val offset = (contentWidth * backEvent.progress).coerceAtLeast(0f)
                 animX.snapTo(offset)
             }
             // Flow completed → gesture committed
-            // Reset offset before navigating to prevent blank/offset screen
-            // during the pop exit transition.
+            isSystemBack = false
             animX.snapTo(0f)
-            // Navigate immediately for both gesture swipes AND hardware button presses.
-            // Note: detectDragGestures.onDragEnd does NOT fire for system back gestures,
-            // so we must navigate here directly rather than deferring to onDragEnd.
             haptics.confirm()
             onBack?.invoke()
         } catch (_: CancellationException) {
-            // Gesture cancelled — snap back instantly
+            isSystemBack = false
             animX.snapTo(0f)
         }
     }
@@ -412,7 +411,141 @@ fun TabSwipeHost(
                 contentWidth = coords.size.width.toFloat().coerceAtLeast(1f)
             }
     ) {
-        // Gradient scrim on the side opposite the swipe direction
+        // ── Previous screen peek preview (system back gesture only) ──
+        if (progress > 0.01f && previousScreen != null && isSystemBack) {
+            val previewWidth = contentWidth * 0.85f
+            val previewOffset = animX.value - previewWidth
+            val previewScale = 0.94f + (1f - 0.94f) * (1f - progress)
+            val screenColor = MaterialTheme.colorScheme.primary
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset { IntOffset(previewOffset.roundToInt(), 0) }
+                    .width(Dp(previewWidth))
+                    .fillMaxHeight()
+                    .graphicsLayer {
+                        scaleX = previewScale
+                        scaleY = previewScale
+                        transformOrigin = TransformOrigin(1f, 0.5f)
+                    }
+            ) {
+                // Main preview surface — full-height rounded card like a real screen
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                    tonalElevation = 3.dp,
+                    shadowElevation = 16.dp,
+                    border = androidx.compose.foundation.BorderStroke(
+                        0.5.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        // ── Mock status bar area ──
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(screenColor.copy(alpha = 0.08f))
+                                .padding(horizontal = 20.dp, vertical = 14.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        FieldMindIcons.ChevronLeft,
+                                        "Back",
+                                        size = 22.dp,
+                                        tint = screenColor.copy(alpha = 0.8f)
+                                    )
+                                    Text(
+                                        previousScreen.label,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+
+                        // ── Mock screen content cards ──
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            repeat(3) { idx ->
+                                val cardAlpha = 1f - idx * 0.12f
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(if (idx == 0) 80.dp else 60.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = cardAlpha * 0.35f)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(if (idx == 0) 40.dp else 32.dp)
+                                                .background(
+                                                    screenColor.copy(alpha = cardAlpha * 0.15f),
+                                                    RoundedCornerShape(50)
+                                                )
+                                        )
+                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .width((80 + idx * 30).dp)
+                                                    .height(10.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.onSurface.copy(alpha = cardAlpha * 0.15f),
+                                                        RoundedCornerShape(4.dp)
+                                                    )
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .width((120 + idx * 20).dp)
+                                                    .height(8.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.onSurface.copy(alpha = cardAlpha * 0.09f),
+                                                        RoundedCornerShape(4.dp)
+                                                    )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(Modifier.weight(1f))
+
+                            Text(
+                                "Swipe to go back",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Gradient scrim on the side opposite the swipe direction ──
         if (progress > 0.01f) {
             Box(
                 modifier = Modifier.fillMaxSize().background(
@@ -431,6 +564,7 @@ fun TabSwipeHost(
             )
         }
 
+        // ── Current screen content (transformed) ──
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -583,9 +717,9 @@ fun SwipeBackHost(
         // Uses parallax (70% speed) for depth layering effect.
         if (progress > 0.01f && previousScreen != null && isHorizontalPeek) {
             val previewWidth = contentWidth * 0.85f
-            // Parallax: previous screen moves slower than current screen
             val previewOffset = animX.value - previewWidth
-            val previewScale = 0.94f + (1f - 0.94f) * (1f - progress)  // scale from 0.94 to 1.0 as progress increases
+            val previewScale = 0.94f + (1f - 0.94f) * (1f - progress)
+            val screenColor = MaterialTheme.colorScheme.primary
 
             Box(
                 modifier = Modifier
@@ -596,53 +730,124 @@ fun SwipeBackHost(
                     .graphicsLayer {
                         scaleX = previewScale
                         scaleY = previewScale
-                        transformOrigin = TransformOrigin(1f, 0.5f) // scale from right edge
+                        transformOrigin = TransformOrigin(1f, 0.5f)
                     }
             ) {
-                // Decorative primary-colored strip on the left edge
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(4.dp)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .align(Alignment.CenterStart)
-                )
-
-                // Main preview surface
+                // Main preview surface — full-height rounded card like a real screen
                 Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = 4.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
                     tonalElevation = 3.dp,
-                    shadowElevation = 12.dp
+                    shadowElevation = 16.dp,
+                    border = androidx.compose.foundation.BorderStroke(
+                        0.5.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+                    )
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(start = 24.dp, end = 16.dp),
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.Center
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        Icon(
-                            FieldMindIcons.ChevronLeft,
-                            "Back",
-                            size = 32.dp,
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                        )
-                        Spacer(Modifier.height(12.dp))
-                        Text(
-                            previousScreen.label,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Swipe to go back",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
+                        // ── Mock status bar area ──
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(screenColor.copy(alpha = 0.08f))
+                                .padding(horizontal = 20.dp, vertical = 14.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Back arrow + screen name
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        FieldMindIcons.ChevronLeft,
+                                        "Back",
+                                        size = 22.dp,
+                                        tint = screenColor.copy(alpha = 0.8f)
+                                    )
+                                    Text(
+                                        previousScreen.label,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+
+                        // ── Mock screen content area ──
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Placeholder content cards
+                            repeat(3) { idx ->
+                                val cardAlpha = 1f - idx * 0.12f
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(if (idx == 0) 80.dp else 60.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = cardAlpha * 0.35f)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        // Mock avatar circle
+                                        Box(
+                                            modifier = Modifier
+                                                .size(if (idx == 0) 40.dp else 32.dp)
+                                                .background(
+                                                    screenColor.copy(alpha = cardAlpha * 0.15f),
+                                                    RoundedCornerShape(50)
+                                                )
+                                        )
+                                        // Mock text lines
+                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .width((80 + idx * 30).dp)
+                                                    .height(10.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.onSurface.copy(alpha = cardAlpha * 0.15f),
+                                                        RoundedCornerShape(4.dp)
+                                                    )
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .width((120 + idx * 20).dp)
+                                                    .height(8.dp)
+                                                    .background(
+                                                        MaterialTheme.colorScheme.onSurface.copy(alpha = cardAlpha * 0.09f),
+                                                        RoundedCornerShape(4.dp)
+                                                    )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(Modifier.weight(1f))
+
+                            // Bottom hint
+                            Text(
+                                "Swipe to go back",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                        }
                     }
                 }
             }
@@ -751,17 +956,10 @@ fun SwipeBackHost(
                                     }
                                     if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
                                         haptics.confirm()
-                                        // Animate to full extent then navigate — await completion, no delay()
+                                        activeDirection = null
+                                        // Snap offset to 0 immediately before navigating.
+                                        // snapTo is a suspend function — must be called inside scope.launch.
                                         scope.launch {
-                                            if (activeDirection == SwipeDirection.Horizontal) {
-                                                animX.animateTo(contentWidth, FieldMindMotion.swipeBackSpring)
-                                            } else {
-                                                animY.animateTo(contentHeight, FieldMindMotion.swipeBackSpring)
-                                            }
-                                            activeDirection = null
-                                            // Reset offset before navigating to prevent blank screen
-                                            // during the pop exit transition (graphicsLayer translation
-                                            // would otherwise shift content off-screen).
                                             animX.snapTo(0f)
                                             animY.snapTo(0f)
                                             onBack()
