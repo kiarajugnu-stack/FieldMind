@@ -875,7 +875,7 @@ private fun FieldMindNavHost(
         } else null
     }
 
-    SharedTransitionLayout(modifier = modifier) { sharedTransitionScope ->
+    SharedTransitionLayout(modifier = modifier) {
         NavHost(
             navController = navController,
             startDestination = "field_today",
