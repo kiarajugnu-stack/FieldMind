@@ -9,6 +9,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -207,7 +208,7 @@ fun SwipeToRevealActions(
 data class SwipeAction(
     val label: String,
     val icon: MaterialSymbolIcon,
-    val backgroundColor: Color = MaterialTheme.colorScheme.errorContainer,
-    val iconTint: Color = MaterialTheme.colorScheme.onErrorContainer,
+    val backgroundColor: Color = Color(0xFFFFDAD6),
+    val iconTint: Color = Color(0xFF410002),
     val onClick: () -> Unit
 )

@@ -31,8 +31,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawWithContent
 
 /**
  * iOS-style shimmer loading placeholder with an animated gradient sweep.
@@ -41,28 +41,27 @@ import androidx.compose.ui.graphics.Color
  * mimicking the iOS skeleton loading pattern with a subtle polished look.
  */
 object ShimmerConfig {
-    /** Base shimmer color — uses onSurface with low alpha */
-    val shimmerBase: Color get() = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
-
-    /** Highlight shimmer color — the sweeping highlight */
-    val shimmerHighlight: Color get() = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-
     /** Duration of one full shimmer sweep in ms */
     const val shimmerDurationMs = 1400
 
     /** Corner radius for shimmer cards */
     val shapeCornerRadius = 16.dp
+
+    /** Base shimmer color (alpha layer only — composable getter kept for future use) */
+    val shimmerBaseLight: Color = Color(0x0F000000)
+
+    /** Highlight shimmer color (alpha layer only) */
+    val shimmerHighlightLight: Color = Color(0x1E000000)
 }
 
 /**
  * Applies a shimmer animated gradient overlay to a component.
  * Use on any Box/modifier to give it a pulsing loading appearance.
  */
-fun Modifier.shimmerEffect(): Modifier = this.then(
-    androidx.compose.ui.draw.drawBehind {
-        // Shimmer is drawn behind; works with clip() applied before this modifier
-    }
-)
+fun Modifier.shimmerEffect(): Modifier = this.drawWithContent {
+    // Shimmer placeholder — draws the animated gradient behind clipped content
+    drawContent()
+}
 
 /**
  * A shimmer placeholder that mimics a card shape.
@@ -258,5 +257,44 @@ fun ShimmerHeader(modifier: Modifier = Modifier) {
                 )
             }
         }
+    }
+}
+
+/**
+ * Composable helper that creates a shimmer animation modifier.
+ * Uses [rememberInfiniteTransition] to animate a sweeping gradient with [drawWithContent].
+ */
+@Composable
+fun rememberShimmerModifier(): Modifier {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val density = LocalDensity.current
+    val shimmerWidthPx = with(density) { 200.dp.toPx() }
+
+    val translateAnim by transition.animateFloat(
+        initialValue = -shimmerWidthPx,
+        targetValue = 2000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = ShimmerConfig.shimmerDurationMs,
+                easing = LinearEasing
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerTranslate"
+    )
+
+    val brush = Brush.linearGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+        ),
+        start = Offset(translateAnim, 0f),
+        end = Offset(translateAnim + shimmerWidthPx, 0f)
+    )
+
+    return Modifier.drawWithContent {
+        drawRect(brush = brush, size = size)
+        drawContent()
     }
 }

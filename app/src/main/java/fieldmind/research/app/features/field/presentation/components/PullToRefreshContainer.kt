@@ -162,7 +162,7 @@ fun PullToRefreshBox(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(if (showRefreshIndicator) with(density) { maxPullPx * 0.3f } else animatedPull.dp)
+                    .height(if (showRefreshIndicator) with(density) { (maxPullPx * 0.3f).toDp() } else animatedPull.dp)
                     .align(Alignment.TopCenter),
                 contentAlignment = Alignment.Center
             ) {
