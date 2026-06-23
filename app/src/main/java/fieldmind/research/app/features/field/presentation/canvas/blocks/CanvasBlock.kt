@@ -218,12 +218,16 @@ fun CanvasBlock(
         }
 
         if (isCollapsed) {
-            // Collapsed state: show preview with expand button
-            // Use fillMaxWidth + defaultMinSize instead of fillMaxSize to avoid
-            // layout issues inside the wrapContentHeight container.
+            // Collapsed state: show preview with expand button.
+            // Use fillMaxWidth + inner wrapContentHeight so the collapsed box
+            // naturally sizes to icon+label height via the outer wrapContentHeight.
+            // Do NOT use fillMaxSize — inside a wrapContentHeight parent it would
+            // fill the full viewport height constraint, making the "minimized" block
+            // appear full-height (the bug we're fixing).
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .wrapContentHeight()
                     .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -245,8 +249,7 @@ fun CanvasBlock(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-            }
-        } else {
+            } else {
             // Full content display — measure natural content height for auto-expand
             Box(
                 modifier = Modifier
