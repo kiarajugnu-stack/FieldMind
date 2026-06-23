@@ -703,29 +703,35 @@ private fun TextBlockContent(
     onContentChanged: (String) -> Unit,
     onInsertBlock: (String) -> Unit
 ) {
-    // The contentJson is the Markdown text itself (stored as a JSON string)
+    // Parse contentJson: stored as {"text":"..."} or raw Markdown string
     val text = remember(contentJson) {
-        if (contentJson.isNotBlank() && contentJson.startsWith("\"")) {
+        if (contentJson.isNotBlank()) {
             try {
-                org.json.JSONTokener(contentJson).nextValue().toString()
+                // Try {"text":"..."} format first
+                val obj = JSONObject(contentJson)
+                obj.optString("text", contentJson)
             } catch (_: Exception) {
-                contentJson
+                // Fallback: try JSON string literal, else use raw
+                if (contentJson.startsWith("\"")) {
+                    try {
+                        org.json.JSONTokener(contentJson).nextValue().toString()
+                    } catch (_: Exception) {
+                        contentJson
+                    }
+                } else {
+                    contentJson
+                }
             }
         } else {
-            contentJson
+            ""
         }
     }
 
     TextBlock(
         text = text,
         onTextChange = { newText ->
-            // Store as a JSON string to maintain valid contentJson format
-            val json = try {
-                JSONObject().apply { put("text", newText) }.toString()
-            } catch (_: Exception) {
-                "\"$newText\""
-            }
-            onContentChanged(json)
+            // Always store as {"text":"..."} for consistency
+            onContentChanged(JSONObject().apply { put("text", newText) }.toString())
         },
         isSelected = isSelected,
         onInsertBlock = onInsertBlock

@@ -176,6 +176,9 @@ fun InfiniteCanvas(
         BlockToolbar(
             selectedBlock = selectedBlock,
             canvasState = canvasState,
+            onToggleCollapse = { blockId ->
+                canvasState.toggleBlockCollapse(blockId)
+            },
             onDelete = {
                 selectedBlock?.let { onBlockDelete?.invoke(it.id) }
             },
