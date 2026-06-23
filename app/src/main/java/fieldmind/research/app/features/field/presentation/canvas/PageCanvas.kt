@@ -20,6 +20,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -289,17 +290,18 @@ fun PageCanvas(
 
             // Compute toolbar position: the block's position within the document,
             // minus the scroll offset, gives its screen position within the outer Box.
+            val pageStartY = pages.getOrNull(selPageIdx)?.startY ?: 0f
             val docBlockY = paddingTopPx + selPageIdx * totalPageStep +
-                (selectedBlock.positionY - pages.getOrNull(selPageIdx)?.startY ?: 0f)
+                (selectedBlock.positionY - pageStartY)
             val toolBarY = docBlockY - scrollState.value
 
             // Compute toolbar offset in Dp for a stable positioning
-            val toolbarOffsetDpX: Dp = with(density) {
+            val toolbarOffsetDpX = with(density) {
                 (paddingHoriPx + selectedBlock.positionX).toDp()
             }
-            val yPixels: Float = toolBarY - with(density) { 48.dp.toPx() }
-            val clampedPixels: Float = yPixels.coerceAtLeast(0f)
-            val toolbarOffsetDpY: Dp = with(density) { clampedPixels.toDp() }
+            val toolbarOffsetDpY = with(density) {
+                ((toolBarY - 48.dp.toPx()).coerceAtLeast(0f)).toDp()
+            }
 
             Box(
                 modifier = Modifier
