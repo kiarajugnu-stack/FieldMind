@@ -59,6 +59,7 @@ import fieldmind.research.app.features.field.presentation.components.FieldMindMo
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTextInputWrapper
 import fieldmind.research.app.features.field.presentation.components.liquidGlassRefraction
+import fieldmind.research.app.features.field.presentation.components.SwipeableAlertDialog
 import fieldmind.research.app.features.field.presentation.components.TabSwipeHost
 import androidx.compose.runtime.CompositionLocalProvider
 
@@ -258,7 +259,7 @@ fun FieldMindNavigation(viewModel: FieldMindViewModel, requestedDestination: Str
 
     // ── Navigation confirmation dialog (for active capture session) ──
     if (showNavigateConfirm) {
-        AlertDialog(
+        SwipeableAlertDialog(
             onDismissRequest = {
                 showNavigateConfirm = false
                 pendingNavRoute = null
@@ -886,7 +887,6 @@ private fun FieldMindNavHost(
         ) {
         composable(FieldMindScreen.Home.route) {
             WithSharedTransitionScope(sharedTransitionScope) {
-                val host = this
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
                     TabSwipeHost(
                         onSwipeBack = onSwipeToPrevTab ?: {},
