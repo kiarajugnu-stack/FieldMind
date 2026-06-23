@@ -614,8 +614,12 @@ private fun CanvasTopBar(
                 }
             }
 
-            // Grid toggle (Infinite mode only)
-            if (canvasMode != CanvasMode.PAGES) {
+            // Grid toggle (Infinite mode only) — fades in/out on mode switch
+            AnimatedVisibility(
+                visible = canvasMode != CanvasMode.PAGES,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 Surface(
                     onClick = onToggleGrid,
                     shape = RoundedCornerShape(12.dp),
