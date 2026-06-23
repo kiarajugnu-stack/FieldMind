@@ -213,7 +213,11 @@ fun CanvasBlock(
         if (isSelected && !isCollapsed) {
             ResizeHandle(
                 modifier = Modifier.align(Alignment.BottomEnd),
-                onResize = { dx, dy -> onResized(block.width + dx, block.height + dy) },
+                onResize = { dx, dy ->
+                    val newW = (block.width + dx).coerceAtLeast(60f)
+                    val newH = (block.height + dy).coerceAtLeast(60f)
+                    onResized(newW, newH)
+                },
                 canvasState = canvasState
             )
         }
@@ -243,10 +247,7 @@ private fun ResizeHandle(
                     // Convert drag delta from screen-space to canvas-space
                     val canvasDx = dragAmount.x / canvasState.zoom
                     val canvasDy = dragAmount.y / canvasState.zoom
-                    // Enforce minimum size: blocks can't shrink below 60x40 logical px
-                    val minW = -300f   // prevents width < 0 (base 300 + this delta)
-                    val minH = -160f   // prevents height < 0 (base 200 + this delta)
-                    onResize(canvasDx.coerceAtLeast(minW), canvasDy.coerceAtLeast(minH))
+                    onResize(canvasDx, canvasDy)
                 }
             }
     )
