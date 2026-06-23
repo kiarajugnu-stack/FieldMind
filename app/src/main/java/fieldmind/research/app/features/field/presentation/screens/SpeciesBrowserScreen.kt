@@ -173,8 +173,7 @@ fun SpeciesBrowserScreen(
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.background,
-                shadowElevation = 0.dp,
-                modifier = Modifier.statusBarsPadding()
+                shadowElevation = 0.dp
             ) {
                 Column(Modifier.fillMaxWidth()) {
                     // ── Species Browser Header (expanded) ──
