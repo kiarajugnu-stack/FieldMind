@@ -604,11 +604,15 @@ fun SwipeBackHost(
                                     }
                                     if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
                                         if (systemBackJustCompleted) {
-                                            // System back gesture already committed; just clean up local state
+                                            // System back gesture already committed; call onBack immediately
                                             systemBackJustCompleted = false
                                             activeDirection = null
                                             targetOffsetX = 0f
                                             targetOffsetY = 0f
+                                            haptics.confirm()
+                                            scope.launch {
+                                                onBack()
+                                            }
                                         } else {
                                             // Custom drag committed
                                             haptics.confirm()
