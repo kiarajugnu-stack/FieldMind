@@ -24,6 +24,7 @@ import fieldmind.research.app.features.field.data.location.FieldLocationProvider
 import fieldmind.research.app.features.field.data.weather.WeatherSnapshot
 import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.AnimatedWeatherScene
+import fieldmind.research.app.features.field.presentation.components.ClickableCard
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.GpsOffDialog
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -944,13 +945,11 @@ private fun WeatherRecordCard(
     colors: fieldmind.research.app.features.field.presentation.theme.FieldMindColors,
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
-    Card(
+    ClickableCard(
+        onClick = { onOpenDetail("observation", observation.id) },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onOpenDetail("observation", observation.id) }
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             Modifier.fillMaxWidth().padding(16.dp),

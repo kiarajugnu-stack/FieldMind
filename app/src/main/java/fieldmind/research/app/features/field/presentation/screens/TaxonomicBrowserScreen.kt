@@ -25,6 +25,7 @@ import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import kotlinx.coroutines.launch
+import fieldmind.research.app.features.field.presentation.components.ClickableCard
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -362,14 +363,13 @@ private fun TaxoLevelCard(
 ) {
     val accent = levelColor(level)
 
-    Card(
+    ClickableCard(
+        onClick = onClick,
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
-            .fillMaxWidth()
             .animateContentSize()
-            .clickable(onClick = onClick)
     ) {
         Row(
             Modifier.fillMaxWidth().padding(16.dp),

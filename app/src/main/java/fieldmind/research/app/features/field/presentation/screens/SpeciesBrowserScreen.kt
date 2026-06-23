@@ -449,14 +449,13 @@ internal fun SpeciesCard(
     val accent = categoryColor(record.category)
     val colors = FieldMindTheme.colors
 
-    Card(
+    ClickableCard(
+        onClick = onClick,
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier
-            .fillMaxWidth()
             .animateContentSize()
-            .clickable(onClick = onClick)
     ) {
         Row(
             Modifier.fillMaxWidth().padding(16.dp),

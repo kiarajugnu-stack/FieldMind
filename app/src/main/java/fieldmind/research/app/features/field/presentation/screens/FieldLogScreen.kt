@@ -216,11 +216,11 @@ fun FieldLogScreen(
                     SectionHeader("Past research sessions", "${completedSessions.size} completed")
                 }
                 items(completedSessions.take(5), key = { it.id }) { session ->
-                    Card(
+                    ClickableCard(
+                        onClick = { onOpenDetail("research_session", session.id) },
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                        modifier = Modifier.fillMaxWidth().clickable { onOpenDetail("research_session", session.id) }
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Row(
                             Modifier.fillMaxWidth().padding(16.dp),
