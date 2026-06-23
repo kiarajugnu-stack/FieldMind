@@ -20,7 +20,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.layout.zIndex
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -299,7 +298,7 @@ fun PageCanvas(
                         // Page left edge in outer Box = paddingHoriPx from Column padding
                         val toolBarX = paddingHoriPx + selectedBlock.positionX
                         // Clamp Y so toolbar stays within viewport (at minimum 0)
-                        val clampedY = (toolBarY - with(density) { 48.dp.toPx() }).coerceAtLeast(0f)
+                        val clampedY = (toolBarY - 48.dp.toPx()).coerceAtLeast(0f)
                         IntOffset(toolBarX.roundToInt(), clampedY.roundToInt())
                     }
                     .zIndex(999f)
