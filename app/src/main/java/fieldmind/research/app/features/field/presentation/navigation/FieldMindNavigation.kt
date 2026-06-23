@@ -884,7 +884,7 @@ private fun FieldMindNavHost(
             exitTransition = { routeExitTransition() },
             popEnterTransition = { routePopEnterTransition() },
             popExitTransition = { routePopExitTransition() }
-        ) {
+        ) builder@{
             composable(FieldMindScreen.Home.route) {
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
                     TabSwipeHost(
