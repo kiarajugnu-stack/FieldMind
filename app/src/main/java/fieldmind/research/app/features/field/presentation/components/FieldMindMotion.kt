@@ -21,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +44,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
 import kotlin.coroutines.cancellation.CancellationException
 import androidx.activity.BackEventCompat
@@ -347,12 +345,10 @@ fun TabSwipeHost(
     content: @Composable () -> Unit
 ) {
     val reduceMotion = FieldMindMotion.isReduceMotion()
-    val scope = rememberCoroutineScope()
     val haptics = rememberFieldMindHaptics()
 
     var tabOffsetX by remember { mutableFloatStateOf(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
-    var systemBackJustCompleted by remember { mutableStateOf(false) }
 
     // Detect keyboard visibility reactively via InputMethodManager
     val context = LocalContext.current
@@ -378,15 +374,11 @@ fun TabSwipeHost(
                 tabOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
             }
             // Flow completed → gesture committed
-            if (hadProgress) {
-                // Gesture swipe — onDragEnd will handle navigation with full-sweep animation
-                systemBackJustCompleted = true
-            } else {
-                // Hardware back button pressed (no progress events) — navigate immediately
-                systemBackJustCompleted = false
-                haptics.confirm()
-                onBack?.invoke()
-            }
+            // Navigate immediately for both gesture swipes AND hardware button presses.
+            // Note: detectDragGestures.onDragEnd does NOT fire for system back gestures,
+            // so we must navigate here directly rather than deferring to onDragEnd.
+            haptics.confirm()
+            onBack?.invoke()
         } catch (_: CancellationException) {
             // Gesture cancelled — snap back via spring animation
             tabOffsetX = 0f
@@ -454,29 +446,12 @@ fun TabSwipeHost(
                                 },
                                 onDragEnd = {
                                     val threshold = contentWidth * 0.20f
-                                    if (systemBackJustCompleted) {
-                                        // System back gesture committed — animate full sweep out then navigate
-                                        systemBackJustCompleted = false
+                                    if (tabOffsetX > threshold && canSwipeBack) {
                                         haptics.confirm()
-                                        scope.launch {
-                                            tabOffsetX = contentWidth
-                                            delay(FieldMindMotion.durationStandard.toLong())
-                                            onBack?.invoke()
-                                        }
-                                    } else if (tabOffsetX > threshold && canSwipeBack) {
-                                        haptics.confirm()
-                                        scope.launch {
-                                            tabOffsetX = contentWidth
-                                            delay(FieldMindMotion.durationStandard.toLong())
-                                            onSwipeBack?.invoke()
-                                        }
+                                        onSwipeBack?.invoke()
                                     } else if (tabOffsetX < -threshold && canSwipeForward) {
                                         haptics.confirm()
-                                        scope.launch {
-                                            tabOffsetX = -contentWidth
-                                            delay(FieldMindMotion.durationStandard.toLong())
-                                            onSwipeForward?.invoke()
-                                        }
+                                        onSwipeForward?.invoke()
                                     } else {
                                         tabOffsetX = 0f
                                     }
@@ -509,7 +484,6 @@ fun SwipeBackHost(
     content: @Composable () -> Unit
 ) {
     val reduceMotion = FieldMindMotion.isReduceMotion()
-    val scope = rememberCoroutineScope()
     val haptics = rememberFieldMindHaptics()
 
     var activeDirection by remember { mutableStateOf<SwipeDirection?>(null) }
@@ -517,7 +491,6 @@ fun SwipeBackHost(
     var targetOffsetY by remember { mutableFloatStateOf(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
     var contentHeight by remember { mutableFloatStateOf(1f) }
-    var systemBackJustCompleted by remember { mutableStateOf(false) }
 
     // Detect keyboard visibility reactively via InputMethodManager
     val context = LocalContext.current
@@ -539,15 +512,11 @@ fun SwipeBackHost(
                 targetOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
             }
             // Flow completed → gesture committed
-            if (hadProgress) {
-                // Gesture swipe — onDragEnd will handle navigation with full-sweep animation
-                systemBackJustCompleted = true
-            } else {
-                // Hardware back button pressed (no progress events) — navigate immediately
-                systemBackJustCompleted = false
-                haptics.confirm()
-                onBack()
-            }
+            // Navigate immediately for both gesture swipes AND hardware button presses.
+            // Note: detectDragGestures.onDragEnd does NOT fire for system back gestures,
+            // so we must navigate here directly rather than deferring to onDragEnd.
+            haptics.confirm()
+            onBack()
         } catch (_: CancellationException) {
             // Gesture cancelled — snap back via spring animation
             targetOffsetX = 0f
@@ -691,18 +660,8 @@ fun SwipeBackHost(
                                         null -> 0f
                                     }
                                     if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
-                                        // Animate full sweep out then navigate
-                                        systemBackJustCompleted = false
                                         haptics.confirm()
-                                        scope.launch {
-                                            when (activeDirection) {
-                                                SwipeDirection.Horizontal -> targetOffsetX = contentWidth
-                                                SwipeDirection.Vertical -> targetOffsetY = contentHeight
-                                                null -> {}
-                                            }
-                                            delay(FieldMindMotion.durationStandard.toLong())
-                                            onBack()
-                                        }
+                                        onBack()
                                     } else {
                                         activeDirection = null
                                         targetOffsetX = 0f
