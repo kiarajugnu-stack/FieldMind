@@ -447,6 +447,7 @@ fun SwipeBackHost(
     var targetOffsetY by remember { mutableFloatStateOf(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
     var contentHeight by remember { mutableFloatStateOf(1f) }
+    var systemBackJustCompleted by remember { mutableStateOf(false) }
 
     // Predictive back gesture (Android 14+) — drives peek animation from system back gesture
     PredictiveBackHandler(enabled = !reduceMotion) { progressFlow ->
@@ -455,6 +456,7 @@ fun SwipeBackHost(
                 targetOffsetX = (contentWidth * backEvent.progress).coerceAtLeast(0f)
             }
             // Flow completed → gesture committed; system handles back navigation
+            systemBackJustCompleted = true
         } catch (_: CancellationException) {
             // Gesture cancelled — snap back via spring animation
             targetOffsetX = 0f
@@ -596,9 +598,14 @@ fun SwipeBackHost(
                                         null -> 0f
                                     }
                                     if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
-                                        // If the system back gesture already animated to full extent,
-                                        // don't call onBack() again — the system handled it.
-                                        if (currentVal < maxVal * 0.99f) {
+                                        if (systemBackJustCompleted) {
+                                            // System back gesture already committed; just clean up local state
+                                            systemBackJustCompleted = false
+                                            activeDirection = null
+                                            targetOffsetX = 0f
+                                            targetOffsetY = 0f
+                                        } else {
+                                            // Custom drag committed
                                             haptics.confirm()
                                             scope.launch {
                                                 when (activeDirection) {
@@ -608,11 +615,6 @@ fun SwipeBackHost(
                                                 }
                                                 onBack()
                                             }
-                                        } else {
-                                            // System already handled back; just clean up local state
-                                            activeDirection = null
-                                            targetOffsetX = 0f
-                                            targetOffsetY = 0f
                                         }
                                     } else {
                                         activeDirection = null
