@@ -75,19 +75,19 @@ class DrawingState(
         showToolbar = true
     }
 
-    fun setColor(newColor: Long) {
+    fun updateColor(newColor: Long) {
         color = newColor
     }
 
-    fun setStrokeWidth(width: Float) {
+    fun updateStrokeWidth(width: Float) {
         strokeWidth = width.coerceIn(1f, 40f)
     }
 
-    fun setShapeType(type: ShapeType) {
+    fun updateShapeType(type: ShapeType) {
         shapeType = type
     }
 
-    fun setEraserMode(mode: EraserMode) {
+    fun updateEraserMode(mode: EraserMode) {
         eraserMode = mode
     }
 

@@ -137,7 +137,7 @@ fun DrawingToolbar(
                         ShapePickerRow(
                             selectedType = drawingState.shapeType,
                             onSelect = { type ->
-                                drawingState.setShapeType(type)
+                                drawingState.updateShapeType(type)
                                 drawingState.setTool(DrawingTool.SHAPE)
                             }
                         )
@@ -149,7 +149,7 @@ fun DrawingToolbar(
                             colors = DrawingState.presetColors,
                             selectedColor = drawingState.color,
                             onSelect = { color ->
-                                drawingState.setColor(color)
+                                drawingState.updateColor(color)
                             }
                         )
                     }
@@ -158,7 +158,7 @@ fun DrawingToolbar(
                     if (showWidthSlider) {
                         StrokeWidthSlider(
                             width = drawingState.strokeWidth,
-                            onWidthChange = { drawingState.setStrokeWidth(it) },
+                            onWidthChange = { drawingState.updateStrokeWidth(it) },
                             color = drawingState.composeColor
                         )
                     }
