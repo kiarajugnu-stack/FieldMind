@@ -71,7 +71,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import fieldmind.research.app.features.field.presentation.components.ObservationStatsDashboard
-import androidx.compose.animation.shared.SharedTransitionScope
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.saveable.rememberSaveable
 
 /**
@@ -2512,7 +2512,7 @@ private fun computeFieldworkNudge(weather: WeatherSnapshot): String {
 
 // ══════════════════════════════════════════════════════════════════════
 //  Recent Captures Card
-// ════════════════════════════════════════════════���═════════════════════
+// ════════════════════════════��═══════════════════���═════════════════════
 
 @Composable
 private fun RecentCapturesCard(observations: List<ObservationEntity>, onOpenDetail: (String, Long) -> Unit) {
