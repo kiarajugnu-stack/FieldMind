@@ -174,6 +174,7 @@ object FieldMindMotion {
     const val swipeScaleFactor = 0.92f
     const val swipeScrimAlpha = 0.35f
     const val swipeShadowElevationDp = 24f
+    const val swipeCornerRadiusDp = 22f
 
     // -- Utility --
 
@@ -354,6 +355,7 @@ fun TabSwipeHost(
     val progress = abs(animatedOffsetX / contentWidth).coerceIn(0f, 1f)
     val scrimAlpha = progress * 0.25f
     val scale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
+    val swipeCornerRadius = (progress * FieldMindMotion.swipeCornerRadiusDp).dp
 
     Box(
         modifier = modifier
@@ -384,6 +386,7 @@ fun TabSwipeHost(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .clip(RoundedCornerShape(swipeCornerRadius))
                 .graphicsLayer {
                     translationX = animatedOffsetX
                     scaleX = scale
@@ -488,6 +491,7 @@ fun SwipeBackHost(
     val scrimAlpha = progress * FieldMindMotion.swipeScrimAlpha
     val contentScale = 1f - progress * (1f - FieldMindMotion.swipeScaleFactor)
     val swipeElevation = progress * FieldMindMotion.swipeShadowElevationDp
+    val swipeCornerRadius = (progress * FieldMindMotion.swipeCornerRadiusDp).dp
 
     Box(
         modifier = modifier
@@ -540,6 +544,7 @@ fun SwipeBackHost(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .clip(RoundedCornerShape(swipeCornerRadius))
                 .graphicsLayer {
                     val ox = animatedOffsetX.roundToInt()
                     val oy = animatedOffsetY.roundToInt()
