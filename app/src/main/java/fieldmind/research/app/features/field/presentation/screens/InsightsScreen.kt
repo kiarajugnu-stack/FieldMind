@@ -479,7 +479,7 @@ fun InsightsScreen(
             // ═══════════ Data Records Table ═══════════
             if (dataRecords.isNotEmpty()) {
                 item { SectionHeader("Data records", "${dataRecords.size} entries") }
-                itemsIndexed(dataRecords.take(8)) { i, record -> DataRecordInsightCard(record, i = i, onClick = { onOpenDetail("data", record.id) }) }
+                itemsIndexed(dataRecords.take(8)) { _, record -> DataRecordInsightCard(record, onClick = { onOpenDetail("data", record.id) }) }
             }
 
             item { Spacer(Modifier.height(24.dp)) }

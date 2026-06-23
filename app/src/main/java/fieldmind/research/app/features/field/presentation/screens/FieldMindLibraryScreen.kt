@@ -78,7 +78,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import kotlinx.coroutines.delay
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.shared.SharedTransitionScope
+import androidx.compose.animation.SharedTransitionScope
 // ══════════════════════════════════════════════════════════════════════
 //  Library (Sources / Reading / Flashcards / Learn)
 // ══════════════════════════════════════════════════════════════════════
