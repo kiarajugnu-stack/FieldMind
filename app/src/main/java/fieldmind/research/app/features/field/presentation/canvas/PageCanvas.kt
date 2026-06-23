@@ -293,15 +293,17 @@ fun PageCanvas(
                 (selectedBlock.positionY - pages.getOrNull(selPageIdx)?.startY ?: 0f)
             val toolBarY = docBlockY - scrollState.value
 
+            // Compute toolbar offset in Dp for a stable positioning
+            val toolbarOffsetDpX = with(density) {
+                (paddingHoriPx + selectedBlock.positionX).toDp()
+            }
+            val toolbarOffsetDpY = with(density) {
+                ((toolBarY - 48.dp.toPx()).coerceAtLeast(0f)).toDp()
+            }
+
             Box(
                 modifier = Modifier
-                    .offset {
-                        // Page left edge in outer Box = paddingHoriPx from Column padding
-                        val toolBarX = paddingHoriPx + selectedBlock.positionX
-                        // Clamp Y so toolbar stays within viewport (at minimum 0)
-                        val clampedY = (toolBarY - 48.dp.toPx()).coerceAtLeast(0f)
-                        IntOffset(toolBarX.roundToInt(), clampedY.roundToInt())
-                    }
+                    .offset(x = toolbarOffsetDpX, y = toolbarOffsetDpY)
                     .zIndex(999f)
             ) {
                 BlockToolbar(

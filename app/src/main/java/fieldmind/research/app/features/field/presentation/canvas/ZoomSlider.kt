@@ -58,7 +58,8 @@ fun ZoomSlider(
     // Map zoom to slider fraction (logarithmic scale)
     // sliderFraction 0.0 → minZoom, 1.0 → maxZoom
     val sliderFraction = remember(canvasState.zoom) {
-        (ln(canvasState.zoom / CanvasState.minZoom) / ln(CanvasState.maxZoom / CanvasState.minZoom))
+        (ln((canvasState.zoom / CanvasState.minZoom).toDouble()) /
+            ln((CanvasState.maxZoom / CanvasState.minZoom).toDouble()))
             .coerceIn(0.0, 1.0)
     }
 
