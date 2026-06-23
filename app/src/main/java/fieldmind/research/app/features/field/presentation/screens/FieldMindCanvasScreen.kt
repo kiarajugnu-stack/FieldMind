@@ -46,6 +46,7 @@ import fieldmind.research.app.features.field.presentation.canvas.DrawingBlock
 import fieldmind.research.app.features.field.presentation.canvas.VoiceBlock
 import fieldmind.research.app.features.field.presentation.canvas.EquationBlock
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.SwipeableAlertDialog
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -76,9 +77,6 @@ fun CanvasScreen(
     onBack: () -> Unit,
     onOpenLinkedEntity: ((String, Long) -> Unit)? = null
 ) {
-    // Handle device back button
-    BackHandler(enabled = true) { onBack() }
-
     val canvasViewModel: CanvasViewModel = viewModel()
     val haptics = rememberFieldMindHaptics()
     val clipboard = LocalClipboardManager.current
@@ -104,6 +102,61 @@ fun CanvasScreen(
 
     // Track viewport size for minimap
     var viewportSize by remember { mutableStateOf(Size(0f, 0f)) }
+
+    // ── Unsaved-changes confirmation dialog ──
+    var showExitConfirm by remember { mutableStateOf(false) }
+    var hasEdits by remember { mutableStateOf(false) }
+    // Track actual user edits via undo availability — only true after user action
+    LaunchedEffect(canUndo) {
+        if (canUndo) hasEdits = true
+    }
+
+    // Handle back: show confirmation if edits pending
+    BackHandler(enabled = true) {
+        if (hasEdits && !showExitConfirm) {
+            showExitConfirm = true
+        } else {
+            onBack()
+        }
+    }
+
+    if (showExitConfirm) {
+        SwipeableAlertDialog(
+            onDismissRequest = { showExitConfirm = false },
+            icon = {
+                Icon(
+                    MaterialSymbolIcon("edit_note"),
+                    "Unsaved changes",
+                    size = 28.dp,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Discard edits?") },
+            text = {
+                Text(
+                    "You have unsaved changes on the canvas. What would you like to do?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitConfirm = false
+                        onBack()
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) { Text("Discard") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirm = false }) {
+                    Text("Keep editing")
+                }
+            }
+        )
+    }
 
     // Auto-select newly added blocks
     LaunchedEffect(lastAddedBlockId) {
