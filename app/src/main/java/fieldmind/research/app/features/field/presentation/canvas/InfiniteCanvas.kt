@@ -193,7 +193,18 @@ fun InfiniteCanvas(
             }
         }
 
-        // Layer 4: BlockToolbar (floating action bar above selected block)
+        // Layer 4: Pan/Zoom gesture layer (below toolbar/slider/minimap so widgets get touches first)
+        // Only activates for touches that do NOT start on a block.
+        // MUST be placed before the overlay widgets in the Box so Compose hit-testing
+        // checks the widgets (last children) first, and only falls through to pan/zoom
+        // when no widget consumed the event.
+        PanZoomLayer(
+            canvasState = canvasState,
+            blocks = blocks,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Layer 5: BlockToolbar (floating action bar above selected block)
         val selectedBlock = remember(blocks, canvasState.selectedBlockIds) {
             blocks.firstOrNull { it.id in canvasState.selectedBlockIds }
         }
@@ -201,7 +212,7 @@ fun InfiniteCanvas(
             selectedBlock = selectedBlock,
             canvasState = canvasState,
             onToggleCollapse = { blockId ->
-                canvasState.toggleBlockCollapse(blockId)
+                canvasState.toggleCollapse(blockId)
             },
             onDelete = {
                 selectedBlock?.let { onBlockDelete?.invoke(it.id) }
@@ -224,14 +235,6 @@ fun InfiniteCanvas(
             onOpenLinked = {
                 selectedBlock?.let { onBlockOpenLinkedEntity?.invoke(it.id) }
             }
-        )
-
-        // Layer 5: Pan/Zoom gesture layer (sits above everything)
-        // Only activates for touches that do NOT start on a block
-        PanZoomLayer(
-            canvasState = canvasState,
-            blocks = blocks,
-            modifier = Modifier.fillMaxSize()
         )
 
         // Layer 6: ZoomSlider (floating widget, right-center)
@@ -302,6 +305,7 @@ private fun PanZoomLayer(
                 // Track initial state for 2+ finger zoom
                 var previousCentroid = Offset.Zero
                 var previousSpan = 0f
+                var wasMultiTouch = false
 
                 while (true) {
                     val event = awaitPointerEvent()
@@ -323,6 +327,14 @@ private fun PanZoomLayer(
                                 kotlin.math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
                             }
 
+                        // Reset tracking when transitioning from single to multi-touch
+                        // to avoid stale previousSpan/centroid causing a zoom jump
+                        if (!wasMultiTouch) {
+                            previousCentroid = centroid
+                            previousSpan = span
+                            wasMultiTouch = true
+                        }
+
                         if (previousSpan > 0f && previousCentroid != Offset.Zero) {
                             val zoomDelta = span / previousSpan
                             val panDelta = centroid - previousCentroid
@@ -334,7 +346,14 @@ private fun PanZoomLayer(
                         previousSpan = span
                         changes.forEach { it.consume() }
                     } else if (changes.size == 1) {
-                        // Single touch: only pan (zoom handled above)
+                        // If we were just in multi-touch, skip the pan delta for this frame
+                        // to avoid a jarring jump when the second finger lifts
+                        if (wasMultiTouch) {
+                            wasMultiTouch = false
+                            changes.forEach { it.consume() }
+                            continue
+                        }
+                        // Single touch: only pan
                         val change = changes.first()
                         val delta = change.position - change.previousPosition
                         canvasState.applyPan(delta.x, delta.y)

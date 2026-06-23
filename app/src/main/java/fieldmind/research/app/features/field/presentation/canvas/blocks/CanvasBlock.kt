@@ -123,14 +123,31 @@ fun CanvasBlock(
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
             // Long-press + drag to move (taps pass through to child composables)
-            .pointerInput(block.id) {
+            .pointerInput(block.id, canvasState.zoom) {
+                // Track cumulative drag offset locally so movement is smooth
+                // even when Room observation lags behind drag frames
+                var cumulativeDx = 0f
+                var cumulativeDy = 0f
+                var dragStartX = block.positionX
+                var dragStartY = block.positionY
+
                 detectDragGesturesAfterLongPress(
+                    onDragStart = {
+                        // Capture starting position and reset cumulative offset
+                        // on each new drag gesture
+                        dragStartX = block.positionX
+                        dragStartY = block.positionY
+                        cumulativeDx = 0f
+                        cumulativeDy = 0f
+                    },
                     onDrag = { change, dragAmount ->
                         change.consume()
                         // Convert drag from screen-space to canvas-space
                         val canvasDx = dragAmount.x / canvasState.zoom
                         val canvasDy = dragAmount.y / canvasState.zoom
-                        onMoved(block.positionX + canvasDx, block.positionY + canvasDy)
+                        cumulativeDx += canvasDx
+                        cumulativeDy += canvasDy
+                        onMoved(dragStartX + cumulativeDx, dragStartY + cumulativeDy)
                     }
                 )
             }

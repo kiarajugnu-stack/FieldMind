@@ -53,7 +53,8 @@ private const val A4_ASPECT = 1.414f
  * @param totalPages total number of pages (emitted once on init and when pages change)
  * @param viewportSize the current viewport size in pixels
  * @param blockContent composable factory for each block's content
- * @param onBlockMoved called when a block is dragged
+ * @param onBlockMoved called when a block is dragged (intermediate positions, no undo)
+ * @param onBlockMovedFinal called when a block drag ends (final position, records undo)
  * @param onBlockResized called when a block is resized
  * @param onBlockTapped called when a block is tapped
  * @param onBlockDelete delete callback
@@ -63,6 +64,7 @@ private const val A4_ASPECT = 1.414f
  * @param onBlockCopy copy callback
  * @param onBlockLinkToEntity link callback
  * @param onBlockOpenLinkedEntity open linked entity callback
+ * @param onBlockMovedFinal called when a block drag ends (final position, records undo)
  * @param currentPage current visible page index (0-based), emitted on scroll
  * @param totalPages total number of pages (emitted when pages change)
  * @param viewportSize viewport size in pixels
@@ -78,6 +80,7 @@ fun PageCanvas(
     modifier: Modifier = Modifier,
     blockContent: @Composable (CanvasBlockEntity, Boolean) -> Unit = { _, _ -> },
     onBlockMoved: ((Long, Float, Float) -> Unit)? = null,
+    onBlockMovedFinal: ((Long, Float, Float, Float, Float) -> Unit)? = null,
     onBlockResized: ((Long, Float, Float) -> Unit)? = null,
     onBlockTapped: ((Long) -> Unit)? = null,
     onBlockDelete: ((Long) -> Unit)? = null,
@@ -230,6 +233,11 @@ fun PageCanvas(
                                     val docY = newY + page.startY
                                     onBlockMoved?.invoke(block.id, newX, docY)
                                 },
+                                onMovedFinal = { startX, startY, finalX, finalY ->
+                                    val docStartY = startY + page.startY
+                                    val docFinalY = finalY + page.startY
+                                    onBlockMovedFinal?.invoke(block.id, startX, docStartY, finalX, docFinalY)
+                                },
                                 onResized = { w, h ->
                                     onBlockResized?.invoke(block.id, w, h)
                                 }
@@ -337,7 +345,11 @@ fun PageCanvas(
  * @param pageY Y position relative to the page top (0 = top of this page)
  * @param isSelected whether this block is currently selected
  * @param onTapped called when the block is tapped
- * @param onMoved called with new (documentX, documentY) — Y includes page offset
+ * @param onMoved called with new (pageX, pageY) during drag (intermediate, no undo)
+ * @param onMovedFinal called with (startX, startY, finalX, finalY) when drag ends —
+ *        the original start position is included so the caller can record undo
+ *        with the correct starting point even though intermediate DB writes
+ *        have already updated the block entity in Room.
  * @param onResized called with new (width, height)
  * @param content the block's inner content
  */
@@ -349,6 +361,7 @@ private fun PageBlock(
     isSelected: Boolean,
     onTapped: (Long) -> Unit,
     onMoved: (Float, Float) -> Unit,
+    onMovedFinal: ((Float, Float, Float, Float) -> Unit)? = null,
     onResized: (Float, Float) -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -374,18 +387,44 @@ private fun PageBlock(
             // Background
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
-            // Tap to select
+            // Combined tap + drag gesture (single pointerInput to avoid conflicts)
+            .pointerInput(block.id) {
+                // Track cumulative drag offset locally for smooth movement
+                var cumulativeDx = 0f
+                var cumulativeDy = 0f
+                var startX = 0f
+                var startY = 0f
+
+                detectDragGestures(
+                    onDragStart = {
+                        startX = pageX
+                        startY = pageY
+                        cumulativeDx = 0f
+                        cumulativeDy = 0f
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        cumulativeDx += dragAmount.x
+                        cumulativeDy += dragAmount.y
+                        val newX = (startX + cumulativeDx).coerceAtLeast(0f)
+                        val newY = startY + cumulativeDy
+                        onMoved(newX, newY)
+                    },
+                    onDragEnd = {
+                        // Flush final position with undo (pass original start position
+                        // since intermediate DB writes have already updated the entity)
+                        val finalX = (startX + cumulativeDx).coerceAtLeast(0f)
+                        val finalY = startY + cumulativeDy
+                        onMovedFinal?.invoke(startX, startY, finalX, finalY)
+                    },
+                    onDragCancel = {}
+                )
+            }
+            // Tap to select (on a separate pointerInput — Compose handles
+            // the tap-vs-drag coordination: a quick press+release triggers
+            // tap, a press+move triggers drag)
             .pointerInput(block.id) {
                 detectTapGestures { onTapped(block.id) }
-            }
-            // Drag to move (no Y clamping — allows dragging blocks between pages)
-            .pointerInput(block.id) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    val newX = (pageX + dragAmount.x).coerceAtLeast(0f)
-                    val newY = pageY + dragAmount.y
-                    onMoved(newX, newY)
-                }
             }
     ) {
         // Block content

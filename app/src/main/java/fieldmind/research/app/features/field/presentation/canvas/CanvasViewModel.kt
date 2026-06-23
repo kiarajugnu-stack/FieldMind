@@ -275,6 +275,28 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     /**
+     * Resize a block during active resize dragging (intermediate positions).
+     * Saves to DB immediately but does NOT record undo for each drag frame.
+     * Use [resizeBlock] for the final drag-end position to record undo.
+     */
+    fun resizeBlockIntermediate(id: Long, w: Float, h: Float) {
+        viewModelScope.launch {
+            repository.updateBlockSize(id, w, h)
+        }
+    }
+
+    /**
+     * Finalize a block move after a drag gesture ends.
+     * The position was already saved by [moveBlockIntermediate] during the drag,
+     * so this only records the undo entry with the [originalX]/[originalY] as
+     * the point to revert to.
+     */
+    fun moveBlockFinal(id: Long, originalX: Float, originalY: Float, newX: Float, newY: Float) {
+        if (originalX == newX && originalY == newY) return
+        undoRedo.push(CanvasCommand.MoveBlock(id, originalX, originalY, newX, newY))
+    }
+
+    /**
      * Increase the block's z-index by 1 (move visual layer forward).
      */
     fun moveBlockForward(id: Long) {
