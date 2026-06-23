@@ -219,24 +219,32 @@ fun CanvasBlock(
 
         if (isCollapsed) {
             // Collapsed state: show preview with expand button
-            Column(
-                modifier = Modifier.fillMaxSize().padding(8.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+            // Use fillMaxWidth + defaultMinSize instead of fillMaxSize to avoid
+            // layout issues inside the wrapContentHeight container.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    MaterialSymbolIcon("unfold_more"),
-                    "Expand",
-                    size = 20.dp,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    block.type,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        MaterialSymbolIcon("unfold_more"),
+                        "Expand",
+                        size = 20.dp,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        block.type,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         } else {
             // Full content display — measure natural content height for auto-expand
