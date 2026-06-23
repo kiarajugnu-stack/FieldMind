@@ -362,7 +362,7 @@ private fun SourcePanel(viewModel: FieldMindViewModel, items: List<SourceEntity>
             val isExpanded = expandedCategories.contains(type)
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth().animateContentSize(),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -1416,7 +1416,6 @@ private fun LibraryFlashcard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .animateContentSize()
             .graphicsLayer { rotationY = rotation; cameraDistance = 28f }
             .clickable {
                 if (onSelect != null) onSelect()
@@ -1612,8 +1611,7 @@ private fun LearnCategoryCard(category: LearnCategory, onOpenResource: (LearnRes
     val accent = FieldMindTheme.colors.accentFor(category.name)
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -1683,7 +1681,7 @@ private fun LearnCategoryCard(category: LearnCategory, onOpenResource: (LearnRes
 private fun OnlineApiProposalCard() {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -1728,7 +1726,7 @@ private fun OnlineApiProposalCard() {
 @Composable
 private fun ResearchAssistantCard() {
     Card(
-        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -1763,7 +1761,7 @@ private fun ResearchAssistantCard() {
 
 @Composable
 private fun ResearchJourneyHero(next: ResearchMilestone, signals: String, onOpenReader: (String, String) -> Unit) {
-    Card(shape = RoundedCornerShape(30.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth().animateContentSize()) {
+    Card(shape = RoundedCornerShape(30.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(56.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) { Icon(next.icon, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, size = 30.dp) }
@@ -1800,7 +1798,7 @@ private fun GuidedPathCard(path: GuidedPath, onOpenReader: (String, String) -> U
     val accent = FieldMindTheme.colors.accentFor("learn")
     ClickableCard(
         onClick = { expanded = !expanded },
-        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

@@ -31,6 +31,7 @@ import fieldmind.research.app.features.field.presentation.navigation.FieldMindSc
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.activity.compose.BackHandler
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -57,6 +58,8 @@ fun DataToolsHubScreen(
     onNavigate: (FieldMindScreen) -> Unit,
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
+    // Handle device back button
+    BackHandler(enabled = true) { onBack() }
     val accentColor = FieldMindTheme.colors.data
     val tools = remember {
         listOf(

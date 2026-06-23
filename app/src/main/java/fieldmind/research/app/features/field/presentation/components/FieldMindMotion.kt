@@ -334,8 +334,8 @@ fun Modifier.pressCardScale(): Modifier = composed {
  */
 @Composable
 fun TabSwipeHost(
-    onSwipeBack: () -> Unit,
-    onSwipeForward: () -> Unit,
+    onSwipeBack: (() -> Unit)?,
+    onSwipeForward: (() -> Unit)?,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -345,6 +345,10 @@ fun TabSwipeHost(
 
     var tabOffsetX by remember { mutableFloatStateOf(0f) }
     var contentWidth by remember { mutableFloatStateOf(1f) }
+    
+    // Check if swipe directions are available
+    val canSwipeBack = onSwipeBack != null
+    val canSwipeForward = onSwipeForward != null
 
     val animatedOffsetX by animateFloatAsState(
         targetValue = tabOffsetX,
@@ -400,16 +404,19 @@ fun TabSwipeHost(
                                 onDragStart = { /* swipe anywhere */ },
                                 onDrag = { change, dragAmount ->
                                     change.consume()
-                                    tabOffsetX = (tabOffsetX + dragAmount.x).coerceIn(-contentWidth * 0.4f, contentWidth * 0.4f)
+                                    // Only allow drag in directions that have valid callbacks
+                                    if ((dragAmount.x > 0 && canSwipeBack) || (dragAmount.x < 0 && canSwipeForward)) {
+                                        tabOffsetX = (tabOffsetX + dragAmount.x).coerceIn(-contentWidth * 0.4f, contentWidth * 0.4f)
+                                    }
                                 },
                                 onDragEnd = {
                                     val threshold = contentWidth * 0.20f
-                                    if (tabOffsetX > threshold) {
+                                    if (tabOffsetX > threshold && canSwipeBack) {
                                         haptics.confirm()
-                                        scope.launch { tabOffsetX = contentWidth; onSwipeBack() }
-                                    } else if (tabOffsetX < -threshold) {
+                                        scope.launch { tabOffsetX = contentWidth; onSwipeBack?.invoke() }
+                                    } else if (tabOffsetX < -threshold && canSwipeForward) {
                                         haptics.confirm()
-                                        scope.launch { tabOffsetX = -contentWidth; onSwipeForward() }
+                                        scope.launch { tabOffsetX = -contentWidth; onSwipeForward?.invoke() }
                                     } else {
                                         tabOffsetX = 0f
                                     }
@@ -604,11 +611,15 @@ fun SwipeBackHost(
                                     }
                                     if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
                                         if (systemBackJustCompleted) {
-                                            // System back gesture already committed; just clean up local state
+                                            // System back gesture already committed; call onBack immediately
                                             systemBackJustCompleted = false
                                             activeDirection = null
                                             targetOffsetX = 0f
                                             targetOffsetY = 0f
+                                            haptics.confirm()
+                                            scope.launch {
+                                                onBack()
+                                            }
                                         } else {
                                             // Custom drag committed
                                             haptics.confirm()

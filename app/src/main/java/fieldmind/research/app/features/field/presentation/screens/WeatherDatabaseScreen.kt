@@ -40,6 +40,7 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.BackHandler
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
@@ -52,6 +53,8 @@ fun WeatherDatabaseScreen(
     onOpenSettings: () -> Unit = {},
     onOpenDetail: (String, Long) -> Unit = { _, _ -> }
 ) {
+    // Handle device back button
+    BackHandler(enabled = true) { onBack() }
     val observations by viewModel.observations.collectAsState()
     val colors = FieldMindTheme.colors
     val tempUnit by viewModel.fieldSettings.tempUnit.collectAsState()

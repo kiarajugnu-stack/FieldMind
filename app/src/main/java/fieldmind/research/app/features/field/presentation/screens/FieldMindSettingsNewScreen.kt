@@ -24,6 +24,7 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import androidx.activity.compose.BackHandler
 
 // ─── Data models ──────────────────────────────────────────────────────
 
@@ -156,6 +157,9 @@ fun FieldMindSettingsNewScreen(
     onOpenScreenVisibility: (() -> Unit)? = null,
     onOpenScreenCaptureProtection: (() -> Unit)? = null
 ) {
+    // Handle device back button
+    BackHandler(enabled = true) { onBack() }
+
     val colors = FieldMindTheme.colors
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
