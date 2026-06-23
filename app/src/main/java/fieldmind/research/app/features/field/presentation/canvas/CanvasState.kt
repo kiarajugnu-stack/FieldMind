@@ -3,8 +3,10 @@ package fieldmind.research.app.features.field.presentation.canvas
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 
 enum class CanvasMode {
     INFINITE,  // Infinite scrollable canvas
@@ -58,6 +60,42 @@ class CanvasState(
     /** Canvas mode: infinite or page-by-page. */
     var canvasMode: CanvasMode by mutableStateOf(CanvasMode.INFINITE)
         private set
+
+    /**
+     * In-memory overrides for block positions during active drag gestures.
+     * Key = block ID, Value = canvas-space position (x, y).
+     * Written on every drag frame, read by [InfiniteCanvas] for visual placement.
+     * Cleared when the drag gesture ends (final position is flushed to Room once).
+     */
+    val liveBlockPositions: MutableMap<Long, Offset> = mutableStateMapOf()
+
+    /**
+     * In-memory overrides for block sizes during active resize gestures.
+     * Key = block ID, Value = canvas-space size (width, height).
+     * Written on every resize frame, read by [CanvasBlock] for visual sizing.
+     * Cleared when the resize gesture ends (final size is flushed to Room once).
+     */
+    val liveBlockSizes: MutableMap<Long, Size> = mutableStateMapOf()
+
+    /** Set a live (in-memory) block position override during drag. */
+    fun setLiveBlockPosition(id: Long, x: Float, y: Float) {
+        liveBlockPositions[id] = Offset(x, y)
+    }
+
+    /** Remove a live block position override (after committing to Room). */
+    fun removeLiveBlockPosition(id: Long) {
+        liveBlockPositions.remove(id)
+    }
+
+    /** Set a live (in-memory) block size override during resize. */
+    fun setLiveBlockSize(id: Long, width: Float, height: Float) {
+        liveBlockSizes[id] = Size(width, height)
+    }
+
+    /** Remove a live block size override (after committing to Room). */
+    fun removeLiveBlockSize(id: Long) {
+        liveBlockSizes.remove(id)
+    }
 
     // ── Clamp values ──
 

@@ -80,8 +80,10 @@ fun CanvasBlock(
     )
 
     // If collapsed, show minimal preview instead of full content
-    val displayWidth = if (isCollapsed) 120f else block.width
-    val displayHeight = if (isCollapsed) 100f else block.height
+    // Use live block size during active resize (in-memory override, not Room)
+    val liveSize = canvasState.liveBlockSizes[block.id]
+    val displayWidth = if (isCollapsed) 120f else (liveSize?.width ?: block.width)
+    val displayHeight = if (isCollapsed) 100f else (liveSize?.height ?: block.height)
 
     // Animated tool alpha: fades from 1.0 at zoom >= FADE_START to 0.0 at zoom <= FADE_END
     val rawToolAlpha = ((canvasState.zoom - TOOL_FADE_END_ZOOM) /
@@ -147,7 +149,23 @@ fun CanvasBlock(
                         val canvasDy = dragAmount.y / canvasState.zoom
                         cumulativeDx += canvasDx
                         cumulativeDy += canvasDy
-                        onMoved(dragStartX + cumulativeDx, dragStartY + cumulativeDy)
+                        // Update in-memory live position — no Room write
+                        canvasState.setLiveBlockPosition(
+                            block.id,
+                            dragStartX + cumulativeDx,
+                            dragStartY + cumulativeDy
+                        )
+                    },
+                    onDragEnd = {
+                        // Flush final position to Room once and clear live override
+                        val finalX = dragStartX + cumulativeDx
+                        val finalY = dragStartY + cumulativeDy
+                        canvasState.removeLiveBlockPosition(block.id)
+                        onMoved(finalX, finalY)
+                    },
+                    onDragCancel = {
+                        // Gesture cancelled — clear live override, don't write to Room
+                        canvasState.removeLiveBlockPosition(block.id)
                     }
                 )
             }
@@ -251,10 +269,18 @@ fun CanvasBlock(
             if (isSelected && !isCollapsed) {
                 ResizeHandle(
                     modifier = Modifier.align(Alignment.BottomEnd),
-                    onResize = { dx, dy ->
-                        val newW = (block.width + dx).coerceAtLeast(60f)
-                        val newH = (block.height + dy).coerceAtLeast(60f)
-                        onResized(newW, newH)
+                    onResize = { cumulativeDx, cumulativeDy ->
+                        // Update in-memory live size — no Room write
+                        val newW = (block.width + cumulativeDx).coerceAtLeast(60f)
+                        val newH = (block.height + cumulativeDy).coerceAtLeast(60f)
+                        canvasState.setLiveBlockSize(block.id, newW, newH)
+                    },
+                    onResizeEnd = { cumulativeDx, cumulativeDy ->
+                        // Flush final size to Room once and clear live override
+                        val finalW = (block.width + cumulativeDx).coerceAtLeast(60f)
+                        val finalH = (block.height + cumulativeDy).coerceAtLeast(60f)
+                        canvasState.removeLiveBlockSize(block.id)
+                        onResized(finalW, finalH)
                     },
                     canvasState = canvasState
                 )
@@ -265,11 +291,14 @@ fun CanvasBlock(
 
 /**
  * Small triangular handle at the bottom-right corner for resize.
+ * Tracks cumulative drag delta so the caller gets cumulative (not per-frame) values.
+ * Calls [onResize] on every frame with cumulative delta, [onResizeEnd] when drag ends.
  */
 @Composable
 private fun ResizeHandle(
     modifier: Modifier = Modifier,
     onResize: (Float, Float) -> Unit,
+    onResizeEnd: (Float, Float) -> Unit = { _, _ -> },
     canvasState: CanvasState
 ) {
     // Scale handle size with zoom so it stays proportionally visible
@@ -282,13 +311,34 @@ private fun ResizeHandle(
                 RoundedCornerShape(topStart = 4.dp)
             )
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    // Convert drag delta from screen-space to canvas-space
-                    val canvasDx = dragAmount.x / canvasState.zoom
-                    val canvasDy = dragAmount.y / canvasState.zoom
-                    onResize(canvasDx, canvasDy)
-                }
+                var cumulativeDx = 0f
+                var cumulativeDy = 0f
+
+                detectDragGestures(
+                    onDragStart = {
+                        cumulativeDx = 0f
+                        cumulativeDy = 0f
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        // Convert drag delta from screen-space to canvas-space
+                        val canvasDx = dragAmount.x / canvasState.zoom
+                        val canvasDy = dragAmount.y / canvasState.zoom
+                        cumulativeDx += canvasDx
+                        cumulativeDy += canvasDy
+                        onResize(cumulativeDx, cumulativeDy)
+                    },
+                    onDragEnd = {
+                        onResizeEnd(cumulativeDx, cumulativeDy)
+                    },
+                    onDragCancel = {
+                        // Reset cumulative on cancel so final cleared position
+                        // matches the original (no-op)
+                        cumulativeDx = 0f
+                        cumulativeDy = 0f
+                        onResizeEnd(cumulativeDx, cumulativeDy)
+                    }
+                )
             }
     )
 }

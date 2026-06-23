@@ -216,12 +216,15 @@ fun PageCanvas(
 
                         // ── Render blocks on this page ──
                         page.blocks.forEach { block ->
-                            val pageRelativeY = block.positionY - page.startY
+                            val livePos = canvasState.liveBlockPositions[block.id]
+                            val posX = livePos?.x ?: block.positionX
+                            val posY = livePos?.y ?: block.positionY
+                            val pageRelativeY = posY - page.startY
                             val isSelected = block.id in canvasState.selectedBlockIds
 
                             PageBlock(
                                 block = block,
-                                pageX = block.positionX,
+                                pageX = posX,
                                 pageY = pageRelativeY,
                                 isSelected = isSelected,
                                 onTapped = { id ->

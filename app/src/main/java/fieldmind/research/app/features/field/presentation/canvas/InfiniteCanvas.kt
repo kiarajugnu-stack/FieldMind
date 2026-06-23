@@ -95,11 +95,18 @@ fun InfiniteCanvas(
     /**
      * Returns the topmost block at the given canvas-space coordinate, or null.
      * Blocks are evaluated in reverse z-order (highest z-index first).
+     * Uses live positions/sizes during active drag gestures.
      */
     fun blockAtCanvasPoint(x: Float, y: Float): CanvasBlockEntity? {
         return blocks.lastOrNull { block ->
-            x in block.positionX..(block.positionX + block.width) &&
-            y in block.positionY..(block.positionY + block.height)
+            val livePos = canvasState.liveBlockPositions[block.id]
+            val liveSize = canvasState.liveBlockSizes[block.id]
+            val bx = livePos?.x ?: block.positionX
+            val by = livePos?.y ?: block.positionY
+            val bw = liveSize?.width ?: block.width
+            val bh = liveSize?.height ?: block.height
+            x in bx..(bx + bw) &&
+            y in by..(by + bh)
         }
     }
 
@@ -147,8 +154,14 @@ fun InfiniteCanvas(
         ) { constraints ->
             // Only render blocks that are visible in the current viewport
             val visibleBlocks = blocks.filter { block ->
-                val screenPos = canvasState.canvasToScreen(block.positionX, block.positionY)
-                val screenSize = Size(block.width * canvasState.zoom, block.height * canvasState.zoom)
+                val livePos = canvasState.liveBlockPositions[block.id]
+                val liveSize = canvasState.liveBlockSizes[block.id]
+                val posX = livePos?.x ?: block.positionX
+                val posY = livePos?.y ?: block.positionY
+                val w = liveSize?.width ?: block.width
+                val h = liveSize?.height ?: block.height
+                val screenPos = canvasState.canvasToScreen(posX, posY)
+                val screenSize = Size(w * canvasState.zoom, h * canvasState.zoom)
                 
                 // Check if block is within viewport (with 100px padding for smooth scrolling)
                 val padding = 100f
@@ -183,7 +196,11 @@ fun InfiniteCanvas(
             layout(constraints.maxWidth, constraints.maxHeight) {
                 placeables.forEachIndexed { index, placeable ->
                     val block = visibleBlocks[index]
-                    val screenPos = canvasState.canvasToScreen(block.positionX, block.positionY)
+                    // Use live in-memory position during active drag (no Room write)
+                    val livePos = canvasState.liveBlockPositions[block.id]
+                    val posX = livePos?.x ?: block.positionX
+                    val posY = livePos?.y ?: block.positionY
+                    val screenPos = canvasState.canvasToScreen(posX, posY)
 
                     placeable.place(
                         position = IntOffset(screenPos.x.toInt(), screenPos.y.toInt()),
