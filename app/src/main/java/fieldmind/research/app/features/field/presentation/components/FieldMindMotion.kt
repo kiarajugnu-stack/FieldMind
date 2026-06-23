@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
 import kotlin.coroutines.cancellation.CancellationException
@@ -434,17 +435,28 @@ fun TabSwipeHost(
                                 onDragEnd = {
                                     val threshold = contentWidth * 0.20f
                                     if (systemBackJustCompleted) {
-                                        // System back gesture already committed; call onBack immediately
+                                        // System back gesture committed — animate full sweep out then navigate
                                         systemBackJustCompleted = false
-                                        tabOffsetX = 0f
                                         haptics.confirm()
-                                        scope.launch { onBack?.invoke() }
+                                        scope.launch {
+                                            tabOffsetX = contentWidth
+                                            delay(FieldMindMotion.durationStandard.toLong())
+                                            onBack?.invoke()
+                                        }
                                     } else if (tabOffsetX > threshold && canSwipeBack) {
                                         haptics.confirm()
-                                        scope.launch { tabOffsetX = contentWidth; onSwipeBack?.invoke() }
+                                        scope.launch {
+                                            tabOffsetX = contentWidth
+                                            delay(FieldMindMotion.durationStandard.toLong())
+                                            onSwipeBack?.invoke()
+                                        }
                                     } else if (tabOffsetX < -threshold && canSwipeForward) {
                                         haptics.confirm()
-                                        scope.launch { tabOffsetX = -contentWidth; onSwipeForward?.invoke() }
+                                        scope.launch {
+                                            tabOffsetX = -contentWidth
+                                            delay(FieldMindMotion.durationStandard.toLong())
+                                            onSwipeForward?.invoke()
+                                        }
                                     } else {
                                         tabOffsetX = 0f
                                     }
@@ -641,27 +653,17 @@ fun SwipeBackHost(
                                         null -> 0f
                                     }
                                     if (currentVal > maxVal * FieldMindMotion.swipeThreshold) {
-                                        if (systemBackJustCompleted) {
-                                            // System back gesture already committed; call onBack immediately
-                                            systemBackJustCompleted = false
-                                            activeDirection = null
-                                            targetOffsetX = 0f
-                                            targetOffsetY = 0f
-                                            haptics.confirm()
-                                            scope.launch {
-                                                onBack()
+                                        // Animate full sweep out then navigate
+                                        systemBackJustCompleted = false
+                                        haptics.confirm()
+                                        scope.launch {
+                                            when (activeDirection) {
+                                                SwipeDirection.Horizontal -> targetOffsetX = contentWidth
+                                                SwipeDirection.Vertical -> targetOffsetY = contentHeight
+                                                null -> {}
                                             }
-                                        } else {
-                                            // Custom drag committed
-                                            haptics.confirm()
-                                            scope.launch {
-                                                when (activeDirection) {
-                                                    SwipeDirection.Horizontal -> targetOffsetX = contentWidth
-                                                    SwipeDirection.Vertical -> targetOffsetY = contentHeight
-                                                    null -> {}
-                                                }
-                                                onBack()
-                                            }
+                                            delay(FieldMindMotion.durationStandard.toLong())
+                                            onBack()
                                         }
                                     } else {
                                         activeDirection = null
