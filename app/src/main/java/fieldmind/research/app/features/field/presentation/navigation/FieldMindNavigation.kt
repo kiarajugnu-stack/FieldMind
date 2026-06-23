@@ -887,10 +887,7 @@ private fun FieldMindNavHost(
         ) {
             composable(FieldMindScreen.Home.route) {
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                    TabSwipeHost(
-                        onSwipeBack = onSwipeToPrevTab ?: {},
-                        onSwipeForward = onSwipeToNextTab ?: {}
-                    ) {
+                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab) {
                         HomeScreen(viewModel = viewModel, onOpenSettings = { navController.navigateToDestination(FieldMindScreen.Settings.route) }, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader, onOpenCanvas = { viewModel.addNote(title = "Canvas", body = "", category = "Other", tags = "canvas") { noteId -> navController.navigateToDestination("field_canvas/$noteId") } })
                     }
                 } else {
@@ -899,7 +896,7 @@ private fun FieldMindNavHost(
             }
             composable(FieldMindScreen.Observe.route) {
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab) {
                         ObserveScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail)
                     }
                 } else {
@@ -908,7 +905,7 @@ private fun FieldMindNavHost(
             }
             composable(FieldMindScreen.Projects.route) {
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab) {
                         ProjectsScreen(viewModel = viewModel, onOpenDetail = openDetail, onStartSession = { navController.navigateToDestination(FieldMindScreen.ResearchSession.route) }, onNavigate = { navController.navigateToDestination(it.route) })
                     }
                 } else {
@@ -917,7 +914,7 @@ private fun FieldMindNavHost(
             }
             composable(FieldMindScreen.Library.route) {
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab) {
                         KnowledgeLibraryScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail, onOpenReader = openReader)
                     }
                 } else {
@@ -926,7 +923,7 @@ private fun FieldMindNavHost(
             }
             composable(FieldMindScreen.Insights.route) {
                 if (onSwipeToPrevTab != null || onSwipeToNextTab != null) {
-                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab ?: {}, onSwipeForward = onSwipeToNextTab ?: {}) {
+                    TabSwipeHost(onSwipeBack = onSwipeToPrevTab, onSwipeForward = onSwipeToNextTab) {
                         InsightsScreen(viewModel = viewModel, onNavigate = { navController.navigateToDestination(it.route) }, onOpenDetail = openDetail)
                     }
                 } else {
