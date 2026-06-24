@@ -37,7 +37,8 @@ fun ProjectDetailScreen(
     viewModel: FieldMindViewModel,
     onBack: () -> Unit = {},
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
-    onNavigate: ((FieldMindScreen) -> Unit)? = null
+    onNavigate: ((FieldMindScreen) -> Unit)? = null,
+    onOpenRelations: (() -> Unit)? = null
 ) {
     val projects by viewModel.projects.collectAsState()
     val observations by viewModel.observations.collectAsState()
@@ -349,10 +350,10 @@ fun ProjectDetailScreen(
                         }
                     )
                     ProjectActionTile(
-                        icon = MaterialSymbolIcon("share"),
-                        label = "Share Project",
-                        subtitle = "Link / File / App",
-                        onClick = { /* Open share */ }
+                        icon = MaterialSymbolIcon("hub"),
+                        label = "View Relations",
+                        subtitle = "Linked entities per observation",
+                        onClick = { onOpenRelations?.invoke() }
                     )
                     ProjectActionTile(
                         icon = MaterialSymbolIcon("archive"),

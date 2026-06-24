@@ -161,6 +161,9 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     // ── Project detail screen ──
     data object ProjectDetail : FieldMindScreen("field_project_detail/{projectId}", "Project", FieldMindIcons.Project)
 
+    // ── Project relations screen ──
+    data object ProjectRelations : FieldMindScreen("field_project_relations/{projectId}", "Relations", MaterialSymbolIcon("hub"))
+
     // ── Canvas note editor ──
     data object Canvas : FieldMindScreen("field_canvas/{noteId}", "Canvas", MaterialSymbolIcon("dashboard_customize"))
 }
@@ -1077,7 +1080,19 @@ private fun FieldMindNavHost(
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() },
                         onOpenDetail = openDetail,
-                        onNavigate = { navController.navigateToDestination(it.route) }
+                        onNavigate = { navController.navigateToDestination(it.route) },
+                        onOpenRelations = { navController.navigateToDestination("field_project_relations/$projectId") }
+                    )
+                }
+            }
+            composable("field_project_relations/{projectId}") { entry ->
+                val projectId = entry.arguments?.getString("projectId")?.toLongOrNull() ?: 0L
+                SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
+                    ProjectRelationsScreen(
+                        projectId = projectId,
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onOpenDetail = openDetail
                     )
                 }
             }
