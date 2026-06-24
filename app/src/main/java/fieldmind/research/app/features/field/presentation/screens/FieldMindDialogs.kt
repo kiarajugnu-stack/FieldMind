@@ -323,19 +323,22 @@ internal fun CollapsibleSection(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit, projectId: Long? = null) {
     var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }
     var answer by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
 
     fun save() {
         if (question.isNotBlank()) {
-            viewModel.addQuestion(question, category, source, status, priority, answer = answer)
+            viewModel.addQuestion(question, category, source, status, priority, projectId = projectId, answer = answer)
             onDismiss()
         }
     }
 
     DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { question.isNotBlank() || answer.isNotBlank() }) {
         DialogHeader(FieldMindIcons.Question, "New Question", "Turn curiosity into something observable, measurable, comparable, or verifiable.")
+        if (projectId != null) {
+            Text("Linked to project", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.project, fontWeight = FontWeight.SemiBold)
+        }
         FieldTextField(question, { question = it }, "What do you want to find out?", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
         DialogDividerSection("Classification", FieldMindIcons.Category)
         ChoiceChipsField("Category", observationCategories, category) { category = it }
@@ -569,7 +572,7 @@ private fun ProgressiveSection(
 }
 
 @Composable
-internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit, initialProjectId: Long? = null) {
     val context = LocalContext.current
     val projects by viewModel.projects.collectAsState()
     val haptics = rememberFieldMindHaptics()
@@ -591,7 +594,7 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
     var questions by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var reliability by remember { mutableStateOf(3f) }
-    var projectId by remember { mutableStateOf<Long?>(null) }
+    var projectId by remember { mutableStateOf(initialProjectId) }
     val docPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
@@ -854,6 +857,44 @@ internal fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> 
             Switch(checked = useSm2, onCheckedChange = { useSm2 = it })
         }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = front.isNotBlank() && back.isNotBlank())
+    }
+}
+
+@Composable
+internal fun NewObservationDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit, projectId: Long? = null) {
+    var subject by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }
+    var facts by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf("Likely") }
+    var tags by remember { mutableStateOf("") }
+
+    fun save() {
+        if (subject.isNotBlank() || facts.isNotBlank()) {
+            val effectiveSubject = subject.ifBlank { facts.take(48).ifBlank { "$category observation" } }
+            viewModel.addObservation(
+                subject = effectiveSubject,
+                category = category,
+                facts = facts.ifBlank { "Quick $category observation." },
+                confidence = confidence,
+                manualLocation = "",
+                tags = if (tags.isNotBlank()) "$tags, $category" else category,
+                evidence = "",
+                context = "",
+                projectId = projectId
+            )
+            onDismiss()
+        }
+    }
+
+    DialogWrapper(onDismiss = onDismiss) {
+        DialogHeader(FieldMindIcons.Observation, "New Observation", "Quickly record what you observed.", accent = FieldMindTheme.colors.observation)
+        if (projectId != null) {
+            Text("Linked to project", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.project, fontWeight = FontWeight.SemiBold)
+        }
+        ChoiceChipsField("Category", observationCategories, category) { category = it }
+        FieldTextField(subject, { subject = it }, "Subject", supportingText = "What did you observe?")
+        FieldTextField(facts, { facts = it }, "Facts / description", minLines = 3, supportingText = "What exactly did you see, hear, or measure?")
+        ChoiceChipsField("Confidence", confidenceOptions, confidence) { confidence = it }
+        FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = subject.isNotBlank() || facts.isNotBlank(), saveLabel = "Save observation")
     }
 }
 

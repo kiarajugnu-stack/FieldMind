@@ -45,7 +45,10 @@ fun ProjectDetailScreen(
     val reports by viewModel.reports.collectAsState()
     val notes by viewModel.notes.collectAsState()
 
+    var showNewObservation by remember { mutableStateOf(false) }
     var showNewNote by remember { mutableStateOf(false) }
+    var showNewQuestion by remember { mutableStateOf(false) }
+    var showNewSource by remember { mutableStateOf(false) }
 
     val project = projects.firstOrNull { it.id == projectId }
     val relatedObs = observations.filter { it.projectId == projectId }
@@ -139,7 +142,7 @@ fun ProjectDetailScreen(
                     Text("Add to project", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         ProjectActionButton(
-                            onClick = { onNavigate?.invoke(FieldMindScreen.Observe) },
+                            onClick = { showNewObservation = true },
                             icon = FieldMindIcons.Observation,
                             label = "Observation",
                             accent = colors.observation,
@@ -153,14 +156,14 @@ fun ProjectDetailScreen(
                             modifier = Modifier.weight(1f)
                         )
                         ProjectActionButton(
-                            onClick = { onNavigate?.invoke(FieldMindScreen.NewQuestion) },
+                            onClick = { showNewQuestion = true },
                             icon = FieldMindIcons.Question,
                             label = "Question",
                             accent = colors.question,
                             modifier = Modifier.weight(1f)
                         )
                         ProjectActionButton(
-                            onClick = { onNavigate?.invoke(FieldMindScreen.Library) },
+                            onClick = { showNewSource = true },
                             icon = FieldMindIcons.Source,
                             label = "Source",
                             accent = colors.source,
@@ -312,12 +315,39 @@ fun ProjectDetailScreen(
         }
     }
 
+    // ── New Observation Dialog ──
+    if (showNewObservation) {
+        NewObservationDialog(
+            viewModel = viewModel,
+            projectId = project.id,
+            onDismiss = { showNewObservation = false }
+        )
+    }
+
     // ── New Note Dialog ──
     if (showNewNote) {
         NewNoteDialog(
             viewModel = viewModel,
             projectId = project.id,
             onDismiss = { showNewNote = false }
+        )
+    }
+
+    // ── New Question Dialog ──
+    if (showNewQuestion) {
+        NewQuestionDialog(
+            viewModel = viewModel,
+            projectId = project.id,
+            onDismiss = { showNewQuestion = false }
+        )
+    }
+
+    // ── New Source Dialog ──
+    if (showNewSource) {
+        NewSourceDialog(
+            viewModel = viewModel,
+            initialProjectId = project.id,
+            onDismiss = { showNewSource = false }
         )
     }
 }
