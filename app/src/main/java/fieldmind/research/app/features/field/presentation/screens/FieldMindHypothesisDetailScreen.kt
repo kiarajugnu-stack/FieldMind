@@ -543,7 +543,7 @@ fun HypothesisDetailScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        haptics.warning()
+                        haptics.confirm()
                         viewModel.deleteHypothesis(hypothesis.id)
                         showDeleteConfirm = false
                         onBack()
