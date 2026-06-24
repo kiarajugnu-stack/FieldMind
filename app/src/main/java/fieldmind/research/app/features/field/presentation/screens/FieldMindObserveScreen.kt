@@ -606,7 +606,16 @@ fun ObserveScreen(
                                     if (expandSessions) {
                                         Divider(Modifier.padding(vertical = 8.dp))
                                         sessionGroups.entries.sortedByDescending { it.value.firstOrNull()?.createdAt }.take(5).forEach { (sessionId, sessionObs) ->
-                                            Row(Modifier.fillMaxWidth().padding(8.dp, 0.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                            val firstObs = sessionObs.firstOrNull()
+                                            Row(
+                                                Modifier.fillMaxWidth().padding(8.dp, 0.dp)
+                                                    .then(
+                                                        if (firstObs != null) Modifier.clickable { onOpenDetail("observation", firstObs.id) }
+                                                        else Modifier
+                                                    ),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                            ) {
                                                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                                     Text("${sessionObs.size} observation${if (sessionObs.size != 1) "s" else ""}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
                                                     Text(java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.US).format(sessionObs.first().createdAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
