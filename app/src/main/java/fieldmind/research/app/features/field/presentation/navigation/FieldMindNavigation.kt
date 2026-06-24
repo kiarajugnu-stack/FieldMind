@@ -64,6 +64,7 @@ import fieldmind.research.app.features.field.presentation.components.SwipeableAl
 import fieldmind.research.app.features.field.presentation.components.TabSwipeHost
 import androidx.compose.runtime.CompositionLocalProvider
 
+import fieldmind.research.app.features.field.presentation.utils.AppLifecycleManager
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
@@ -196,8 +197,17 @@ private val bottomTabs = listOf(
 fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel, requestedDestination: String? = null) {
     val onboardingCompleted by appSettings.onboardingCompleted.collectAsState()
     var appUnlocked by remember { mutableStateOf(!viewModel.fieldSettings.privacyLockEnabled.value) }
+    var isDecoyMode by remember { mutableStateOf(false) }
     val privacyEnabled by viewModel.fieldSettings.privacyLockEnabled.collectAsState()
     LaunchedEffect(privacyEnabled) { if (!privacyEnabled) appUnlocked = true }
+    // Observe auto-lock from AppLifecycleManager
+    val shouldAutoLock by AppLifecycleManager.shouldShowLock.collectAsState()
+    LaunchedEffect(shouldAutoLock) {
+        if (shouldAutoLock) {
+            appUnlocked = false
+        }
+    }
+
     if (!onboardingCompleted) {
         FieldMindOnboardingScreen(
             settings = viewModel.fieldSettings,
@@ -207,7 +217,9 @@ fun FieldMindApp(appSettings: AppSettings, viewModel: FieldMindViewModel, reques
         FieldMindAppLock(
             settings = viewModel.fieldSettings,
             isUnlocked = appUnlocked,
-            onUnlock = { appUnlocked = true }
+            isDecoyMode = isDecoyMode,
+            onUnlock = { appUnlocked = true },
+            onDecoyUnlock = { isDecoyMode = true }
         ) {
             val privacyTyping by viewModel.fieldSettings.privacyTypingEnabled.collectAsState()
             CompositionLocalProvider(LocalPrivacyTypingEnabled provides privacyTyping) {

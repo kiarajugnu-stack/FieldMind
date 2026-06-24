@@ -20,10 +20,12 @@ import androidx.fragment.app.FragmentActivity
 import fieldmind.research.app.features.field.presentation.components.applyScreenCaptureProtection
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindApp
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.utils.AppLifecycleManager
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.data.model.AppSettings
 import fieldmind.research.app.shared.presentation.viewmodel.ThemeViewModel
 import fieldmind.research.app.ui.theme.RhythmTheme
+import android.content.ClipboardManager
 
 class MainActivity : FragmentActivity() {
     companion object {
@@ -55,6 +57,9 @@ class MainActivity : FragmentActivity() {
         handleSharedSource(intent)
         requestedFieldMindDestination.value = intent?.getStringExtra(EXTRA_FIELDMIND_DESTINATION)
 
+        // Initialize lifecycle manager for auto-lock
+        AppLifecycleManager.initialize(this)
+
         setContent {
             val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()
             val darkMode by themeViewModel.darkMode.collectAsState()
@@ -78,9 +83,18 @@ class MainActivity : FragmentActivity() {
             val fieldDynamicColor by fieldMindViewModel.fieldSettings.dynamicColorEnabled.collectAsState()
             val fieldEntityColors by fieldMindViewModel.fieldSettings.entityColors.collectAsState()
             val screenCaptureProtection by fieldMindViewModel.fieldSettings.screenCaptureProtectionEnabled.collectAsState()
+            val alwaysOnScreen by fieldMindViewModel.fieldSettings.alwaysOnScreenEnabled.collectAsState()
 
             LaunchedEffect(screenCaptureProtection) {
                 applyScreenCaptureProtection(window, screenCaptureProtection)
+            }
+
+            LaunchedEffect(alwaysOnScreen) {
+                if (alwaysOnScreen) {
+                    window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
             }
 
             FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = fieldDynamicColor, entityColorOverrides = fieldEntityColors) {
@@ -92,6 +106,26 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Only trigger auto-lock if setting is enabled
+        val autoLockBg = fieldMindViewModel.fieldSettings.autoLockOnBackground.value
+        if (autoLockBg) {
+            AppLifecycleManager.onActivityPaused()
+        }
+        // Auto-clear clipboard if configured
+        val autoClearClipboard = fieldMindViewModel.fieldSettings.clipboardAutoCleanupEnabled.value
+        if (autoClearClipboard) {
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.clearPrimaryClip()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AppLifecycleManager.onActivityResumed()
     }
 
     override fun onNewIntent(intent: Intent) {

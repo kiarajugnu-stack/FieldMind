@@ -649,12 +649,13 @@ fun SecuritySettingsPage(
                     HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(if (appPinHash.isNotBlank()) "Change PIN" else "Set a 4-6 digit PIN", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        OutlinedTextField(value = pinInput, onValueChange = { if (it.length <= 6) { pinInput = it; pinError = false } }, label = { Text("Enter PIN") }, singleLine = true, isError = pinError, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password).withPrivacyTyping(LocalPrivacyTypingEnabled.current), trailingIcon = { if (LocalPrivacyTypingEnabled.current) PrivacyTypingIndicator() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
-                        OutlinedTextField(value = pinConfirm, onValueChange = { if (it.length <= 6) { pinConfirm = it; pinError = false } }, label = { Text("Confirm PIN") }, singleLine = true, isError = pinError, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password).withPrivacyTyping(LocalPrivacyTypingEnabled.current), trailingIcon = { if (LocalPrivacyTypingEnabled.current) PrivacyTypingIndicator() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
+                        OutlinedTextField(value = pinInput, onValueChange = { if (it.length <= 6) { pinInput = it; pinError = false } }, label = { Text("Enter PIN") }, singleLine = true, isError = pinError, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword).withPrivacyTyping(LocalPrivacyTypingEnabled.current), trailingIcon = { if (LocalPrivacyTypingEnabled.current) PrivacyTypingIndicator() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
+                        OutlinedTextField(value = pinConfirm, onValueChange = { if (it.length <= 6) { pinConfirm = it; pinError = false } }, label = { Text("Confirm PIN") }, singleLine = true, isError = pinError, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword).withPrivacyTyping(LocalPrivacyTypingEnabled.current), trailingIcon = { if (LocalPrivacyTypingEnabled.current) PrivacyTypingIndicator() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
                         if (pinError) Text("PINs don't match. Try again.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             OutlinedButton(onClick = { showPinSetup = false; pinInput = ""; pinConfirm = ""; pinError = false }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { Text("Cancel") }
-                            Button(onClick = { if (pinInput.length >= 4 && pinInput == pinConfirm) { val hash = settings.hashAppPin(pinInput); settings.setAppPinHash(hash); settings.setAppPinEnabled(true); showPinSetup = false; pinInput = ""; pinConfirm = ""; pinError = false } else pinError = true }, enabled = pinInput.length >= 4 && pinConfirm.length >= 4, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { Text("Save PIN") }
+                            val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
+                            Button(onClick = { if (pinInput.length >= minPinLen && pinInput == pinConfirm) { val hash = settings.hashAppPin(pinInput); settings.setAppPinHash(hash); settings.setAppPinEnabled(true); showPinSetup = false; pinInput = ""; pinConfirm = ""; pinError = false } else pinError = true }, enabled = pinInput.length >= minPinLen && pinConfirm.length >= minPinLen, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { Text("Save PIN") }
                         }
                     }
                 }
@@ -805,11 +806,12 @@ fun SecuritySettingsPage(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Enter your current PIN to disable the app PIN lock.")
-                    OutlinedTextField(value = currentPinInput, onValueChange = { if (it.length <= 6) { currentPinInput = it; currentPinError = false } }, label = { Text("Current PIN") }, singleLine = true, isError = currentPinError, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password).withPrivacyTyping(LocalPrivacyTypingEnabled.current), trailingIcon = { if (LocalPrivacyTypingEnabled.current) PrivacyTypingIndicator() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
+                    OutlinedTextField(value = currentPinInput, onValueChange = { if (it.length <= 6) { currentPinInput = it; currentPinError = false } }, label = { Text("Current PIN") }, singleLine = true, isError = currentPinError, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword).withPrivacyTyping(LocalPrivacyTypingEnabled.current), trailingIcon = { if (LocalPrivacyTypingEnabled.current) PrivacyTypingIndicator() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
                     if (currentPinError) Text("Incorrect PIN", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             },
-            confirmButton = { Button(onClick = { if (settings.verifyAppPin(currentPinInput)) { settings.setAppPinEnabled(false); settings.setAppPinHash(""); showCurrentPinDialog = false; currentPinInput = ""; currentPinError = false } else currentPinError = true }, enabled = currentPinInput.length >= 4) { Text("Disable") } },
+            val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
+            confirmButton = { Button(onClick = { if (settings.verifyAppPin(currentPinInput)) { settings.setAppPinEnabled(false); settings.setAppPinHash(""); showCurrentPinDialog = false; currentPinInput = ""; currentPinError = false } else currentPinError = true }, enabled = currentPinInput.length >= minPinLen) { Text("Disable") } },
             dismissButton = { TextButton(onClick = { showCurrentPinDialog = false; currentPinInput = ""; currentPinError = false }) { Text("Cancel") } }
         )
     }
@@ -848,7 +850,8 @@ fun SecuritySettingsPage(
                     if (decoyError) Text("PINs don't match. Try again.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             },
-            confirmButton = { Button(onClick = { if (decoyInput.length >= 4 && decoyInput == decoyConfirm) { val hash = settings.hashAppPin(decoyInput); settings.setDecoyPinHash(hash); settings.setDecoyPinLabel(decoyLabelInput.trim()); settings.setDecoyPinEnabled(true); showDecoyDialog = false; decoyInput = ""; decoyConfirm = ""; decoyLabelInput = ""; decoyError = false } else decoyError = true }, enabled = decoyInput.length >= 4 && decoyConfirm.length >= 4) { Text("Save") } },
+            val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
+            confirmButton = { Button(onClick = { if (decoyInput.length >= minPinLen && decoyInput == decoyConfirm) { val hash = settings.hashAppPin(decoyInput); settings.setDecoyPinHash(hash); settings.setDecoyPinLabel(decoyLabelInput.trim()); settings.setDecoyPinEnabled(true); showDecoyDialog = false; decoyInput = ""; decoyConfirm = ""; decoyLabelInput = ""; decoyError = false } else decoyError = true }, enabled = decoyInput.length >= minPinLen && decoyConfirm.length >= minPinLen) { Text("Save") } },
             dismissButton = { TextButton(onClick = { showDecoyDialog = false; decoyInput = ""; decoyConfirm = ""; decoyLabelInput = ""; decoyError = false }) { Text("Cancel") } }
         )
     }
@@ -2110,7 +2113,52 @@ internal fun ChoiceItemForm(title: String, options: List<String>, selected: Stri
             }
             Text(title, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
         }
-        ChoiceChips(options, selected, onSelected = onSelected)
+        var showDialog by remember { mutableStateOf(false) }
+        Surface(
+            onClick = { showDialog = true },
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(selected, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f), size = 18.dp)
+            }
+        }
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                icon = if (icon != null) {{ Icon(icon, null, tint = MaterialTheme.colorScheme.primary, size = 28.dp) }} else null,
+                title = { Text(title, fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        options.forEach { option ->
+                            val isSelected = selected == option
+                            Surface(
+                                onClick = { onSelected(option); showDialog = false },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                border = if (isSelected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
+                            ) {
+                                Row(
+                                    Modifier.fillMaxWidth().padding(14.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(selected = isSelected, onClick = { onSelected(option); showDialog = false })
+                                    Text(option, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                                    if (isSelected) Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { showDialog = false }) { Text("Cancel") } }
+            )
+        }
     }
 }
 

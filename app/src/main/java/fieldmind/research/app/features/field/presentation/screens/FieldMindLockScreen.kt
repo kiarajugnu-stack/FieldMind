@@ -33,7 +33,9 @@ import fieldmind.research.app.features.field.presentation.components.FieldMindIc
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
 import fieldmind.research.app.features.field.presentation.components.PrivacyTypingIndicator
 import fieldmind.research.app.features.field.presentation.components.withPrivacyTyping
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 // ══════════════════════════════════════════════════════════════════════
 //  App Lock / Privacy Gate
 // ══════════════════════════════════════════════════════════════════════
@@ -49,13 +51,31 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 fun FieldMindAppLock(
     settings: FieldMindSettings,
     isUnlocked: Boolean,
+    isDecoyMode: Boolean,
     onUnlock: () -> Unit,
+    onDecoyUnlock: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val privacyEnabled by settings.privacyLockEnabled.collectAsState()
     val appPinEnabled by settings.appPinEnabled.collectAsState()
     val appPinHash by settings.appPinHash.collectAsState()
+    val appPinLength by settings.appPinLength.collectAsState()
+    val pinRequiredLength = when (appPinLength) {
+        "5 digits" -> 5
+        "6 digits" -> 6
+        else -> 4
+    }
+    val decoyEnabled by settings.decoyPinEnabled.collectAsState()
+    val decoyPinHash by settings.decoyPinHash.collectAsState()
     val hasPin = appPinEnabled && appPinHash.isNotBlank()
+    val hasDecoy = decoyEnabled && decoyPinHash.isNotBlank()
+
+    // If decoy mode is active, show empty app instead of real content
+    if (isDecoyMode) {
+        DecoyAppContent(onExitDecoy = { /* user must restart app to exit decoy */ })
+        return
+    }
+
     if ((!privacyEnabled && !hasPin) || isUnlocked) {
         content()
         return
@@ -161,22 +181,37 @@ fun FieldMindAppLock(
 
                 // PIN input (for in-app PIN mode)
                 if (usePinLock && hasPin) {
-                    Text("Enter PIN", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("Enter PIN ($pinRequiredLength digits)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     OutlinedTextField(
                         value = pin,
                         onValueChange = {
-                            if (it.length <= 6) {
+                            val maxLen = maxOf(pinRequiredLength, 6)
+                            if (it.length <= maxLen) {
                                 pin = it
                                 pinError = false
-                                if (it.length >= 4 && settings.verifyAppPin(it)) {
+                                // Check decoy PIN first (if enabled)
+                                if (it.length >= pinRequiredLength && hasDecoy && settings.verifyDecoyPin(it)) {
+                                    pinAttempts = 0
+                                    onDecoyUnlock?.invoke()
+                                    pin = ""
+                                }
+                                // Then check real PIN
+                                else if (it.length >= pinRequiredLength && settings.verifyAppPin(it)) {
                                     pinAttempts = 0
                                     onUnlock()
-                                } else if (it.length >= 4) {
+                                } else if (it.length >= pinRequiredLength) {
                                     pinAttempts++
                                     pinError = true
                                     pin = ""
                                     if (pinAttempts >= 3) {
-                                        pinLockedUntil = System.currentTimeMillis() + 30_000
+                                        // Apply failed unlock cooldown if configured
+                                        val cooldownSetting = settings.failedUnlockCooldown.value
+                                        val cooldownMs = when (cooldownSetting) {
+                                            "30 Second Cooldown" -> 30_000L
+                                            "5 Minute Cooldown" -> 300_000L
+                                            else -> 30_000L // Default 30s
+                                        }
+                                        pinLockedUntil = System.currentTimeMillis() + cooldownMs
                                         pinAttempts = 0
                                     }
                                 }
@@ -186,7 +221,7 @@ fun FieldMindAppLock(
                         label = { Text("PIN") },
                         singleLine = true,
                         isError = pinError,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done).withPrivacyTyping(LocalPrivacyTypingEnabled.current),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done).withPrivacyTyping(LocalPrivacyTypingEnabled.current),
                         supportingText = if (pinError) {{ Text("Incorrect PIN. Try again.") }} else null,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
@@ -232,6 +267,92 @@ fun FieldMindAppLock(
                     }
                 }
             }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Decoy App Content — clean, empty FieldMind (no data visible)
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Displayed when the user enters the decoy PIN. Shows a clean, empty version
+ * of FieldMind with no real data. The user must restart the app to return
+ * to the real lock screen.
+ */
+@Composable
+fun DecoyAppContent(
+    onExitDecoy: () -> Unit = {}
+) {
+    Box(
+        modifier = Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background).systemBarsPadding(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            modifier = Modifier.padding(32.dp)
+        ) {
+            // Decoy brand icon
+            Box(
+                Modifier.size(80.dp).clip(RoundedCornerShape(24.dp)).background(FieldMindTheme.colors.hypothesis.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(FieldMindIcons.Nature, null, tint = FieldMindTheme.colors.hypothesis, size = 44.dp)
+            }
+
+            Text(
+                "Welcome to FieldMind",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                "A clean version of the app is ready. There is no data to display yet — start observing to build your research notebook.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // Empty state illustration
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(MaterialSymbolIcon("empty_dashboard"), null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), size = 48.dp)
+                    Text(
+                        "No observations yet",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "This is a fresh start. Observations, notes, and research will appear here once you begin.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                "Tap the + button below to start your first observation.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
