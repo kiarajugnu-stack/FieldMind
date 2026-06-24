@@ -49,6 +49,8 @@ interface FieldMindDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkReportSource(ref: ReportSourceCrossRef)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkProjectDataRecord(ref: ProjectDataRecordCrossRef)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkHypothesisEvidence(ref: HypothesisEvidenceCrossRef)
+    @Query("DELETE FROM field_hypothesis_evidence WHERE hypothesisId = :hypothesisId AND observationId = :observationId")
+    suspend fun deleteHypothesisEvidenceCrossRef(hypothesisId: Long, observationId: Long)
     @Query("SELECT * FROM field_hypothesis_evidence")
     fun observeAllHypothesisEvidence(): Flow<List<HypothesisEvidenceCrossRef>>
 

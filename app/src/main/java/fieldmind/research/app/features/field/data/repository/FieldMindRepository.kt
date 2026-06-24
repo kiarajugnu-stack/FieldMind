@@ -92,6 +92,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun linkReportSource(reportId: Long, sourceId: Long) = dao.linkReportSource(ReportSourceCrossRef(reportId, sourceId))
     suspend fun linkProjectDataRecord(projectId: Long, dataRecordId: Long) = dao.linkProjectDataRecord(ProjectDataRecordCrossRef(projectId, dataRecordId))
     suspend fun linkHypothesisEvidence(hypothesisId: Long, observationId: Long) = dao.linkHypothesisEvidence(HypothesisEvidenceCrossRef(hypothesisId, observationId))
+    suspend fun unlinkHypothesisEvidence(hypothesisId: Long, observationId: Long) = dao.deleteHypothesisEvidenceCrossRef(hypothesisId, observationId)
     suspend fun archiveObservation(id: Long) = dao.archiveObservation(id, System.currentTimeMillis())
     suspend fun archiveNote(id: Long) = dao.archiveNote(id, System.currentTimeMillis())
     suspend fun archiveQuestion(id: Long) = dao.archiveQuestion(id, System.currentTimeMillis())

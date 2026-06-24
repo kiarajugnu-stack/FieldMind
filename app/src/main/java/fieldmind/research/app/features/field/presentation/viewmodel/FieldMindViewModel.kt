@@ -211,6 +211,10 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         repository.linkHypothesisEvidence(hypothesisId, observationId)
     }
 
+    fun unlinkHypothesisEvidence(hypothesisId: Long, observationId: Long) = viewModelScope.launch {
+        repository.unlinkHypothesisEvidence(hypothesisId, observationId)
+    }
+
     fun linkQuestionObservation(questionId: Long, observationId: Long) = viewModelScope.launch {
         repository.linkQuestionObservation(questionId, observationId)
         // Also update the relatedObservationIds string on the question entity
