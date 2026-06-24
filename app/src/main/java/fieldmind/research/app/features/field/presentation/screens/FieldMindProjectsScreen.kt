@@ -24,6 +24,7 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -108,6 +109,8 @@ fun ProjectsScreen(
     val questions by viewModel.questions.collectAsState()
     val sources by viewModel.sources.collectAsState()
     val colors = FieldMindTheme.colors
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var searchQuery by remember { mutableStateOf("") }
     var showSearch by remember { mutableStateOf(false) }
@@ -174,6 +177,7 @@ fun ProjectsScreen(
         }
     }
 
+    Box(Modifier.fillMaxSize()) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 96.dp),
@@ -405,9 +409,14 @@ fun ProjectsScreen(
                         sources.count { it.relatedProjectId == project.id },
                     relativeTime = relativeTime(project.updatedAt),
                     viewModel = viewModel,
+                    showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
                     onClick = { onOpenDetail("project", project.id) }
                 )
             }
+        }
+        // ── Snackbar overlay ──
+        Box(Modifier.align(Alignment.BottomCenter).padding(16.dp).padding(bottom = 80.dp)) {
+            SnackbarHost(hostState = snackbarHostState)
         }
     }
 }
@@ -422,6 +431,7 @@ private fun ProjectCard(
     recordCount: Int,
     relativeTime: String,
     viewModel: FieldMindViewModel,
+    showSnackbar: (String) -> Unit = {},
     onClick: () -> Unit
 ) {
     val colors = FieldMindTheme.colors
@@ -529,6 +539,7 @@ private fun ProjectCard(
                                 selectedMethods = project.selectedMethods ?: "",
                                 connectionMap = project.connectionMap ?: ""
                             )
+                            showSnackbar("${project.title} duplicated")
                         },
                         leadingIcon = { Icon(MaterialSymbolIcon("content_copy"), null, size = 18.dp) }
                     )
@@ -594,6 +605,10 @@ private fun ProjectCard(
                                     status = if (project.status == "Archived") "Active" else "Archived",
                                     archivedAt = if (project.status == "Archived") null else System.currentTimeMillis()
                                 )
+                            )
+                            showSnackbar(
+                                if (project.status == "Archived") "${project.title} restored"
+                                else "${project.title} archived"
                             )
                         },
                         leadingIcon = {
@@ -666,6 +681,7 @@ private fun ProjectCard(
                     onClick = {
                         viewModel.deleteProject(project.id)
                         showDeleteConfirm = false
+                        showSnackbar("${project.title} deleted")
                     },
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
