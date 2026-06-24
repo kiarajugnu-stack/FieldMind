@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -123,16 +124,19 @@ fun CanvasBlock(
         label = "toolAlpha"
     )
 
-    // Block size at current zoom
-    val scaledWidth = displayWidth * canvasState.zoom
-    val scaledMinHeight = displayHeight * canvasState.zoom
-
     Box(
         modifier = Modifier
-            // Block dimensions — width is fixed, height has a minimum but grows with content
-            .width(with(density) { scaledWidth.toDp() })
-            .heightIn(min = with(density) { scaledMinHeight.toDp() })
+            // Block dimensions — document-space size (graphicsLayer handles visual zoom)
+            .width(with(density) { displayWidth.toDp() })
+            .heightIn(min = with(density) { displayHeight.toDp() })
             .wrapContentHeight()
+            // GPU-scale all block content uniformly via graphicsLayer (like PageCanvas)
+            // Zoom does NOT change block positions or sizes — it only magnifies the rendering.
+            .graphicsLayer(
+                scaleX = canvasState.zoom,
+                scaleY = canvasState.zoom,
+                transformOrigin = TransformOrigin(0f, 0f)
+            )
             // Selection border
             .then(
                 if (isSelected) {
@@ -272,20 +276,16 @@ fun CanvasBlock(
         ) {
             // Minimize button (top-left corner)
             if (isSelected && !isCollapsed) {
-                val buttonSize = (20f * canvasState.zoom).coerceIn(10f, 24f).dp
-                val iconSize = (10f * canvasState.zoom).coerceIn(6f, 14f).dp
+                // Fixed dp values — graphicsLayer on parent handles zoom scaling
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(
-                            start = (4f * canvasState.zoom).coerceAtLeast(2f).dp,
-                            top = (4f * canvasState.zoom).coerceAtLeast(2f).dp
-                        ),
+                        .padding(start = 4.dp, top = 4.dp),
                     contentAlignment = Alignment.TopStart
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(buttonSize)
+                            .size(20.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                             .pointerInput(Unit) {
@@ -296,7 +296,7 @@ fun CanvasBlock(
                         Icon(
                             MaterialSymbolIcon("unfold_less"),
                             "Minimize",
-                            size = iconSize,
+                            size = 10.dp,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -305,18 +305,16 @@ fun CanvasBlock(
 
             // Link badge overlay (top-right corner)
             if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
+                // Fixed dp values — graphicsLayer on parent handles zoom scaling
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(
-                            end = (4f / canvasState.zoom).dp,
-                            top = (4f / canvasState.zoom).dp
-                        ),
+                        .padding(end = 4.dp, top = 4.dp),
                     contentAlignment = Alignment.TopEnd
                 ) {
                     Box(
                         modifier = Modifier
-                            .size((16f * canvasState.zoom).coerceIn(10f, 20f).dp)
+                            .size(16.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary),
                         contentAlignment = Alignment.Center
@@ -324,7 +322,7 @@ fun CanvasBlock(
                         Icon(
                             MaterialSymbolIcon("link"),
                             "Linked to ${block.linkedEntityType}",
-                            size = (10f * canvasState.zoom).coerceIn(6f, 14f).dp,
+                            size = 10.dp,
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -370,11 +368,18 @@ private fun ResizeHandle(
     onResizeEnd: (Float, Float) -> Unit = { _, _ -> },
     canvasState: CanvasState
 ) {
-    // Scale handle size with zoom so it stays proportionally visible
-    val handleSize = (16f * canvasState.zoom).coerceIn(8f, 24f).dp
+    // Handle size stays visually consistent regardless of zoom
+    // The parent graphicsLayer scales the handle, so we compensate with 1f/zoom
+    // (same pattern as PageBlock resize handle)
+    val handleSize = (16f / canvasState.zoom).coerceIn(8f, 24f).dp
     Box(
         modifier = modifier
             .size(handleSize)
+            .graphicsLayer(
+                scaleX = 1f / canvasState.zoom,
+                scaleY = 1f / canvasState.zoom,
+                transformOrigin = TransformOrigin(0f, 0f)
+            )
             .background(
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                 RoundedCornerShape(topStart = 4.dp)
