@@ -920,7 +920,6 @@ private fun PageBlock(
                             // 300ms long-press delay before drag starts — prevents accidental
                             // drags when tapping to select
                             detectDragGesturesAfterLongPress(
-                                longPressTimeout = 300L,
                                 onDragStart = {
                                     startX = pageX
                                     startY = pageY
@@ -1087,7 +1086,6 @@ private fun PageBlock(
                             var cumulativeDx = 0f
                             var cumulativeDy = 0f
                             detectDragGesturesAfterLongPress(
-                                longPressTimeout = 300L,
                                 onDragStart = {
                                     cumulativeDx = 0f
                                     cumulativeDy = 0f

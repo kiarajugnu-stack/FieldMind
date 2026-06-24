@@ -42,6 +42,7 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import fieldmind.research.app.features.field.presentation.components.pressScale
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.BorderStroke
