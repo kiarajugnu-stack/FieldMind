@@ -24,8 +24,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -193,7 +195,19 @@ fun PageCanvas(
                     tonalElevation = 0.dp,
                     shadowElevation = 0.dp
                 ) {
-                    Box(Modifier.fillMaxSize()) {
+                    // PDF-like zoom: graphicsLayer uniformly scales all content within the fixed-size page.
+                    // Zoom does NOT change block positions or sizes — it only magnifies the rendering.
+                    // Pointer input coordinates are divided by zoom to convert from pre-transform
+                    // screen space to document space.
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                scaleX = zoom,
+                                scaleY = zoom,
+                                transformOrigin = TransformOrigin(0f, 0f)
+                            )
+                    ) {
                         // ── Tap empty area on page → deselect ──
                         // Only active when NOT drawing
                         if (drawingState?.showToolbar != true) {
@@ -398,6 +412,8 @@ private fun PageDrawingRender(
     drawings: List<DrawingEntity>,
     modifier: Modifier = Modifier
 ) {
+    // graphicsLayer on the parent handles zoom scaling, so drawing
+    // coordinates are in document-space (no zoom multiplication needed).
     Canvas(modifier = modifier) {
         val pageDrawings = drawings.filter { drawing ->
             val strokes = parseStrokeData(drawing.strokeDataJson) ?: return@filter false
@@ -408,7 +424,7 @@ private fun PageDrawingRender(
             }
         }
         pageDrawings.forEach { drawing ->
-            drawDrawingOnPage(drawing, pageStartY, zoom)
+            drawDrawingOnPage(drawing, pageStartY)
         }
     }
 }
@@ -433,6 +449,8 @@ private fun PageDrawingInput(
     var currentStroke by remember { mutableStateOf<InProgressStroke?>(null) }
 
     // ── Gesture handlers ──
+    // Pointer input is in pre-transform space (graphicsLayer does not affect hit-testing).
+    // Divide by zoom to convert to document-space coordinates.
     val gestureModifier = if (!drawingState.isEraser) {
         Modifier.pointerInput(drawingState.activeTool, drawingState.strokeWidth, drawingState.color, drawingState.shapeType) {
             detectDragGestures(
@@ -483,9 +501,10 @@ private fun PageDrawingInput(
     }
 
     // ── Render in-progress stroke ──
+    // graphicsLayer on the parent handles zoom scaling, so draw in document-space
     Canvas(modifier = modifier.then(gestureModifier)) {
         currentStroke?.let { stroke ->
-            drawPageStroke(stroke, pageStartY, zoom)
+            drawPageStroke(stroke, pageStartY)
         }
     }
 }
@@ -513,13 +532,12 @@ private fun findPageHitStroke(
 }
 
 /**
- * Render a [DrawingEntity] onto a page Canvas, offsetting Y by pageStartY
- * and scaling by zoom.
+ * Render a [DrawingEntity] onto a page Canvas.
+ * Coordinates are in document-space — graphicsLayer on the parent handles zoom scaling.
  */
 private fun DrawScope.drawDrawingOnPage(
     drawing: DrawingEntity,
-    pageStartY: Float,
-    zoom: Float
+    pageStartY: Float
 ) {
     val strokes = parseStrokeData(drawing.strokeDataJson) ?: return
     val color = Color(drawing.color)
@@ -533,8 +551,9 @@ private fun DrawScope.drawDrawingOnPage(
     strokes.forEach { parsedStroke ->
         if (parsedStroke.points.size < 2) return@forEach
 
+        // Points are in document space — offset Y by pageStartY for page-local rendering
         val pagePoints = parsedStroke.points.map { pt ->
-            Offset(pt.x * zoom, (pt.y - pageStartY) * zoom)
+            Offset(pt.x, pt.y - pageStartY)
         }
 
         if (tool == DrawingTool.SHAPE && parsedStroke.points.size >= 2) {
@@ -558,16 +577,16 @@ private fun DrawScope.drawDrawingOnPage(
 
 /**
  * Render the current in-progress stroke on the page.
+ * Coordinates are in document-space — graphicsLayer handles zoom.
  */
 private fun DrawScope.drawPageStroke(
     stroke: InProgressStroke,
-    pageStartY: Float,
-    zoom: Float
+    pageStartY: Float
 ) {
     if (stroke.points.size < 2) return
 
     val pagePoints = stroke.points.map { pt ->
-        Offset(pt.x * zoom, (pt.y - pageStartY) * zoom)
+        Offset(pt.x, pt.y - pageStartY)
     }
 
     val color = Color(stroke.color)
@@ -785,9 +804,10 @@ private fun PageBlock(
 
     Box(
         modifier = Modifier
-            .offset { IntOffset((pageX * zoom).roundToInt(), (pageY * zoom).roundToInt()) }
-            .width(with(density) { (block.width * zoom).toDp() })
-            .heightIn(min = with(density) { (defaultHeight * zoom).toDp() })
+            // Block positioned at document-space coordinates — graphicsLayer handles visual zoom
+            .offset { IntOffset(pageX.roundToInt(), pageY.roundToInt()) }
+            .width(with(density) { block.width.toDp() })
+            .heightIn(min = with(density) { defaultHeight.toDp() })
             .wrapContentHeight()
             .then(
                 if (isSelected) {
@@ -815,6 +835,8 @@ private fun PageBlock(
                     },
                     onDrag = { change, dragAmount ->
                         change.consume()
+                        // Drag deltas are in pre-transform (screen) space — divide by zoom
+                        // to convert to document-space movement
                         cumulativeDx += dragAmount.x / zoom
                         cumulativeDy += dragAmount.y / zoom
                         val newX = (startX + cumulativeDx).coerceAtLeast(0f)
@@ -870,6 +892,13 @@ private fun PageBlock(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .size(16.dp)
+                    // Resize handle stays the same visual size regardless of zoom.
+                    // We compensate for graphicsLayer scaling by dividing the dp size by zoom.
+                    .graphicsLayer(
+                        scaleX = 1f / zoom,
+                        scaleY = 1f / zoom,
+                        transformOrigin = TransformOrigin(0f, 0f)
+                    )
                     .background(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
                         RoundedCornerShape(topStart = 4.dp)
@@ -884,6 +913,8 @@ private fun PageBlock(
                             },
                             onDrag = { change, dragAmount ->
                                 change.consume()
+                                // Drag deltas are in pre-transform screen space — divide by zoom
+                                // to convert to document-space size deltas
                                 cumulativeDx += dragAmount.x / zoom
                                 cumulativeDy += dragAmount.y / zoom
                                 val newW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
