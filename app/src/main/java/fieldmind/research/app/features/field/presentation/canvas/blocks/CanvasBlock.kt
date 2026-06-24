@@ -249,7 +249,8 @@ fun CanvasBlock(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-            } else {
+            }
+        } else {
             // Full content display — measure natural content height for auto-expand
             Box(
                 modifier = Modifier

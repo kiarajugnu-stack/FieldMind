@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import kotlin.math.*
 
@@ -83,9 +84,8 @@ private fun DrawScope.drawDotGrid(canvasState: CanvasState) {
     // Batched dot rendering: collect all dot screen positions, then draw
     // them as a single [drawPoints] call. This replaces 100K individual
     // drawCircle calls with a single GPU-batched draw call.
-    val points = mutableListOf<Offset>()
     val capacity = endCol - startCol + 1
-    points.ensureCapacity(capacity * capacity)
+    val points = ArrayList<Offset>(capacity * capacity)
 
     for (row in startRow..endRow) {
         for (col in startCol..endCol) {
@@ -97,7 +97,7 @@ private fun DrawScope.drawDotGrid(canvasState: CanvasState) {
 
     drawPoints(
         points = points,
-        pointMode = androidx.compose.ui.graphics.drawscope.PointMode.Points,
+        pointMode = PointMode.Points,
         color = Color(0x1A000000),  // ~10% opacity black
         strokeWidth = DOT_RADIUS * 2f
     )
