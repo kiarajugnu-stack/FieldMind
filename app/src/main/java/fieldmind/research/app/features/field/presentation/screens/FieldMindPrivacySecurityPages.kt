@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.composed
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -27,6 +28,9 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import android.os.Build
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.platform.LocalDensity
 
 // ══════════════════════════════════════════════════════════════════════
 //  Security Score Detail Page
@@ -382,8 +386,24 @@ fun AppPreviewPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     }
 }
 
+@Suppress("NewApi")
 private fun Modifier.blur(radius: androidx.compose.ui.unit.Dp): Modifier = this.then(
-    Modifier.alpha(0.4f)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        Modifier.composed {
+            val density = LocalDensity.current
+            val radiusPx = with(density) { radius.toPx() }
+            val renderEffect = remember(radiusPx) {
+                android.graphics.RenderEffect.createBlurEffect(
+                    radiusPx,
+                    radiusPx,
+                    android.graphics.Shader.TileMode.MIRROR
+                ).asComposeRenderEffect()
+            }
+            Modifier.graphicsLayer { this.renderEffect = renderEffect }
+        }
+    } else {
+        Modifier.alpha(0.4f)
+    }
 )
 
 // ══════════════════════════════════════════════════════════════════════
