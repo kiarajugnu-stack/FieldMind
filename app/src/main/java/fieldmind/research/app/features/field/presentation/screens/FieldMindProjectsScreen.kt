@@ -183,48 +183,35 @@ fun ProjectsScreen(
         contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // ── Header: Projects + [+] ──
+        // ── Header: Projects with StandardScreenHeader ──
         item {
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Box(
-                        Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
-                            .background(colors.project.copy(alpha = 0.16f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(FieldMindIcons.Projects, null, tint = colors.project, size = 24.dp)
-                    }
-                    Column {
-                        Text("Projects", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                        Text("${projects.size} total", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    // Search toggle
-                    FilledTonalIconButton(
-                        onClick = { showSearch = !showSearch },
-                        modifier = Modifier.size(40.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(if (showSearch) MaterialSymbolIcon("close") else FieldMindIcons.Search, null, size = 20.dp)
-                    }
-                    // New project
-                    FilledTonalButton(
-                        onClick = { onNavigate?.invoke(FieldMindScreen.NewProject) },
-                        shape = RoundedCornerShape(14.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(containerColor = colors.project.copy(alpha = 0.16f))
-                    ) {
-                        Icon(FieldMindIcons.Add, null, size = 18.dp, tint = colors.project)
-                        Spacer(Modifier.size(6.dp))
-                        Text("New", fontWeight = FontWeight.SemiBold)
+            StandardScreenHeader(
+                title = "Projects",
+                subtitle = "${projects.size} total · Manage your research projects",
+                icon = FieldMindIcons.Projects,
+                heroColor = colors.project,
+                trailing = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FilledTonalIconButton(
+                            onClick = { showSearch = !showSearch },
+                            modifier = Modifier.size(40.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(if (showSearch) MaterialSymbolIcon("close") else FieldMindIcons.Search, null, size = 20.dp)
+                        }
+                        FilledTonalButton(
+                            onClick = { onNavigate?.invoke(FieldMindScreen.NewProject) },
+                            shape = RoundedCornerShape(14.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(containerColor = colors.project.copy(alpha = 0.16f))
+                        ) {
+                            Icon(FieldMindIcons.Add, null, size = 18.dp, tint = colors.project)
+                            Spacer(Modifier.size(6.dp))
+                            Text("New", fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
-            }
+            )
         }
 
         // ── Search ──

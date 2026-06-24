@@ -749,12 +749,12 @@ private fun CompactHomeHeader(
             ) {
                 Box(
                     Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(52.dp)
+                        .clip(RoundedCornerShape(16.dp))
                         .background(colors.positive.copy(alpha = if (colors.isDark) 0.34f else 0.16f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(FieldMindIcons.Nature, null, tint = colors.positive, size = 22.dp)
+                    Icon(FieldMindIcons.Nature, null, tint = colors.positive, size = 28.dp)
                 }
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -1069,11 +1069,11 @@ private fun HeroActionChip(
         tonalElevation = 0.dp
     ) {
         Row(
-            Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Icon(icon, null, tint = accent, size = 20.dp)
+            Icon(icon, null, tint = accent, size = 22.dp)
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
         }
     }
