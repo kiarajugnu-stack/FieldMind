@@ -205,8 +205,9 @@ fun PageCanvas(
                                 docY in by..(by + block.height)
                             }
                             if (hitBlock == null) {
+                                val hadSelection = canvasState.selectedBlockIds.isNotEmpty()
                                 canvasState.clearSelection()
-                                onDeselectAll?.invoke()
+                                if (hadSelection) onDeselectAll?.invoke()
                             }
                         }
                     }
