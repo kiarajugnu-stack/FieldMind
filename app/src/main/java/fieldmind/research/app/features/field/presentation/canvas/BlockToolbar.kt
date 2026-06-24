@@ -1,8 +1,12 @@
 package fieldmind.research.app.features.field.presentation.canvas
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -18,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fieldmind.research.app.features.field.presentation.components.expressivePress
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -91,8 +96,25 @@ fun BlockToolbar(
 
     AnimatedVisibility(
         visible = selectedBlock != null,
-        enter = fadeIn() + slideInVertically { -it / 2 },
-        exit = fadeOut() + slideOutVertically { -it / 2 },
+        enter = scaleIn(
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            ),
+            initialScale = 0.85f
+        ) + fadeIn(
+            animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
+        ) + slideInVertically(
+            animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
+        ) { -it / 3 },
+        exit = scaleOut(
+            animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium),
+            targetScale = 0.85f
+        ) + fadeOut(
+            animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
+        ) + slideOutVertically(
+            animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
+        ) { -it / 3 },
         modifier = modifier
             .offset { toolbarOffset }
     ) {
@@ -220,7 +242,9 @@ private fun ToolbarAction(
         onClick = onClick,
         shape = RoundedCornerShape(10.dp),
         color = Color.Transparent,
-        modifier = Modifier.height(32.dp)
+        modifier = Modifier
+            .height(32.dp)
+            .expressivePress(scaleDown = 0.9f)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp),

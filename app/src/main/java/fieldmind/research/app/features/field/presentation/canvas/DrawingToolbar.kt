@@ -26,6 +26,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fieldmind.research.app.features.field.presentation.components.pressScale
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 
@@ -279,6 +280,7 @@ private fun ToolButton(
         color = bgColor,
         modifier = Modifier
             .size(40.dp)
+            .pressScale(scaleDown = 0.88f)
             .then(
                 if (tool == DrawingTool.SHAPE) {
                     Modifier.pointerInput(Unit) {
@@ -367,6 +369,7 @@ private fun ColorSwatch(
             .scale(scale)
             .clip(CircleShape)
             .background(color)
+            .pressScale(scaleDown = 0.8f)
             .clickable(onClick = onClick)
             .then(
                 if (isSelected) {
@@ -407,7 +410,9 @@ private fun ShapePickerRow(
                         MaterialTheme.colorScheme.primary
                     else
                         MaterialTheme.colorScheme.surfaceContainerLow,
-                    modifier = Modifier.height(34.dp)
+                    modifier = Modifier
+                        .height(34.dp)
+                        .pressScale(scaleDown = 0.92f)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 10.dp),
