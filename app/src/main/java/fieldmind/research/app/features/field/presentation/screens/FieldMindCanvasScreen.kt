@@ -243,9 +243,7 @@ fun CanvasScreen(
                     onToggleLock = { canvasViewModel.canvasState.toggleCanvasLock() },
                     onToggleGallery = { showFigureGallery = !showFigureGallery },
                     currentPage = currentPage,
-                    totalPages = totalPages,
-                    showDrawingToolbar = canvasViewModel.drawingState.showToolbar,
-                    onToggleDrawing = { canvasViewModel.drawingState.toggleToolbar() }
+                    totalPages = totalPages
                 )
 
             // ── Canvas body (Infinite or Pages mode) ──
@@ -543,9 +541,7 @@ private fun CanvasTopBar(
     onToggleLock: () -> Unit = {},
     onToggleGallery: (() -> Unit)? = null,
     currentPage: Int = 0,
-    totalPages: Int = 1,
-    showDrawingToolbar: Boolean = false,
-    onToggleDrawing: () -> Unit = {} {
+    totalPages: Int = 1 {
     var showOverflow by remember { mutableStateOf(false) }
 
     Surface(
