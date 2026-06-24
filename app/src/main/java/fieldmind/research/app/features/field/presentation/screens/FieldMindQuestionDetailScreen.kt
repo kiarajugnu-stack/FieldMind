@@ -295,23 +295,24 @@ fun QuestionDetailScreen(
         }
 
         // ════════════════════════════════════════════════════════════
-        //  Evidence section (observations linked as evidence)
+        //  Evidence & Linked Observations (observations linked to this question)
         // ════════════════════════════════════════════════════════════
         item {
             SectionCard(
                 icon = MaterialSymbolIcon("science"),
-                title = "Evidence",
-                iconTint = FieldMindTheme.colors.observation
+                title = "Evidence & Observations",
+                iconTint = FieldMindTheme.colors.observation,
+                badge = if (linkedObservations.isNotEmpty()) "${linkedObservations.size}" else null
             ) {
                 if (linkedObservations.isEmpty()) {
                     Text(
-                        "No evidence observations linked yet. Link observations from the field to test your hypotheses.",
+                        "Link observations from the field to provide evidence for your hypotheses.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        linkedObservations.take(5).forEach { obs ->
+                        linkedObservations.forEach { obs ->
                             Surface(
                                 onClick = { onOpenDetail("observation", obs.id) },
                                 shape = RoundedCornerShape(12.dp),
@@ -338,23 +339,14 @@ fun QuestionDetailScreen(
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis
                                         )
-                                        Text(
-                                            "${obs.category} • ${obs.date}",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 1
-                                        )
+                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Text(obs.category, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(obs.date, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
                                     }
                                     Icon(MaterialSymbolIcon("chevron_right"), null, size = 16.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                                 }
                             }
-                        }
-                        if (linkedObservations.size > 5) {
-                            Text(
-                                "+${linkedObservations.size - 5} more observations",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
                         }
                     }
                 }
@@ -421,72 +413,6 @@ fun QuestionDetailScreen(
         }
 
         // ════════════════════════════════════════════════════════════
-        //  Evidence & Linked Observations (combined — same data source per model)
-        // ════════════════════════════════════════════════════════════
-        if (linkedObservations.isNotEmpty() || linkedHypotheses.isNotEmpty()) {
-            // Get observations linked via hypothesis-evidence cross-refs
-            val hypothesisObsIds = remember(linkedHypotheses) {
-                emptySet<Long>() // Simplified: shows the same relatedObservationIds set
-            }
-
-            item {
-                SectionCard(
-                    icon = MaterialSymbolIcon("visibility"),
-                    title = "Linked Observations",
-                    iconTint = FieldMindTheme.colors.observation,
-                    badge = if (linkedObservations.isNotEmpty()) "${linkedObservations.size}" else null
-                ) {
-                    if (linkedObservations.isEmpty()) {
-                        Text(
-                            "No observations linked to this question. Link observations from the field to provide evidence for your hypotheses.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            linkedObservations.forEach { obs ->
-                                Surface(
-                                    onClick = { onOpenDetail("observation", obs.id) },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Row(
-                                        Modifier.fillMaxWidth().padding(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        Box(
-                                            Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))
-                                                .background(FieldMindTheme.colors.observation.copy(alpha = 0.14f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(FieldMindIcons.Observation, null, tint = FieldMindTheme.colors.observation, size = 16.dp)
-                                        }
-                                        Column(Modifier.weight(1f)) {
-                                            Text(
-                                                obs.subject.ifBlank { "Observation #${obs.id}" },
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontWeight = FontWeight.Medium,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                Text(obs.category, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                                Text(obs.date, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            }
-                                        }
-                                        Icon(MaterialSymbolIcon("chevron_right"), null, size = 16.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // ════════════════════════════════════════════════════════════
         //  Notes
         // ════════════════════════════════════════════════════════════
         item {
@@ -536,17 +462,48 @@ fun QuestionDetailScreen(
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        if (question.answeredAt != null) {
-                            Text(
-                                "Answered ${formatTimestamp(question.answeredAt)}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
+
+                        // ── Confidence badge ──
+                        val displayConfidence = question.confidence
+                        val confColor = when {
+                            displayConfidence >= 80 -> FieldMindTheme.colors.positive
+                            displayConfidence >= 50 -> FieldMindTheme.colors.warning
+                            else -> MaterialTheme.colorScheme.error
                         }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = confColor.copy(alpha = 0.12f)
+                            ) {
+                                Row(
+                                    Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(MaterialSymbolIcon("psychology"), null, size = 12.dp, tint = confColor)
+                                    Text(
+                                        "${displayConfidence}% confidence",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = confColor,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                            if (question.answeredAt != null) {
+                                Text(
+                                    "Answered ${formatTimestamp(question.answeredAt)}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                            }
+                        }
+
                         // Edit button
                         OutlinedButton(
                             onClick = {
                                 answerText = question.answer
+                                confidenceLevel = question.confidence
                                 showAnswerEditor = true
                             },
                             shape = RoundedCornerShape(12.dp)
