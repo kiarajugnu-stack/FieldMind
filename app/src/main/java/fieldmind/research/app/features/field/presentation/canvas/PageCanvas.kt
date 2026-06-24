@@ -3,7 +3,7 @@ package fieldmind.research.app.features.field.presentation.canvas
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -169,11 +169,37 @@ fun PageCanvas(
         totalPages(pages.size)
     }
 
-    // ── Outer container ──
+    // ── Outer container with tap-to-deselect on page margins ──
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color(0xFFE8E8E8))
+            // Permanent tap-to-deselect on any empty area (including page margins)
+            .then(
+                if (drawingState?.showToolbar != true && !canvasState.canvasLocked) {
+                    // Include computedPanX and computedPanY as keys so the handler
+                    // recaptures the correct scroll offset after viewport/scroll changes
+                    Modifier.pointerInput(computedPanX, computedPanY) {
+                        detectTapGestures { tapOffset ->
+                            // Check if tap is on any block across ALL pages
+                            val hitBlock = blocks.lastOrNull { block ->
+                                val bx = canvasState.liveBlockPositions[block.id]?.x ?: block.positionX
+                                val by = canvasState.liveBlockPositions[block.id]?.y ?: block.positionY
+                                // Convert tap from screen coords to document space
+                                val docX = (tapOffset.x - computedPanX) / zoom
+                                val docY = (tapOffset.y - computedPanY) / zoom
+                                docX in bx..(bx + block.width) &&
+                                docY in by..(by + block.height)
+                            }
+                            if (hitBlock == null) {
+                                canvasState.clearSelection()
+                            }
+                        }
+                    }
+                } else {
+                    Modifier
+                }
+            )
     ) {
         // ── Layer 1: Scrollable pages with pinch-to-zoom ──
         Column(
@@ -208,31 +234,6 @@ fun PageCanvas(
                                 transformOrigin = TransformOrigin(0f, 0f)
                             )
                     ) {
-                        // ── Tap empty area on page → deselect ──
-                        // Only active when NOT drawing
-                        if (drawingState?.showToolbar != true) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .pointerInput(Unit) {
-                                        detectTapGestures { tapOffset ->
-                                            val docX = tapOffset.x / zoom
-                                            val docY = (tapOffset.y / zoom) + page.startY
-                                            // Check if tap is on a block — if not, clear selection
-                                            val hitBlock = page.blocks.lastOrNull { block ->
-                                                val bx = canvasState.liveBlockPositions[block.id]?.x ?: block.positionX
-                                                val by = canvasState.liveBlockPositions[block.id]?.y ?: block.positionY
-                                                docX in bx..(bx + block.width) &&
-                                                docY in by..(by + block.height)
-                                            }
-                                            if (hitBlock == null) {
-                                                canvasState.clearSelection()
-                                            }
-                                        }
-                                    }
-                            )
-                        }
-
                         // ── Pinch-to-zoom gesture layer (on the page surface) ──
                         // Single-finger drag handled by verticalScroll.
                         // Two-finger pinch adjusts zoom via canvasState.
@@ -820,43 +821,57 @@ private fun PageBlock(
             )
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .pointerInput(block.id) {
-                var cumulativeDx = 0f
-                var cumulativeDy = 0f
-                var startX = 0f
-                var startY = 0f
+            .let { modifier ->
+                // When canvas is locked, only allow tap (selection) — no drag or resize
+                if (canvasState.canvasLocked) {
+                    modifier
+                        .pointerInput(block.id) {
+                            detectTapGestures { onTapped(block.id) }
+                        }
+                } else {
+                    modifier
+                        .pointerInput(block.id) {
+                            var cumulativeDx = 0f
+                            var cumulativeDy = 0f
+                            var startX = 0f
+                            var startY = 0f
 
-                detectDragGestures(
-                    onDragStart = {
-                        startX = pageX
-                        startY = pageY
-                        cumulativeDx = 0f
-                        cumulativeDy = 0f
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        // Drag deltas are in pre-transform (screen) space — divide by zoom
-                        // to convert to document-space movement
-                        cumulativeDx += dragAmount.x / zoom
-                        cumulativeDy += dragAmount.y / zoom
-                        val newX = (startX + cumulativeDx).coerceAtLeast(0f)
-                        val newY = startY + cumulativeDy
-                        canvasState.setLiveBlockPosition(block.id, newX, newY)
-                        onMoved(newX, newY)
-                    },
-                    onDragEnd = {
-                        val finalX = (startX + cumulativeDx).coerceAtLeast(0f)
-                        val finalY = startY + cumulativeDy
-                        canvasState.setLiveBlockPosition(block.id, finalX, finalY)
-                        onMovedFinal?.invoke(startX, startY, finalX, finalY)
-                    },
-                    onDragCancel = {
-                        canvasState.removeLiveBlockPosition(block.id)
-                    }
-                )
-            }
-            .pointerInput(block.id) {
-                detectTapGestures { onTapped(block.id) }
+                            // 300ms long-press delay before drag starts — prevents accidental
+                            // drags when tapping to select
+                            detectDragGesturesAfterLongPress(
+                                longPressTimeoutMillis = 300,
+                                onDragStart = {
+                                    startX = pageX
+                                    startY = pageY
+                                    cumulativeDx = 0f
+                                    cumulativeDy = 0f
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    // Drag deltas are in pre-transform (screen) space — divide by zoom
+                                    // to convert to document-space movement
+                                    cumulativeDx += dragAmount.x / zoom
+                                    cumulativeDy += dragAmount.y / zoom
+                                    val newX = (startX + cumulativeDx).coerceAtLeast(0f)
+                                    val newY = startY + cumulativeDy
+                                    canvasState.setLiveBlockPosition(block.id, newX, newY)
+                                    onMoved(newX, newY)
+                                },
+                                onDragEnd = {
+                                    val finalX = (startX + cumulativeDx).coerceAtLeast(0f)
+                                    val finalY = startY + cumulativeDy
+                                    canvasState.setLiveBlockPosition(block.id, finalX, finalY)
+                                    onMovedFinal?.invoke(startX, startY, finalX, finalY)
+                                },
+                                onDragCancel = {
+                                    canvasState.removeLiveBlockPosition(block.id)
+                                }
+                            )
+                        }
+                        .pointerInput(block.id) {
+                            detectTapGestures { onTapped(block.id) }
+                        }
+                }
             }
     ) {
         // ── Clean up stale live overrides when entity catches up ──
@@ -883,8 +898,8 @@ private fun PageBlock(
             content()
         }
 
-        // Resize handle (bottom-right, when selected)
-        if (isSelected) {
+        // Resize handle (bottom-right, when selected, only when unlocked)
+        if (isSelected && !canvasState.canvasLocked) {
             val liveSize = canvasState.liveBlockSizes[block.id]
             val displayWidth = liveSize?.width ?: block.width
             val displayHeight = liveSize?.height ?: block.height
@@ -906,7 +921,9 @@ private fun PageBlock(
                     .pointerInput(block.id) {
                         var cumulativeDx = 0f
                         var cumulativeDy = 0f
-                        detectDragGestures(
+                        // 300ms long-press delay before resize starts
+                        detectDragGesturesAfterLongPress(
+                            longPressTimeoutMillis = 300,
                             onDragStart = {
                                 cumulativeDx = 0f
                                 cumulativeDy = 0f

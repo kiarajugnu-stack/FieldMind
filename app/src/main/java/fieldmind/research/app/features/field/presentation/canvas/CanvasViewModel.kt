@@ -250,13 +250,11 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
 
     /**
      * Move a block during active dragging (intermediate positions).
-     * Saves to DB immediately but does NOT record undo for each drag frame.
-     * Use [moveBlock] for the final drag-end position to record undo.
+     * Only updates in-memory [CanvasState.liveBlockPositions] — does NOT write to Room.
+     * The final position is saved to Room via [moveBlock] when the drag gesture ends.
      */
     fun moveBlockIntermediate(id: Long, x: Float, y: Float) {
-        viewModelScope.launch {
-            repository.updateBlockPosition(id, x, y)
-        }
+        canvasState.setLiveBlockPosition(id, x, y)
     }
 
     /**
@@ -287,13 +285,16 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
 
     /**
      * Finalize a block move after a drag gesture ends.
-     * The position was already saved by [moveBlockIntermediate] during the drag,
-     * so this only records the undo entry with the [originalX]/[originalY] as
-     * the point to revert to.
+     * Saves the final position to Room and records an undo entry. During the drag,
+     * [moveBlockIntermediate] only updated in-memory [CanvasState.liveBlockPositions]
+     * for smooth visual feedback without per-frame Room writes.
      */
     fun moveBlockFinal(id: Long, originalX: Float, originalY: Float, newX: Float, newY: Float) {
         if (originalX == newX && originalY == newY) return
-        undoRedo.push(CanvasCommand.MoveBlock(id, originalX, originalY, newX, newY))
+        viewModelScope.launch {
+            repository.updateBlockPosition(id, newX, newY)
+            undoRedo.push(CanvasCommand.MoveBlock(id, originalX, originalY, newX, newY))
+        }
     }
 
     /**

@@ -233,12 +233,14 @@ fun CanvasScreen(
                     undoLabel = undoLabel,
                     redoLabel = redoLabel,
                     zoom = canvasViewModel.canvasState.zoom,
+                    canvasLocked = canvasViewModel.canvasState.canvasLocked,
                     onBack = { handleBack() },
                     onUndo = { haptics.light(); canvasViewModel.undo() },
                     onRedo = { haptics.light(); canvasViewModel.redo() },
                     onZoomIn = { canvasViewModel.canvasState.applyZoom(1.2f, androidx.compose.ui.geometry.Offset(100f, 100f)) },
                     onZoomOut = { canvasViewModel.canvasState.applyZoom(0.83f, androidx.compose.ui.geometry.Offset(100f, 100f)) },
                     onZoomReset = { canvasViewModel.canvasState.resetView() },
+                    onToggleLock = { canvasViewModel.canvasState.toggleCanvasLock() },
                     onToggleGallery = { showFigureGallery = !showFigureGallery },
                     currentPage = currentPage,
                     totalPages = totalPages,
@@ -503,12 +505,14 @@ private fun CanvasTopBar(
     undoLabel: String?,
     redoLabel: String?,
     zoom: Float = 1f,
+    canvasLocked: Boolean = false,
     onBack: () -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
     onZoomIn: () -> Unit = {},
     onZoomOut: () -> Unit = {},
     onZoomReset: () -> Unit = {},
+    onToggleLock: () -> Unit = {},
     onToggleGallery: (() -> Unit)? = null,
     currentPage: Int = 0,
     totalPages: Int = 1,
@@ -622,6 +626,29 @@ private fun CanvasTopBar(
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                         )
                     }
+                }
+            }
+
+            // ── Lock toggle ──
+            Surface(
+                onClick = onToggleLock,
+                shape = RoundedCornerShape(8.dp),
+                color = if (canvasLocked)
+                    MaterialTheme.colorScheme.primaryContainer
+                else
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        MaterialSymbolIcon(if (canvasLocked) "lock" else "lock_open"),
+                        if (canvasLocked) "Unlock canvas" else "Lock canvas",
+                        size = 16.dp,
+                        tint = if (canvasLocked)
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 

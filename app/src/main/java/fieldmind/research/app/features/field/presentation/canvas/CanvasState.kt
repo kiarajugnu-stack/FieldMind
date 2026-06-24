@@ -48,6 +48,10 @@ class CanvasState(
     var collapsedBlockIds: Set<Long> by mutableStateOf(emptySet())
         private set
 
+    /** Whether the canvas is locked (blocks cannot be dragged or resized). */
+    var canvasLocked: Boolean by mutableStateOf(false)
+        private set
+
     /**
      * In-memory overrides for block positions during active drag gestures.
      * Key = block ID, Value = canvas-space position (x, y).
@@ -197,6 +201,14 @@ class CanvasState(
     /** Expand a collapsed block. */
     fun expandBlock(id: Long) {
         collapsedBlockIds = collapsedBlockIds - id
+    }
+
+    /** Toggle the canvas lock — when locked, blocks cannot be dragged or resized. */
+    fun toggleCanvasLock() {
+        canvasLocked = !canvasLocked
+        if (canvasLocked) {
+            clearSelection()
+        }
     }
 
     // ── Coordinate transforms ──
