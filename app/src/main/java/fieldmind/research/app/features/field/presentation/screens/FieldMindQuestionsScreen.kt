@@ -308,8 +308,22 @@ fun QuestionsScreen(
 
         // ── Quick add question ──
         item {
-            AddButton("Add question") {
-                showQuestionBuilder = true
+            Surface(
+                onClick = { showQuestionBuilder = true },
+                shape = RoundedCornerShape(18.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                tonalElevation = 0.dp,
+                modifier = Modifier.fillMaxWidth().expressivePress(scaleDown = 0.97f)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Icon(FieldMindIcons.Add, null, tint = FieldMindTheme.colors.question, size = 20.dp)
+                    Spacer(Modifier.size(8.dp))
+                    Text("Add question", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = FieldMindTheme.colors.question)
+                }
             }
         }
 

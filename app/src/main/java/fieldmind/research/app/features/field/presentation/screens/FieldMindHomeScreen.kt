@@ -1954,9 +1954,6 @@ private fun ResearchSessionCtaCard(
     }
 }
 
-@Composable
-
-
 @OptIn(ExperimentalLayoutApi::class)
 // ══════════════════════════════════════════════════════════════════════
 //  Session Observations — Grouped by research session
