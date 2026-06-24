@@ -127,6 +127,10 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SettingsSpeciesId : FieldMindScreen("field_settings_species_id", "Species ID", FieldMindIcons.Nature)
     data object SettingsAutoGen : FieldMindScreen("field_settings_auto_gen", "Auto generation", FieldMindIcons.Sparkle)
 
+    // ── Tasks screen ──
+    data object Tasks : FieldMindScreen("field_tasks", "Tasks", MaterialSymbolIcon("checklist"))
+    data object NewTask : FieldMindScreen("field_new_task", "New Task", MaterialSymbolIcon("checklist"))
+
     // ── Creation screens (converted from dialogs) ──
     data object NewProject : FieldMindScreen("field_new_project", "New Project", FieldMindIcons.Project)
     data object NewQuestion : FieldMindScreen("field_new_question", "New Question", FieldMindIcons.Question)
@@ -1023,6 +1027,8 @@ private fun FieldMindNavHost(
             composable(FieldMindScreen.NewQuestion.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { NewQuestionScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.NewHypothesis.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { NewHypothesisScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.NewDataRecord.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { NewDataRecordScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
+            composable(FieldMindScreen.Tasks.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { TasksScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenDetail = openDetail, onNavigate = { route -> navController.navigateToDestination(route) }) } }
+            composable(FieldMindScreen.NewTask.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { NewTaskScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.NewReport.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { NewReportScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.SpeciesTool.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { SpeciesToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenBrowser = { navController.navigateToDestination(FieldMindScreen.SpeciesBrowser.route) }, onOpenTaxonomicBrowser = { navController.navigateToDestination(FieldMindScreen.TaxonomicBrowser.route) }) } }
             composable(FieldMindScreen.ChecklistTool.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { ChecklistToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) } }

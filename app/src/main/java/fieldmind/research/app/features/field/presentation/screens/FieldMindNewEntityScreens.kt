@@ -275,6 +275,58 @@ fun NewDataRecordScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
+//  NEW TASK SCREEN — Full-screen creation form
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun NewTaskScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var taskType by remember { mutableStateOf("Field Survey") }
+    var priority by remember { mutableStateOf("Medium") }
+    var dueDate by remember { mutableStateOf("") }
+    var assignedTo by remember { mutableStateOf("") }
+    var showAdvanced by remember { mutableStateOf(false) }
+
+    fun save() {
+        if (title.isNotBlank()) {
+            viewModel.addTask(title, description, taskType, priority, dueDate, assignedTo)
+            onBack()
+        }
+    }
+
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
+        StandardScreenHeader(
+            title = "New Task",
+            subtitle = "Define a field task, survey, or to-do with priority and due date.",
+            icon = MaterialSymbolIcon("checklist"),
+            heroColor = FieldMindTheme.colors.flashcard,
+            trailing = { BackButton(onClick = onBack) }
+        )
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            FieldTextField(title, { title = it }, "What needs to be done?", supportingText = "Short, actionable task title")
+            FieldTextField(description, { description = it }, "Description / instructions", minLines = 3, supportingText = "Details, context, or step-by-step instructions")
+            DividerSection("Classification", MaterialSymbolIcon("category"), FieldMindTheme.colors.flashcard)
+            ChoiceChipsField("Type", taskTypes, taskType) { taskType = it }
+            ChoiceChipsField("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
+            DividerSection("Scheduling & assignment", MaterialSymbolIcon("calendar_month"), FieldMindTheme.colors.flashcard)
+            FieldTextField(dueDate, { dueDate = it }, "Due date (YYYY-MM-DD)", supportingText = "Leave blank if no deadline")
+            FieldTextField(assignedTo, { assignedTo = it }, "Assigned to", supportingText = "Team member name — leave blank if self-assigned")
+            CollapsibleSection("Advanced options", "Links to questions, observations, and species", icon = MaterialSymbolIcon("link"), expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+                Text("Linked entities can be set after the task is created from the task detail screen.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = ::save, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank()) {
+                Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Create task")
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
 //  NEW REPORT SCREEN — Full-screen creation form
 // ══════════════════════════════════════════════════════════════════════
 
@@ -338,6 +390,8 @@ fun NewReportScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 // ══════════════════════════════════════════════════════════════════════
 //  Shared helpers
 // ══════════════════════════════════════════════════════════════════════
+
+private val taskTypes = listOf("Field Survey", "Observation Collection", "Species Count", "Audio Recording", "Photo Collection", "Video Collection", "Habitat Mapping", "Literature Review", "Data Analysis", "Report Writing", "Verification", "Sample Collection", "GPS Tracking", "Custom")
 
 private fun defaultUnitForTool(tool: String): String = when (tool) {
     "Weather Log" -> "°C"
