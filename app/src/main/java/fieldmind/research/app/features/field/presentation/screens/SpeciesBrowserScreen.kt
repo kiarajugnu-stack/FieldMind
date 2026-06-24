@@ -563,8 +563,10 @@ fun SharedTransitionScope.SpeciesDetailScreen(
     var species by remember { mutableStateOf<SpeciesRecord?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var similarSpecies by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
+    // Internal navigation state for similar species (lets user tap through similar species)
+    var internalSpeciesId by remember { mutableStateOf(speciesId) }
 
-    LaunchedEffect(speciesId) {
+    LaunchedEffect(internalSpeciesId) {
         val record = database.getById(speciesId)
         species = record
         if (record != null && record.similarSpecies.isNotEmpty()) {
@@ -919,7 +921,7 @@ fun SharedTransitionScope.SpeciesDetailScreen(
                                             }
                                             // Tap to navigate to that species
                                             Surface(
-                                                onClick = { /* would navigate to similar species detail */ },
+                                                onClick = { internalSpeciesId = similar.id },
                                                 shape = CircleShape,
                                                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                                                 modifier = Modifier.size(36.dp)
