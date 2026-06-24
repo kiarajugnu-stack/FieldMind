@@ -1227,7 +1227,6 @@ fun NewFolderScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         0xFFFF9800L to "Orange",
         0xFFF44336L to "Red"
     )
-    val colors = FieldMindTheme.colors
 
     Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
         StandardScreenHeader(
@@ -1264,11 +1263,10 @@ fun NewFolderScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             Spacer(Modifier.height(8.dp))
             Button(onClick = {
                 if (folderName.isNotBlank()) {
-                    viewModel.addNote(
-                        title = "📁 $folderName",
-                        body = "Folder created on ${java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault()).format(java.util.Date())}",
-                        category = "Folder",
-                        tags = "folder, ${folderName.lowercase().replace(" ", "-")}",
+                    viewModel.addFolder(
+                        name = folderName.trim(),
+                        color = selectedColor,
+                        projectId = null,
                         onSaved = { onBack() }
                     )
                 }

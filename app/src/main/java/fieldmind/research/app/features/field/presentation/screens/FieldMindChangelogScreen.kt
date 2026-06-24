@@ -43,6 +43,25 @@ internal data class FieldMindChangelogEntry(
 )
 
 private val fieldMindChangelog = listOf(    FieldMindChangelogEntry(
+        version = "2.2.26.23",
+        date = "2026-06-24",
+        title = "Real Folder Entity & Task Screen Polish",
+        importance = "Patch",
+        tags = listOf("Folders", "Entity", "UI", "Data Layer"),
+        sections = listOf(
+            "📁 Real Folder Entity (Database-Backed)" to listOf(
+                "Created a proper FolderEntity in Room database with fields: name, color, icon, parent folder, project link.",
+                "Added full data layer: DAO queries (observe, insert, update, soft delete), Repository methods, and ViewModel integration.",
+                "Registered FolderEntity in FieldMindDatabase with version bump to 16 (destructive migration fallback).",
+                "Updated NewFolderScreen and NewFolderDialog to call viewModel.addFolder() instead of faking folders as Notes with category='Folder'.",
+                "Folders now persist as a dedicated database table with proper lifecycle tracking (createdAt, updatedAt, archivedAt, deletedAt)."
+            ),
+            "🎨 Task Screen Design Consistency" to listOf(
+                "NewTaskScreen already has statusBarPadding, StandardScreenHeader with heroColor (FieldMindTheme.colors.flashcard), and consistent design patterns matching other entity screens.",
+                "NewTaskDialog in ProjectDetailScreen uses DialogWrapper with proper accent color and full-screen mode."
+            )
+        )
+    ),    FieldMindChangelogEntry(
         version = "2.2.26.22",
         date = "2026-06-24",
         title = "Quick Capture FAB with Voice Notes",

@@ -1042,12 +1042,9 @@ private fun NewFolderDialog(
 
         DialogActions(onCancel = onDismiss, onSave = {
             if (folderName.isNotBlank()) {
-                // Create a note to represent the folder (persistable without new entity type)
-                viewModel.addNote(
-                    title = "📁 $folderName",
-                    body = "Folder created on ${SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date())}",
-                    category = "Folder",
-                    tags = "folder, ${folderName.lowercase().replace(" ", "-")}",
+                viewModel.addFolder(
+                    name = folderName.trim(),
+                    color = selectedColor,
                     projectId = projectId,
                     onSaved = { onDismiss() }
                 )

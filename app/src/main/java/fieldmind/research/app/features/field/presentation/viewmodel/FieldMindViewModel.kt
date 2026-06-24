@@ -1120,6 +1120,35 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun observeTasksForProject(projectId: Long) = repository.observeTasksForProject(projectId)
     val weatherCatalog: StateFlow<List<WeatherCatalogEntity>> = repository.weatherCatalog.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    // ── Folders ──
+    val folders: StateFlow<List<FolderEntity>> = repository.folders.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun observeFoldersForProject(projectId: Long) = repository.observeFoldersForProject(projectId)
+
+    fun addFolder(
+        name: String,
+        color: Long = 0xFF5F7F52,
+        iconName: String = "folder",
+        projectId: Long? = null,
+        parentFolderId: Long? = null,
+        description: String = "",
+        onSaved: ((Long) -> Unit)? = null
+    ) = viewModelScope.launch {
+        val id = repository.addFolder(
+            FolderEntity(
+                name = name.trim(),
+                color = color,
+                iconName = iconName,
+                projectId = projectId,
+                parentFolderId = parentFolderId,
+                description = description.trim()
+            )
+        )
+        onSaved?.invoke(id)
+    }
+
+    fun updateFolderEntity(entity: FolderEntity) = viewModelScope.launch { repository.updateFolder(entity) }
+    fun deleteFolder(id: Long) = viewModelScope.launch { repository.deleteFolder(id) }
+
     // ── Extra backup data (PhashDatabase + GeoFenceRegions + Streaks + Achievements) ──
     /**
      * Merge PhashDatabase, GeoFenceRegions, streak data, and achievement unlock

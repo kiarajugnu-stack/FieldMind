@@ -350,6 +350,26 @@ data class ResearchSessionEntity(
 data class SessionObservationCrossRef(val sessionId: Long, val observationId: Long)
 
 // ══════════════════════════════════════════════════════════════════════
+//  Folder Entity — Organizational folders for projects
+// ══════════════════════════════════════════════════════════════════════
+
+@Entity(tableName = "field_folders")
+data class FolderEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val color: Long = 0xFF5F7F52,
+    val iconName: String = "folder",
+    val parentFolderId: Long? = null,
+    val projectId: Long? = null,
+    val description: String = "",
+    val status: String = "Active",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+// ══════════════════════════════════════════════════════════════════════
 //  New Entities for Full Spec (Phase 4 — Tasks, Species, Evidence Reports)
 // ══════════════════════════════════════════════════════════════════════
 

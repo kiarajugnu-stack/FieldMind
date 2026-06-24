@@ -200,4 +200,18 @@ interface FieldMindDao {
 
     @Query("UPDATE field_tasks SET deletedAt = :time, updatedAt = :time WHERE id = :id")
     suspend fun softDeleteTask(id: Long, time: Long)
+
+    // ── Folders ──
+    @Query("SELECT * FROM field_folders WHERE deletedAt IS NULL ORDER BY name ASC")
+    fun observeFolders(): Flow<List<FolderEntity>>
+    @Query("SELECT * FROM field_folders WHERE projectId = :projectId AND deletedAt IS NULL ORDER BY name ASC")
+    fun observeFoldersForProject(projectId: Long): Flow<List<FolderEntity>>
+    @Query("SELECT * FROM field_folders WHERE id = :id LIMIT 1")
+    fun observeFolder(id: Long): Flow<FolderEntity?>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFolder(entity: FolderEntity): Long
+    @Update
+    suspend fun updateFolder(entity: FolderEntity)
+    @Query("UPDATE field_folders SET deletedAt = :time, updatedAt = :time WHERE id = :id")
+    suspend fun softDeleteFolder(id: Long, time: Long)
 }

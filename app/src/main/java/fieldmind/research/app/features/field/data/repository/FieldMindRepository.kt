@@ -164,4 +164,13 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     fun observeWeatherCatalogAll() = dao.observeWeatherCatalogAll()
     suspend fun addWeatherCatalog(entity: WeatherCatalogEntity): Long = dao.insertWeatherCatalog(entity)
     suspend fun deleteWeatherCatalogBefore(before: Long) = dao.deleteWeatherCatalogBefore(before)
+
+    // ── Folders ──
+    val folders: Flow<List<FolderEntity>> = dao.observeFolders()
+    fun observeFoldersForProject(projectId: Long) = dao.observeFoldersForProject(projectId)
+    fun observeFolder(id: Long) = dao.observeFolder(id)
+    suspend fun addFolder(entity: FolderEntity): Long = dao.insertFolder(entity)
+    suspend fun updateFolder(entity: FolderEntity) = dao.updateFolder(entity.copy(updatedAt = System.currentTimeMillis()))
+    suspend fun deleteFolder(id: Long) = dao.softDeleteFolder(id, System.currentTimeMillis())
+
 }
