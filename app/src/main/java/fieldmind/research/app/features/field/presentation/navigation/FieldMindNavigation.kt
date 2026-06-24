@@ -161,6 +161,9 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     // ── Project detail screen ──
     data object ProjectDetail : FieldMindScreen("field_project_detail/{projectId}", "Project", FieldMindIcons.Project)
 
+    // ── Hypothesis detail screen ──
+    data object HypothesisDetail : FieldMindScreen("field_hypothesis_detail/{hypothesisId}", "Hypothesis", FieldMindIcons.Hypothesis)
+
     // ── Project relations screen ──
     data object ProjectRelations : FieldMindScreen("field_project_relations/{projectId}", "Relations", MaterialSymbolIcon("hub"))
 
@@ -880,6 +883,7 @@ private fun FieldMindNavHost(
             "question" -> navController.navigateToDestination("field_question_detail/$id")
             "task" -> navController.navigateToDestination("field_task_detail/$id")
             "species" -> navController.navigateToDestination("field_species_detail/$id")
+            "hypothesis" -> navController.navigateToDestination("field_hypothesis_detail/$id")
             else -> navController.navigateToDestination("field_detail/$kind/$id")
         }
     }
