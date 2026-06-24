@@ -23,6 +23,8 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -55,6 +57,12 @@ fun ProjectDetailScreen(
     var showNewSource by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
 
+    // ── Picker dialogs state ──
+    var showObservationPicker by remember { mutableStateOf(false) }
+    var showSourcePicker by remember { mutableStateOf(false) }
+    var obsPickerSearch by remember { mutableStateOf("") }
+    var srcPickerSearch by remember { mutableStateOf("") }
+
     val project = projects.firstOrNull { it.id == projectId }
     val relatedObs = observations.filter { it.projectId == projectId }
     val relatedQs = questions.filter { it.relatedProjectId == projectId }
@@ -64,6 +72,7 @@ fun ProjectDetailScreen(
     val relatedReports = reports.filter { it.projectId == projectId }
     val colors = FieldMindTheme.colors
     val context = LocalContext.current
+    val haptics = rememberFieldMindHaptics()
 
     if (project == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -282,6 +291,131 @@ fun ProjectDetailScreen(
             }
         }
 
+        // ── Linked Entities ──
+        item {
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(MaterialSymbolIcon("link"), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+                        Text("Link existing entities", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+
+                    // Observations
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Observations", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = colors.observation)
+                        if (relatedObs.isEmpty()) {
+                            Text(
+                                "No observations linked yet.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        } else {
+                            relatedObs.take(3).forEach { obs ->
+                                Surface(
+                                    onClick = { onOpenDetail("observation", obs.id) },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Box(
+                                            Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))
+                                                .background(colors.observation.copy(alpha = 0.14f)),
+                                            contentAlignment = Alignment.Center
+                                        ) { Icon(FieldMindIcons.Observation, null, tint = colors.observation, size = 16.dp) }
+                                        Column(Modifier.weight(1f)) {
+                                            Text(obs.subject.ifBlank { "Observation #${obs.id}" }, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            Text(obs.category, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        IconButton(
+                                            onClick = { viewModel.updateObservation(obs.copy(projectId = null)) },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(MaterialSymbolIcon("link_off"), "Unlink", size = 14.dp, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+                                        }
+                                    }
+                                }
+                            }
+                            if (relatedObs.size > 3) {
+                                Text("+${relatedObs.size - 3} more", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = { showObservationPicker = true },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(MaterialSymbolIcon("add_link"), null, size = 16.dp)
+                            Spacer(Modifier.size(6.dp))
+                            Text("Link existing observation")
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                    // Sources
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Sources", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = colors.source)
+                        if (relatedSources.isEmpty()) {
+                            Text(
+                                "No sources linked yet.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        } else {
+                            relatedSources.forEach { src ->
+                                Surface(
+                                    onClick = { onOpenDetail("source", src.id) },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Box(
+                                            Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))
+                                                .background(colors.source.copy(alpha = 0.14f)),
+                                            contentAlignment = Alignment.Center
+                                        ) { Icon(FieldMindIcons.Category, null, tint = colors.source, size = 16.dp) }
+                                        Column(Modifier.weight(1f)) {
+                                            Text(src.title.ifBlank { "Source #${src.id}" }, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            Text("${src.type} • ${src.readingStatus}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        IconButton(
+                                            onClick = { viewModel.updateSourceEntity(src.copy(relatedProjectId = null)) },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(MaterialSymbolIcon("link_off"), "Unlink", size = 14.dp, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = { showSourcePicker = true },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(MaterialSymbolIcon("add_link"), null, size = 16.dp)
+                            Spacer(Modifier.size(6.dp))
+                            Text("Link existing source")
+                        }
+                    }
+                }
+            }
+        }
+
         // ── Actions: Export, Share, Archive ──
         item {
             Card(
@@ -449,6 +583,201 @@ fun ProjectDetailScreen(
                 TextButton(onClick = { showRenameDialog = false }) { Text("Cancel") }
             }
         )
+    // ════════════════════════════════════════════════════════════════
+    //  Observation Picker Dialog
+    // ════════════════════════════════════════════════════════════════
+    if (showObservationPicker) {
+        EntityPickerDialog(
+            title = "Link Observation to Project",
+            searchQuery = obsPickerSearch,
+            onSearchChange = { obsPickerSearch = it },
+            onDismiss = {
+                showObservationPicker = false
+                obsPickerSearch = ""
+            },
+            items = observations.filter { obs ->
+                obs.deletedAt == null && obs.projectId != project.id &&
+                (obsPickerSearch.isBlank() ||
+                 obs.subject.contains(obsPickerSearch, ignoreCase = true) ||
+                 obs.category.contains(obsPickerSearch, ignoreCase = true))
+            },
+            itemIcon = { Icon(FieldMindIcons.Observation, null, tint = colors.observation, size = 16.dp) },
+            itemPrimaryText = { it.subject.ifBlank { "Observation #${it.id}" } },
+            itemSecondaryText = { "${it.category} • ${it.date}" },
+            onSelect = { obs ->
+                haptics.confirm()
+                viewModel.updateObservation(obs.copy(projectId = project.id))
+                showObservationPicker = false
+                obsPickerSearch = ""
+            }
+        )
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  Source Picker Dialog
+    // ════════════════════════════════════════════════════════════════
+    if (showSourcePicker) {
+        EntityPickerDialog(
+            title = "Link Source to Project",
+            searchQuery = srcPickerSearch,
+            onSearchChange = { srcPickerSearch = it },
+            onDismiss = {
+                showSourcePicker = false
+                srcPickerSearch = ""
+            },
+            items = sources.filter { src ->
+                src.deletedAt == null && src.relatedProjectId != project.id &&
+                (srcPickerSearch.isBlank() ||
+                 src.title.contains(srcPickerSearch, ignoreCase = true) ||
+                 src.type.contains(srcPickerSearch, ignoreCase = true))
+            },
+            itemIcon = { Icon(FieldMindIcons.Category, null, tint = colors.source, size = 16.dp) },
+            itemPrimaryText = { it.title.ifBlank { "Source #${it.id}" } },
+            itemSecondaryText = { "${it.type} • ${it.readingStatus}" },
+            onSelect = { src ->
+                haptics.confirm()
+                viewModel.updateSourceEntity(src.copy(relatedProjectId = project.id))
+                showSourcePicker = false
+                srcPickerSearch = ""
+            }
+        )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Entity Picker Dialog (reusable searchable list)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun <T> EntityPickerDialog(
+    title: String,
+    searchQuery: String,
+    onSearchChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    items: List<T>,
+    itemIcon: @Composable (T) -> Unit,
+    itemPrimaryText: @Composable (T) -> String,
+    itemSecondaryText: @Composable (T) -> String,
+    onSelect: (T) -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp)
+                    .padding(top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Title
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                // Search field
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    placeholder = { Text("Search...") },
+                    leadingIcon = { Icon(MaterialSymbolIcon("search"), null, size = 18.dp) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
+                )
+
+                if (items.isEmpty()) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No items found",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        items(items) { item ->
+                            Surface(
+                                onClick = { onSelect(item) },
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ) {
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Box(
+                                        Modifier
+                                            .size(32.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        itemIcon(item)
+                                    }
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            itemPrimaryText(item),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Medium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            itemSecondaryText(item),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Close button
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(end = 8.dp, bottom = 8.dp)
+                ) {
+                    Text("Cancel")
+                }
+            }
+        }
     }
 }
 

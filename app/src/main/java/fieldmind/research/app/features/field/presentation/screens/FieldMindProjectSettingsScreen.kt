@@ -243,7 +243,7 @@ fun ProjectSettingsScreen(
                                             MaterialSymbolIcon("check"),
                                             null,
                                             size = 16.dp,
-                                            tint = if (color.luminance() > 0.5f) Color.Black else Color.White
+                                            tint = if (color.red * 0.299f + color.green * 0.587f + color.blue * 0.114f > 0.5f) Color.Black else Color.White
                                         )
                                     }
                                 }
