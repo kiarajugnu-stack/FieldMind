@@ -258,7 +258,7 @@ fun ProfileSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, onOpenEntityColors: (() -> Unit)? = null) {
     val settings = viewModel.fieldSettings
     val themeMode by settings.themeMode.collectAsState()
     val dynamicColor by settings.dynamicColorEnabled.collectAsState()
@@ -276,6 +276,17 @@ fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             }
         }
         // ── Map settings ──
+        // ── Entity accent colors ──
+        item { SectionHeader("Entity Colors", "Per-category accent color customization") }
+        item {
+            SettingsNavCard(
+                "Entity accent colors",
+                "Customize colors for observations, notes, tasks, questions, and more",
+                MaterialSymbolIcon("palette"),
+                FieldMindTheme.colors.flashcard
+            ) { onOpenEntityColors?.invoke() }
+        }
+
         item { SectionHeader("Map", "Map type and location display preferences") }
         item {
             SettingsGroupCard {

@@ -42,7 +42,31 @@ internal data class FieldMindChangelogEntry(
     val sections: List<Pair<String, List<String>>>
 )
 
-private val fieldMindChangelog = listOf(    FieldMindChangelogEntry(
+private val fieldMindChangelog = listOf(        FieldMindChangelogEntry(
+        version = "2.2.26.27",
+        date = "2026-06-24",
+        title = "Per-Category Color Customizer",
+        importance = "Patch",
+        tags = listOf("Colors", "Theme", "Settings", "UI"),
+        sections = listOf(
+            "🎨 Per-Category Entity Color Customization" to listOf(
+                "Added Entity Accent Colors settings page under Appearance with a full inline color picker for all 18 entity/state/confidence color tokens.",
+                "Each entity type shows its current color swatch, label, and customization status (Default / Customized).",
+                "Tap any row to open an inline editor with a 28-color preset grid, custom hex input, and Apply/Reset/Cancel controls.",
+                "Custom colors are persisted in SharedPreferences and survive app restarts and exports.",
+                "Reset All to Defaults button instantly clears all overrides and reverts to the unified palette.",
+                "Colors apply immediately across the entire app via the FieldMindTheme composable's new entityColorOverrides parameter."
+            ),
+            "🔧 Data Layer & Theme Integration" to listOf(
+                "Added entityColors StateFlow + setEntityColors() to FieldMindSettings with JSON serialization via Gson.",
+                "Added applyOverrides() method to FieldMindColors data class that merges per-key overrides into a copy.",
+                "FieldMindTheme() now accepts entityColorOverrides param and chains .applyOverrides() before providing the CompositionLocal.",
+                "MainActivity collects entityColors from Settings and passes them to FieldMindTheme for app-wide application.",
+                "Added DEFAULT_ENTITY_COLORS, ENTITY_COLOR_LABELS, and ENTITY_COLOR_ICONS constants for the color picker UI.",
+                "entityColors included in toExportJson / applyFromJson for backup/restore compatibility."
+            )
+        )
+    ),FieldMindChangelogEntry(
         version = "2.2.26.25",
         date = "2026-06-24",
         title = "Project Detail Redesign with Activity Feed & Create Sheet",

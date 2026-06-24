@@ -384,6 +384,26 @@ class FieldMindSettings private constructor(context: Context) {
     private val _appPinLength = MutableStateFlow(prefs.getString(KEY_APP_PIN_LENGTH, "4 digits") ?: "4 digits")
     val appPinLength: StateFlow<String> = _appPinLength.asStateFlow()
 
+    // ── Per-category entity color overrides ──
+    private val _entityColors = MutableStateFlow(parseEntityColorsJson(prefs.getString(KEY_ENTITY_COLORS, null)))
+    /** Map of entity type → hex color Long (e.g. "observation" → 0xFF2E7D32). Empty = use defaults. */
+    val entityColors: StateFlow<Map<String, Long>> = _entityColors.asStateFlow()
+
+    fun setEntityColors(value: Map<String, Long>) {
+        val json = gson.toJson(value)
+        prefs.edit().putString(KEY_ENTITY_COLORS, json).apply()
+        _entityColors.value = value
+    }
+
+    private fun parseEntityColorsJson(json: String?): Map<String, Long> {
+        if (json.isNullOrBlank()) return emptyMap()
+        return try {
+            val type = object : com.google.gson.reflect.TypeToken<Map<String, Double>>() {}.type
+            val raw: Map<String, Double> = gson.fromJson(json, type) ?: emptyMap()
+            raw.mapValues { it.value.toLong() }
+        } catch (_: Exception) { emptyMap() }
+    }
+
     /** Decoy PIN enabled */
     private val _decoyPinEnabled = MutableStateFlow(prefs.getBoolean(KEY_DECOY_PIN_ENABLED, false))
     val decoyPinEnabled: StateFlow<Boolean> = _decoyPinEnabled.asStateFlow()
@@ -711,6 +731,7 @@ class FieldMindSettings private constructor(context: Context) {
         _userInterests.value = UserInterests()
         _screenVisibility.value = ScreenVisibility()
         _onboardingExtendedTourCompleted.value = false
+        _entityColors.value = emptyMap()
     }
 
     // ── Species identification setters ──
@@ -811,6 +832,7 @@ class FieldMindSettings private constructor(context: Context) {
         put(KEY_DECOY_PIN_ENABLED, _decoyPinEnabled.value)
         put(KEY_DECOY_PIN_HASH, _decoyPinHash.value)
         put(KEY_DECOY_PIN_LABEL, _decoyPinLabel.value)
+        put(KEY_ENTITY_COLORS, gson.toJson(_entityColors.value))
         put(KEY_APP_PREVIEW_MODE, _appPreviewMode.value)
         put(KEY_EXPORT_PASSWORD_PROTECTION, _exportPasswordProtectionEnabled.value)
         put(KEY_EXPORT_PASSWORD_HASH, _exportPasswordHash.value)
@@ -945,6 +967,7 @@ class FieldMindSettings private constructor(context: Context) {
             edit.putString(KEY_SCREEN_VISIBILITY, jsonStr)
             _screenVisibility.value = vis
         }
+        applyString(KEY_ENTITY_COLORS)
         applyBoolean(KEY_EXTENDED_TOUR_DONE)
         applyInt(KEY_DAILY_GOAL)
 
@@ -1033,6 +1056,7 @@ class FieldMindSettings private constructor(context: Context) {
         _perenualApiKey.value = prefs.getString(KEY_PERENUAL_API_KEY, "") ?: ""
         _appPinEnabled.value = prefs.getBoolean(KEY_APP_PIN_ENABLED, false)
         _appPinHash.value = prefs.getString(KEY_APP_PIN_HASH, "") ?: ""
+        _entityColors.value = parseEntityColorsJson(prefs.getString(KEY_ENTITY_COLORS, null))
     }
 
     private inline fun edit(key: String, value: String, after: () -> Unit) { prefs.edit().putString(key, value).apply(); after() }
@@ -1151,5 +1175,7 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_DECOY_PIN_ENABLED = "decoy_pin_enabled"
         private const val KEY_DECOY_PIN_HASH = "decoy_pin_hash"
         private const val KEY_DECOY_PIN_LABEL = "decoy_pin_label"
+        // ── Per-category entity color overrides ──
+        private const val KEY_ENTITY_COLORS = "entity_colors"
     }
 }

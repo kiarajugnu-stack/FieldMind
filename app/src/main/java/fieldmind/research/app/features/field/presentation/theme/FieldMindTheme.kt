@@ -13,6 +13,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 
 /**
  * FieldMind brand theme.
@@ -172,6 +173,35 @@ data class FieldMindColors(
     fun Color.cardBorder(): Color = copy(alpha = 0.40f)
     /** Muted text / secondary decoration. */
     fun Color.muted(): Color = copy(alpha = 0.60f)
+
+    /**
+     * Apply per-category color overrides from Settings.
+     * Any entity type in [overrides] replaces its default color.
+     * Entity types not in [overrides] keep their current default value.
+     */
+    fun applyOverrides(overrides: Map<String, Long>): FieldMindColors {
+        if (overrides.isEmpty()) return this
+        return copy(
+            observation = overrides["observation"]?.let { Color(it) } ?: observation,
+            question = overrides["question"]?.let { Color(it) } ?: question,
+            hypothesis = overrides["hypothesis"]?.let { Color(it) } ?: hypothesis,
+            project = overrides["project"]?.let { Color(it) } ?: project,
+            source = overrides["source"]?.let { Color(it) } ?: source,
+            note = overrides["note"]?.let { Color(it) } ?: note,
+            task = overrides["task"]?.let { Color(it) } ?: task,
+            folder = overrides["folder"]?.let { Color(it) } ?: folder,
+            species = overrides["species"]?.let { Color(it) } ?: species,
+            data = overrides["data"]?.let { Color(it) } ?: data,
+            report = overrides["report"]?.let { Color(it) } ?: report,
+            flashcard = overrides["flashcard"]?.let { Color(it) } ?: flashcard,
+            positive = overrides["positive"]?.let { Color(it) } ?: positive,
+            warning = overrides["warning"]?.let { Color(it) } ?: warning,
+            info = overrides["info"]?.let { Color(it) } ?: info,
+            confidenceSure = overrides["confidenceSure"]?.let { Color(it) } ?: confidenceSure,
+            confidenceGuess = overrides["confidenceGuess"]?.let { Color(it) } ?: confidenceGuess,
+            confidenceVerify = overrides["confidenceVerify"]?.let { Color(it) } ?: confidenceVerify
+        )
+    }
 }
 
 private val LightFieldMindColors = FieldMindColors(
@@ -272,10 +302,89 @@ object FieldMindTheme {
  * @param darkTheme follow the system/app dark setting so the theme auto-adapts.
  * @param dynamicColor when true and supported (Android 12+), use Material You wallpaper colors.
  */
+/**
+ * Default entity colors map used for the color picker UI reset functionality.
+ * Matches [LightFieldMindColors] values.
+ */
+val DEFAULT_ENTITY_COLORS: Map<String, Long> = mapOf(
+    "observation" to 0xFF2E7D32,
+    "question" to 0xFF1565C0,
+    "hypothesis" to 0xFF8B5000,
+    "project" to 0xFF00695C,
+    "source" to 0xFF5E35B1,
+    "note" to 0xFF8E24AA,
+    "task" to 0xFF00897B,
+    "folder" to 0xFF6D4C41,
+    "species" to 0xFF43A047,
+    "data" to 0xFF006D7A,
+    "report" to 0xFFA1531F,
+    "flashcard" to 0xFFE91E63,
+    "positive" to 0xFF00A86B,
+    "warning" to 0xFFE67E22,
+    "info" to 0xFF546E7A,
+    "confidenceSure" to 0xFF27AE60,
+    "confidenceGuess" to 0xFFF39C12,
+    "confidenceVerify" to 0xFFE53935
+)
+
+/** Display labels for each entity color key. */
+val ENTITY_COLOR_LABELS: Map<String, String> = mapOf(
+    "observation" to "Observation",
+    "question" to "Question",
+    "hypothesis" to "Hypothesis",
+    "project" to "Project",
+    "source" to "Source",
+    "note" to "Note",
+    "task" to "Task",
+    "folder" to "Folder",
+    "species" to "Species",
+    "data" to "Data",
+    "report" to "Report",
+    "flashcard" to "Flashcard",
+    "positive" to "Positive (Success)",
+    "warning" to "Warning",
+    "info" to "Info",
+    "confidenceSure" to "Confidence: Sure",
+    "confidenceGuess" to "Confidence: Guess",
+    "confidenceVerify" to "Confidence: Verify"
+)
+
+/** Icons for each entity color key. */
+val ENTITY_COLOR_ICONS: Map<String, MaterialSymbolIcon> = mapOf(
+    "observation" to MaterialSymbolIcon("visibility"),
+    "question" to MaterialSymbolIcon("help"),
+    "hypothesis" to MaterialSymbolIcon("lightbulb"),
+    "project" to MaterialSymbolIcon("science"),
+    "source" to MaterialSymbolIcon("menu_book"),
+    "note" to MaterialSymbolIcon("edit_note"),
+    "task" to MaterialSymbolIcon("checklist"),
+    "folder" to MaterialSymbolIcon("folder"),
+    "species" to MaterialSymbolIcon("pets"),
+    "data" to MaterialSymbolIcon("bar_chart"),
+    "report" to MaterialSymbolIcon("description"),
+    "flashcard" to MaterialSymbolIcon("style"),
+    "positive" to MaterialSymbolIcon("check_circle"),
+    "warning" to MaterialSymbolIcon("warning"),
+    "info" to MaterialSymbolIcon("info"),
+    "confidenceSure" to MaterialSymbolIcon("thumb_up"),
+    "confidenceGuess" to MaterialSymbolIcon("help_outline"),
+    "confidenceVerify" to MaterialSymbolIcon("verified")
+)
+
+/**
+ * Applies the FieldMind brand color scheme (or dynamic Material You colors) and provides
+ * [FieldMindColors] to descendants. Typography and shapes are inherited from any outer
+ * [MaterialTheme] so the rest of the app's font/shape choices are preserved.
+ *
+ * @param darkTheme follow the system/app dark setting so the theme auto-adapts.
+ * @param dynamicColor when true and supported (Android 12+), use Material You wallpaper colors.
+ * @param entityColorOverrides per-category color overrides from Settings (entity type → hex Long).
+ */
 @Composable
 fun FieldMindTheme(
     darkTheme: Boolean,
     dynamicColor: Boolean,
+    entityColorOverrides: Map<String, Long> = emptyMap(),
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -285,7 +394,8 @@ fun FieldMindTheme(
         darkTheme -> BrandDark
         else -> BrandLight
     }
-    val semantic = if (darkTheme) DarkFieldMindColors else LightFieldMindColors
+    val semantic = (if (darkTheme) DarkFieldMindColors else LightFieldMindColors)
+        .applyOverrides(entityColorOverrides)
 
     CompositionLocalProvider(LocalFieldMindColors provides semantic) {
         MaterialTheme(
@@ -296,3 +406,7 @@ fun FieldMindTheme(
         )
     }
 }
+
+// ── Re-export for convenient single import ──
+// import fieldmind.research.app.features.field.presentation.theme.MaterialSymbolIcon
+// (MaterialSymbolIcon is already in components/icons package, not re-exported here)

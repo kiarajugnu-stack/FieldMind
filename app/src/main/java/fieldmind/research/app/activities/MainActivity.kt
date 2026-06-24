@@ -76,13 +76,14 @@ class MainActivity : FragmentActivity() {
             // FieldMind owns the active surface: apply FieldMind's brand palette directly
             // without wrapping in RhythmTheme to avoid color conflicts
             val fieldDynamicColor by fieldMindViewModel.fieldSettings.dynamicColorEnabled.collectAsState()
+            val fieldEntityColors by fieldMindViewModel.fieldSettings.entityColors.collectAsState()
             val screenCaptureProtection by fieldMindViewModel.fieldSettings.screenCaptureProtectionEnabled.collectAsState()
 
             LaunchedEffect(screenCaptureProtection) {
                 applyScreenCaptureProtection(window, screenCaptureProtection)
             }
 
-            FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = fieldDynamicColor) {
+            FieldMindTheme(darkTheme = isDarkTheme, dynamicColor = fieldDynamicColor, entityColorOverrides = fieldEntityColors) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

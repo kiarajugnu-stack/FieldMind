@@ -111,6 +111,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object Settings : FieldMindScreen("field_settings", "Settings", FieldMindIcons.Settings)
     data object SettingsProfile : FieldMindScreen("field_settings_profile", "Profile", FieldMindIcons.Nature)
     data object SettingsAppearance : FieldMindScreen("field_settings_appearance", "Appearance", FieldMindIcons.Palette)
+    data object SettingsEntityColors : FieldMindScreen("field_settings_entity_colors", "Entity Colors", MaterialSymbolIcon("palette"))
     data object SettingsCapture : FieldMindScreen("field_settings_capture", "Capture", FieldMindIcons.Capture)
     data object SettingsAi : FieldMindScreen("field_settings_ai", "AI Assistant", FieldMindIcons.Sparkle)
     data object SettingsLocalModel : FieldMindScreen("field_settings_local_model", "Local Model", FieldMindIcons.Download)
@@ -1020,7 +1021,8 @@ private fun FieldMindNavHost(
                 }
             }
             composable(FieldMindScreen.SettingsProfile.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { ProfileSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
-            composable(FieldMindScreen.SettingsAppearance.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { AppearanceSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
+            composable(FieldMindScreen.SettingsAppearance.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { AppearanceSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }, onOpenEntityColors = { navController.navigateToDestination(FieldMindScreen.SettingsEntityColors.route) }) } }
+            composable(FieldMindScreen.SettingsEntityColors.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { EntityAccentColorsPage(settings = viewModel.fieldSettings, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.SettingsCapture.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { CaptureDefaultsSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.SettingsAi.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { AiAssistantSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.SettingsLocalModel.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { LocalModelSettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
