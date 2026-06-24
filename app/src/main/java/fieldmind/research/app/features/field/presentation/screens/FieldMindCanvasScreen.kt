@@ -395,7 +395,7 @@ fun CanvasScreen(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = if (isDrawingActive) 100.dp else 160.dp),
+                    .padding(end = 16.dp, bottom = 160.dp),
                 shape = CircleShape,
                 containerColor = if (isDrawingActive)
                     MaterialTheme.colorScheme.primary
