@@ -155,15 +155,7 @@ fun SharedTransitionScope.HomeScreen(
     val yesterdayCount = observations.count { it.date == yesterdayKey }
     val currentStreak = remember(observations, streaksEnabled) { if (streaksEnabled) FieldMindStreaks.currentStreakDays(observations.map { it.date }) else 0 }
     val activeProject = projects.firstOrNull { it.status == "Active" } ?: projects.firstOrNull()
-    val learnSignals = remember(observations, questions, projects) {
-        buildList {
-            observations.sortedByDescending { it.timestamp }.take(10).forEach { add(it.category); add(it.subject); add(it.tags) }
-            questions.sortedByDescending { it.updatedAt }.take(10).forEach { add(it.category); add(it.questionText) }
-            projects.take(6).forEach { add(it.topicType); add(it.title) }
-        }
-    }
     val researchSessions by viewModel.researchSessions.collectAsState()
-    val recommendations = remember(learnSignals) { recommendedResources(learnSignals) }
     val weatherShowTemp by viewModel.fieldSettings.weatherShowTemperature.collectAsState()
     val weatherShowCondition by viewModel.fieldSettings.weatherShowCondition.collectAsState()
     val weatherShowHumidity by viewModel.fieldSettings.weatherShowHumidity.collectAsState()
@@ -256,8 +248,21 @@ fun SharedTransitionScope.HomeScreen(
 
     val homeScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     Box(Modifier.fillMaxSize().statusBarsPadding()) {            LazyColumn(state = homeScrollState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 96.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            // ── Hero Section ──
-            item { HomeHeroSection(todayCount, goal, currentStreak, observations.size, questions.size, onOpenSettings, onNavigate, onCapture = { showCamera = true }, onNewNote = { showNoteDialog = true }, onOpenCanvas = onOpenCanvas) }
+            // ── Merged Header + Goal ──
+            item {
+                CompactHomeHeader(
+                    todayCount = todayCount,
+                    goal = goal,
+                    streakDays = currentStreak,
+                    deltaLabel = deltaLabel,
+                    totalObs = observations.size,
+                    onOpenSettings = onOpenSettings,
+                    onNavigate = onNavigate,
+                    onCapture = { showCamera = true },
+                    onNewNote = { showNoteDialog = true },
+                    onOpenCanvas = onOpenCanvas
+                )
+            }
 
             // ── Research Session CTA ──
             item { ResearchSessionCtaCard(
@@ -297,21 +302,10 @@ fun SharedTransitionScope.HomeScreen(
 )
             }
 
-            // ── Daily Goal with delta ──
-            item { DailyGoalCard(todayCount, goal, currentStreak, deltaLabel) { onNavigate(FieldMindScreen.Observe) } }
-
-
-
             // ── Species Catalog — shown prominently for wildlife/ecology users ──
             item { HomeSpeciesCatalogSection(onNavigate = onNavigate, userInterests = userInterests) }
 
-            // ── Recent Captures ──
-            if (observations.isNotEmpty()) {
-                item { RecentCapturesCard(observations, onOpenDetail) }
-            }
-
-            // ── Learning & Reading ──
-            item { RecommendedLearningCard(recommendations, onOpenReader, onSeeAll = { onNavigate(FieldMindScreen.Learn) }) }
+            // ── Reading Review ──
             item { ReadingReviewCard(sources, flashcards, onNavigate) }
 
             // ── Observations Timeline — Compact card, opens full page ──
@@ -356,13 +350,6 @@ fun SharedTransitionScope.HomeScreen(
                             Icon(FieldMindIcons.Forward, null, size = 16.dp)
                         }
                     }
-                }
-            }
-
-            // ── Observation Statistics Dashboard ──
-            if (observations.isNotEmpty()) {
-                item {
-                    ObservationStatsDashboard(observations = observations)
                 }
             }
 
@@ -717,16 +704,16 @@ fun SharedTransitionScope.HomeScreen(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Hero Section — Welcome + Animated Stats + Settings
+//  Compact Header — Merged branding + daily goal progress + actions
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun HomeHeroSection(
+private fun CompactHomeHeader(
     todayCount: Int,
     goal: Int,
     streakDays: Int,
-    totalObs: Int,
-    totalQuestions: Int,
+    deltaLabel: String = "",
+    totalObs: Int = 0,
     onOpenSettings: () -> Unit,
     onNavigate: (FieldMindScreen) -> Unit,
     onCapture: () -> Unit = {},
@@ -734,6 +721,13 @@ private fun HomeHeroSection(
     onOpenCanvas: () -> Unit = {}
 ) {
     val colors = FieldMindTheme.colors
+    val complete = todayCount >= goal && goal > 0
+    val progress = if (goal > 0) (todayCount.toFloat() / goal).coerceIn(0f, 1f) else 0f
+    val remaining = (goal - todayCount).coerceAtLeast(0)
+
+    // Note choice dialog
+    var showNoteChoice by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -745,94 +739,170 @@ private fun HomeHeroSection(
     ) {
         Column(
             Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // ── Row 1: Compact branding + settings ──
             Row(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Box(
                     Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(22.dp))
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(colors.positive.copy(alpha = if (colors.isDark) 0.34f else 0.16f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(FieldMindIcons.Nature, null, tint = colors.positive, size = 34.dp)
+                    Icon(FieldMindIcons.Nature, null, tint = colors.positive, size = 22.dp)
                 }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Column(Modifier.weight(1f)) {
                     Text(
                         "FieldMind",
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        "Observe. Question. Research clearly.",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Surface(
                     onClick = onOpenSettings,
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     tonalElevation = 0.dp,
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(44.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(FieldMindIcons.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 28.dp)
+                        Icon(FieldMindIcons.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
                     }
                 }
             }
 
-            Text(
-                if (totalObs == 0) "Start your first observation to begin your research story."
-                else "You have $totalObs observation${if (totalObs != 1) "s" else ""} across your research.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            // ── Row 2: Horizontal progress bar + goal ──
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        if (complete) "Goal met ✓" else "Today's observations",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.weight(1f))
+                    if (streakDays > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(FieldMindIcons.Streak, null, tint = colors.warning, size = 14.dp)
+                            Text(
+                                "$streakDays day${if (streakDays == 1) "" else "s"}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = colors.warning,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Horizontal gradient progress bar
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(
+                                if (complete) Brush.horizontalGradient(listOf(colors.positive, colors.confidenceSure))
+                                else Brush.horizontalGradient(listOf(colors.observation, colors.data))
+                            )
+                    )
+                }
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        if (complete) "Great work! Keep the streak going."
+                        else "$remaining more to hit today's goal of $goal.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (deltaLabel.isNotBlank()) {
+                        Text(
+                            deltaLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colors.observation,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
+            // ── Row 3: Action chips — Capture, Note (with choice), Projects ──
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 HeroActionChip(
                     icon = FieldMindIcons.Camera,
                     label = "Capture",
                     accent = colors.observation,
                     modifier = Modifier.weight(1f)
                 ) { onCapture() }
-                HeroActionChip(
-                    icon = FieldMindIcons.Note,
-                    label = "Note",
-                    accent = colors.source,
-                    modifier = Modifier.weight(1f)
-                ) { onNewNote() }
-            }
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Note with choice dropdown
+                Box(modifier = Modifier.weight(1f)) {
+                    HeroActionChip(
+                        icon = FieldMindIcons.Note,
+                        label = "Note",
+                        accent = colors.source,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { showNoteChoice = true }
+
+                    DropdownMenu(
+                        expanded = showNoteChoice,
+                        onDismissRequest = { showNoteChoice = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Canvas") },
+                            onClick = {
+                                showNoteChoice = false
+                                onOpenCanvas()
+                            },
+                            leadingIcon = {
+                                Icon(MaterialSymbolIcon("dashboard_customize"), null, size = 18.dp)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Quick Note") },
+                            onClick = {
+                                showNoteChoice = false
+                                onNewNote()
+                            },
+                            leadingIcon = {
+                                Icon(FieldMindIcons.Note, null, size = 18.dp)
+                            }
+                        )
+                    }
+                }
+
                 HeroActionChip(
                     icon = FieldMindIcons.Project,
                     label = "Projects",
                     accent = colors.project,
                     modifier = Modifier.weight(1f)
                 ) { onNavigate(FieldMindScreen.Projects) }
-                HeroActionChip(
-                    icon = FieldMindIcons.Timer,
-                    label = "Timer",
-                    accent = colors.flashcard,
-                    modifier = Modifier.weight(1f)
-                ) { onNavigate(FieldMindScreen.TimerTool) }
-            }
-
-            // ── Row 3: Canvas ──
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                HeroActionChip(
-                    icon = MaterialSymbolIcon("dashboard_customize"),
-                    label = "Canvas",
-                    accent = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.weight(1f)
-                ) { onOpenCanvas() }
-                Spacer(Modifier.weight(1f))
             }
         }
     }
@@ -978,49 +1048,6 @@ private fun HomeNoteCaptureDialog(
                     ) { Text("Save Note") }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun HeroStatBubble(
-    value: String,
-    label: String,
-    accent: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier
-) {
-    // Simple count-up animation
-    val animatedValue = remember { Animatable(0f) }
-    val targetFloat = value.toFloatOrNull() ?: 0f
-    LaunchedEffect(targetFloat) {
-        animatedValue.animateTo(
-            targetValue = targetFloat,
-            animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing)
-        )
-    }
-
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        color = accent.copy(alpha = 0.1f),
-        tonalElevation = 0.dp
-    ) {
-        Column(
-            Modifier.padding(16.dp, 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                if (value.toIntOrNull() != null) animatedValue.value.roundToInt().toString() else value,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = accent
-            )
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
@@ -1618,95 +1645,6 @@ internal fun WeatherConditionImage(code: Int, isNight: Boolean = false, compact:
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Research Pulse Card — Animated snapshot of recent activity
-// ══════════════════════════════════════════════════════════════════════
-
-@Composable
-private fun ResearchPulseCard(
-    observations: List<ObservationEntity>,
-    questions: List<QuestionEntity>,
-    projects: List<ProjectEntity>,
-    onNavigate: (FieldMindScreen) -> Unit
-) {
-    val colors = FieldMindTheme.colors
-    val weekObs = observations.count { it.date >= LocalDate.now().minusDays(7).toString() }
-    val openQs = questions.count { it.status != "Answered" }
-    val activeProjects = projects.count { it.status == "Active" }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            ,
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(
-                    Modifier.size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(colors.observation.copy(alpha = 0.14f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(FieldMindIcons.Streak, null, tint = colors.observation, size = 24.dp)
-                }
-                Column(Modifier.weight(1f)) {
-                    Text("Research pulse", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("Your 7-day research activity", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                TextButton(onClick = { onNavigate(FieldMindScreen.Insights) }) { Text("Details") }
-            }
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                PulseMetric(
-                    value = "$weekObs",
-                    label = "Obs / week",
-                    accent = colors.observation,
-                    icon = FieldMindIcons.Observation
-                )
-                PulseMetric(
-                    value = "$openQs",
-                    label = "Open Qs",
-                    accent = colors.question,
-                    icon = FieldMindIcons.Question
-                )
-                PulseMetric(
-                    value = "$activeProjects",
-                    label = "Projects",
-                    accent = colors.project,
-                    icon = FieldMindIcons.Project
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PulseMetric(
-    value: String,
-    label: String,
-    accent: androidx.compose.ui.graphics.Color,
-    icon: MaterialSymbolIcon
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Box(
-            Modifier.size(40.dp)
-                .clip(CircleShape)
-                .background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.2f else 0.12f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, null, tint = accent, size = 22.dp)
-        }
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = accent)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-// ══════════════════════════════════════════════════════════════════════
 //  Quick Actions Row
 // ══════════════════════════════════════════════════════════════════════
 
@@ -1945,91 +1883,7 @@ internal fun recommendedResources(signals: List<String>): List<LearnRecommendati
         .map { it.first }
 }
 
-@Composable
-private fun RecommendedLearningCard(items: List<LearnRecommendation>, onOpenReader: (String, String) -> Unit, onSeeAll: () -> Unit) {
-    val accent = FieldMindTheme.colors.accentFor("learn")
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            items.forEach { rec ->
-                Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).pressScale(scaleDown = 0.97f).clickable { onOpenReader(rec.resource.url, rec.resource.title) }.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(accent.copy(alpha = if (FieldMindTheme.colors.isDark) 0.22f else 0.14f)), contentAlignment = Alignment.Center) {
-                        Icon(icon = learnKindIcon(rec.resource.kind), contentDescription = null, tint = accent, size = 18.dp)
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(rec.resource.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Text("${rec.resource.kind} · ${rec.path}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    Icon(icon = FieldMindIcons.Book, contentDescription = null, tint = accent, size = 18.dp)
-                }
-            }
-            TextButton(onClick = onSeeAll, modifier = Modifier.align(Alignment.End)) { Text("Open Learn"); Spacer(Modifier.size(4.dp)); Icon(icon = FieldMindIcons.Forward, contentDescription = null, size = 18.dp) }
-        }
-    }
-}
 
-@Composable
-private fun DailyGoalCard(todayCount: Int, goal: Int, streakDays: Int, deltaLabel: String = "", onClick: () -> Unit) {
-    val colors = FieldMindTheme.colors
-    val complete = todayCount >= goal && goal > 0
-    val progress = if (goal > 0) todayCount.toFloat() / goal else 0f
-    val percent = (progress.coerceIn(0f, 1f) * 100).toInt()
-    val remaining = (goal - todayCount).coerceAtLeast(0)
-    val ringGradient = if (complete)
-        listOf(colors.positive, colors.confidenceSure, colors.positive.copy(green = colors.positive.green * 1.2f), colors.positive)
-    else
-        listOf(colors.observation, colors.data, colors.hypothesis, colors.observation)
-    val bg = Brush.linearGradient(
-        if (complete) listOf(colors.positive.copy(alpha = 0.12f), colors.confidenceSure.copy(alpha = 0.22f))
-        else listOf(MaterialTheme.colorScheme.surfaceContainerHigh, colors.observation.copy(alpha = 0.08f))
-    )
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(bg)
-            .pressScale(scaleDown = 0.98f)
-            .clickable(onClick = onClick)
-            
-    ) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-            GradientProgressRing(
-                progress = progress,
-                centerValue = "$todayCount/$goal",
-                caption = "$percent%",
-                gradient = ringGradient,
-                size = 104.dp
-            )
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(if (complete) "Daily goal met" else "Today's observations", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(
-                    if (complete) "Great discipline — keep the streak going." else "$remaining more to hit today's goal of $goal.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    GoalStatChip(FieldMindIcons.Streak, "$streakDays day${if (streakDays == 1) "" else "s"} streak", colors.warning)
-                    GoalStatChip(if (complete) FieldMindIcons.Check else FieldMindIcons.Observation, if (complete) "Done" else "$todayCount logged", if (complete) colors.positive else colors.observation)
-                }
-                if (deltaLabel.isNotBlank()) {
-                    Text(
-                        deltaLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colors.observation,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun ResearchSessionCtaCard(
@@ -2101,19 +1955,7 @@ private fun ResearchSessionCtaCard(
 }
 
 @Composable
-fun GoalStatChip(icon: MaterialSymbolIcon, label: String, tint: androidx.compose.ui.graphics.Color) {
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(tint.copy(alpha = if (FieldMindTheme.colors.isDark) 0.20f else 0.13f))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        Icon(icon = icon, contentDescription = null, tint = tint, size = 14.dp)
-        Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = tint)
-    }
-}
+
 
 @OptIn(ExperimentalLayoutApi::class)
 // ══════════════════════════════════════════════════════════════════════
