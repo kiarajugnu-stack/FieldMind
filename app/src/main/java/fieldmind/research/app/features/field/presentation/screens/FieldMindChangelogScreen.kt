@@ -43,7 +43,36 @@ internal data class FieldMindChangelogEntry(
 )
 
 private val fieldMindChangelog = listOf(    FieldMindChangelogEntry(
-        version = "2.2.26.23",
+        version = "2.2.26.25",
+        date = "2026-06-24",
+        title = "Project Detail Redesign with Activity Feed & Create Sheet",
+        importance = "Patch",
+        tags = listOf("Project Detail", "Redesign", "UI", "Create Sheet", "Navigation"),
+        sections = listOf(
+            "📋 Redesigned Project Detail Screen" to listOf(
+                "Complete redesign with modern header: back button, project icon/name/status/topic, search and + Add buttons, and overflow menu.",
+                "Stats row shows entity counts (Obs, Notes, Qs, Sources, Tasks) plus folders/data/reports with themed accent colors.",
+                "Filter tabs (All, Obs, Notes, Questions, Sources, Tasks) let you drill into specific entity types with proper filtering.",
+                "Activity feed renders all project entities in chronological order with rich cards showing kind icon, title, body, tags, and linked counts.",
+                "Search bar with animated toggle lets you search across all entity types within the project.",
+                "Empty state with helpful guidance when no records exist yet.",
+                "[+ Add Record] button at the bottom opens the new Create sheet."
+            ),
+            "🎯 New Create Sheet (COLLECT/ANALYZE/EVIDENCE/PLAN)" to listOf(
+                "Full-screen bottom sheet organized into 4 sections: COLLECT (Observation, Photo, Voice Note, Location Record), ANALYZE (Note, Question, Hypothesis, Experiment), EVIDENCE (Source, Document, Citation), and PLAN (Task, Survey Session, Field Visit, Folder).",
+                "Each option shows a colored icon, label, description, and + add icon with press feedback.",
+                "Overflow menu in the header opens Project Options: View Relations and Project Settings.",
+                "Hypothesis option now wired to the existing NewHypothesisDialog.",
+                "Survey Session navigates to the Research Session screen."
+            ),
+            "🔧 Data & Navigation Fixes" to listOf(
+                "Properly wired onOpenRelations and onOpenSettings callbacks from navigation into the project options menu.",
+                "Updated statusBarsPadding and consistent design language throughout the screen.",
+                "All entity cards are clickable and navigate to their respective detail screens via onOpenDetail."
+            )
+        )
+    ),    FieldMindChangelogEntry(
+        version = "2.2.26.24",
         date = "2026-06-24",
         title = "Real Folder Entity & Task Screen Polish",
         importance = "Patch",
