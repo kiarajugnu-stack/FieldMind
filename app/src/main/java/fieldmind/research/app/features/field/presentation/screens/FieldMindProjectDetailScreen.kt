@@ -1,6 +1,7 @@
 package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -1015,27 +1016,23 @@ private fun NewFolderDialog(
         // Color picker
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Color", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                colorOptions.forEach { (colorLong, colorName) ->
-                    val isSelected = selectedColor == colorLong
-                    val color = Color(colorLong)
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(color)
-                            .then(
-                                if (isSelected) Modifier
-                                    .border(3.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(14.dp))
-                                else Modifier
-                            )
-                            .clickable { haptics.light(); selectedColor = colorLong },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isSelected) {
-                            Icon(MaterialSymbolIcon("check"), null, tint = Color.White, size = 22.dp)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {                    colorOptions.forEach { (colorLong, colorName) ->
+                        val isSelected = selectedColor == colorLong
+                        val color = Color(colorLong)
+                        val borderMod = if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(14.dp)) else Modifier
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(color)
+                                .then(borderMod)
+                                .clickable { haptics.light(); selectedColor = colorLong },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(MaterialSymbolIcon("check"), null, tint = Color.White, size = 22.dp)
+                            }
                         }
-                    }
                 }
             }
         }

@@ -880,6 +880,21 @@ internal fun NewObservationDialog(viewModel: FieldMindViewModel, onDismiss: () -
     var recording by remember { mutableStateOf(false) }
     var recordSeconds by remember { mutableIntStateOf(0) }
 
+    fun startLocating() {
+        locating = true
+        locationProvider.requestCurrentLocation { captured ->
+            locating = false
+            if (captured != null) {
+                latitude = captured.latitude.toString()
+                longitude = captured.longitude.toString()
+                location = captured.asDisplayText()
+                locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place ->
+                    if (!place.isNullOrBlank()) location = captured.copy(placeName = place).asDisplayText()
+                }
+            }
+        }
+    }
+
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         if (result.values.any { it }) startLocating() else {}
     }
@@ -918,21 +933,6 @@ internal fun NewObservationDialog(viewModel: FieldMindViewModel, onDismiss: () -
     }
 
     LaunchedEffect(recording) { if (recording) { recordSeconds = 0; while (recording) { delay(1000); recordSeconds++ } } }
-
-    fun startLocating() {
-        locating = true
-        locationProvider.requestCurrentLocation { captured ->
-            locating = false
-            if (captured != null) {
-                latitude = captured.latitude.toString()
-                longitude = captured.longitude.toString()
-                location = captured.asDisplayText()
-                locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place ->
-                    if (!place.isNullOrBlank()) location = captured.copy(placeName = place).asDisplayText()
-                }
-            }
-        }
-    }
 
     fun save() {
         if (subject.isNotBlank() || facts.isNotBlank()) {

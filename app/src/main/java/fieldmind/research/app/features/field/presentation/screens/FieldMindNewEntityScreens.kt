@@ -164,15 +164,13 @@ fun NewProjectScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     colorOptions.forEach { (colorLong, color) ->
                         val isSelected = selectedColor == colorLong
+                        val borderMod = if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(16.dp)) else Modifier
                         Box(
                             modifier = Modifier
                                 .size(52.dp)
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(color)
-                                .then(
-                                    if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(16.dp))
-                                    else Modifier
-                                )
+                                .then(borderMod)
                                 .clickable { haptics.light(); selectedColor = colorLong },
                             contentAlignment = Alignment.Center
                         ) {
@@ -624,11 +622,7 @@ fun NewTaskScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                                     modifier = Modifier
                                         .size(18.dp)
                                         .clip(androidx.compose.foundation.shape.CircleShape)
-                                        .background(if (isSelected) accent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                                        .then(
-                                            if (isSelected) Modifier
-                                            else Modifier
-                                        ),
+                                        .background(if (isSelected) accent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (isSelected) {
@@ -1253,9 +1247,10 @@ fun NewFolderScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     colorOptions.forEach { (colorLong, colorName) ->
                         val isSelected = selectedColor == colorLong
+                        val borderMod = if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(14.dp)) else Modifier
                         Box(
                             modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(Color(colorLong))
-                                .then(if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(14.dp)) else Modifier)
+                                .then(borderMod)
                                 .clickable { haptics.light(); selectedColor = colorLong },
                             contentAlignment = Alignment.Center
                         ) {
