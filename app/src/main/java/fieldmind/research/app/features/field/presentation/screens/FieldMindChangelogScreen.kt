@@ -44,6 +44,31 @@ internal data class FieldMindChangelogEntry(
 
 private val fieldMindChangelog = listOf(
     FieldMindChangelogEntry(
+        version = "2.2.26.21",
+        date = "2026-06-24",
+        title = "Entity Linking Pickers & Settings Improvements",
+        importance = "Patch",
+        tags = listOf("Linking", "Pickers", "Settings", "Fixes"),
+        sections = listOf(
+            "🔗 Entity Linking Infrastructure" to listOf(
+                "Added DAO DELETE queries, Repository unlink methods, and 8 ViewModel link/unlink methods for task→observation, project→observation, and project→source cross-references.",
+                "TaskDetailScreen now includes a searchable observation picker with unlink (link_off) and link (add_link) buttons for managing linked observations.",
+                "ProjectDetailScreen now includes a 'Linked Entities' card with observation and source sub-sections, each with unlink buttons and searchable picker dialogs.",
+                "Link/unlink operations use the existing cross-ref table pattern (TaskObservationCrossRef, ProjectObservationCrossRef, ProjectSourceCrossRef) for consistency."
+            ),
+            "⚙️ Advanced Settings & Developer Options" to listOf(
+                "Added 'Developer options' nav card to the 'About & advanced' section in Settings, wired to the existing onOpenDeveloper callback.",
+                "Developer options card uses the MaterialSymbolIcon \"tune\" icon and hypothesis accent color for visual distinction."
+            ),
+            "🐛 Compilation Error Fixes" to listOf(
+                "Fixed Color.luminance() unresolved reference — replaced with manual NTSC luminance calculation (color.red * 0.299f + color.green * 0.587f + color.blue * 0.114f) for Compose compatibility.",
+                "Fixed missing closing brace in ProjectDetailScreen that caused cascading 'local function' errors across StatusBadge, ProjectActionButton, ProjectActionTile, and StatItem composables.",
+                "Fixed missing import (androidx.compose.foundation.lazy.items) in ProjectDetailScreen for the EntityPickerDialog's items(items) LazyListScope extension.",
+                "Fixed FieldMindIcons.Code unresolved reference — replaced with MaterialSymbolIcon(\"tune\") which uses standard Material Symbols."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
         version = "1.5.3-infinite-canvas-removed",
         date = "2026-06-24",
         title = "Removed Infinite Canvas — Simplified to Page-Only Mode",

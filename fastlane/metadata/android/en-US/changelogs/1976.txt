@@ -1,0 +1,5 @@
+• Entity linking pickers for Task & Project detail screens (link/unlink observations & sources)
+• Developer options nav card added to Settings' Advanced section
+• Fixed Color.luminance() compilation error (manual NTSC luminance)
+• Fixed missing brace causing cascading local-function errors in ProjectDetailScreen
+• Added missing lazy.items import for EntityPickerDialog
