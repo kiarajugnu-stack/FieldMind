@@ -21,6 +21,8 @@ import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindVie
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -59,6 +61,7 @@ fun ProjectDetailScreen(
     val relatedData = data.filter { it.projectId == projectId }
     val relatedReports = reports.filter { it.projectId == projectId }
     val colors = FieldMindTheme.colors
+    val context = LocalContext.current
 
     if (project == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -290,7 +293,60 @@ fun ProjectDetailScreen(
                         icon = MaterialSymbolIcon("file_download"),
                         label = "Export Project",
                         subtitle = "PDF / Markdown",
-                        onClick = { /* Open export */ }
+                        onClick = {
+                            val exportText = buildString {
+                                appendLine("# ${project.title}")
+                                appendLine()
+                                appendLine("**Topic:** ${project.topicType}")
+                                appendLine("**Status:** ${project.status}")
+                                appendLine("**Created:** ${SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(project.createdAt))}")
+                                appendLine()
+                                if (project.objective.isNotBlank()) appendLine("## Objective\n${project.objective}\n")
+                                if (project.researchQuestion.isNotBlank()) appendLine("## Research Question\n${project.researchQuestion}\n")
+                                if (project.methods.isNotBlank()) appendLine("## Methods\n${project.methods}\n")
+                                if (project.conclusion.isNotBlank()) appendLine("## Conclusion\n${project.conclusion}\n")
+                                appendLine("---")
+                                appendLine("Observations: ${relatedObs.size}")
+                                appendLine("Notes: ${relatedNotes.size}")
+                                appendLine("Questions: ${relatedQs.size}")
+                                appendLine("Sources: ${relatedSources.size}")
+                                if (relatedData.isNotEmpty()) appendLine("Data records: ${relatedData.size}")
+                                if (relatedReports.isNotEmpty()) appendLine("Reports: ${relatedReports.size}")
+                                appendLine()
+                                appendLine("Exported from FieldMind")
+                            }
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/markdown"
+                                putExtra(Intent.EXTRA_SUBJECT, "${project.title} — FieldMind Export")
+                                putExtra(Intent.EXTRA_TEXT, exportText)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Export Project As"))
+                        }
+                    )
+                    ProjectActionTile(
+                        icon = MaterialSymbolIcon("share"),
+                        label = "Share Project",
+                        subtitle = "Link / File / App",
+                        onClick = {
+                            val shareText = buildString {
+                                appendLine("📁 ${project.title}")
+                                if (project.objective.isNotBlank()) appendLine(project.objective)
+                                appendLine()
+                                appendLine("Type: ${project.topicType}")
+                                appendLine("Status: ${project.status}")
+                                appendLine("Observations: ${relatedObs.size}")
+                                appendLine("Notes: ${relatedNotes.size}")
+                                appendLine("Questions: ${relatedQs.size}")
+                                appendLine("Sources: ${relatedSources.size}")
+                                appendLine("Updated: ${SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(project.updatedAt))}")
+                            }
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "Project: ${project.title}")
+                                putExtra(Intent.EXTRA_TEXT, shareText)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Share Project"))
+                        }
                     )
                     ProjectActionTile(
                         icon = MaterialSymbolIcon("share"),
