@@ -186,11 +186,12 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun archiveObservation(id: Long) = viewModelScope.launch { repository.archiveObservation(id) }
 
     fun updateQuestionEntity(entity: QuestionEntity) = viewModelScope.launch { repository.updateQuestion(entity) }
-    fun setQuestionAnswer(entity: QuestionEntity, answer: String) = viewModelScope.launch {
+    fun setQuestionAnswer(entity: QuestionEntity, answer: String, confidence: Int = entity.confidence) = viewModelScope.launch {
         val trimmed = answer.trim()
         repository.updateQuestion(
             entity.copy(
                 answer = trimmed,
+                confidence = confidence.coerceIn(0, 100),
                 answeredAt = if (trimmed.isBlank()) null else System.currentTimeMillis(),
                 status = if (trimmed.isBlank()) entity.status else "Answered"
             )

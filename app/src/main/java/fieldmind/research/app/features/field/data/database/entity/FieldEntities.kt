@@ -101,6 +101,8 @@ data class QuestionEntity(
     val status: String,
     val priority: String = "Medium",
     val answer: String = "",
+    val confidence: Int = 80,
+    val notes: String = "",
     val answeredAt: Long? = null,
     val relatedObservationIds: String = "",
     val relatedSourceIds: String = "",

@@ -155,6 +155,9 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     // ── Task detail screen ──
     data object TaskDetail : FieldMindScreen("field_task_detail/{taskId}", "Task", MaterialSymbolIcon("checklist"))
 
+    // ── Question detail screen ──
+    data object QuestionDetail : FieldMindScreen("field_question_detail/{questionId}", "Question", FieldMindIcons.Question)
+
     // ── Project detail screen ──
     data object ProjectDetail : FieldMindScreen("field_project_detail/{projectId}", "Project", FieldMindIcons.Project)
 
@@ -869,7 +872,12 @@ private fun FieldMindNavHost(
     onNavigateToTabRoute: ((String) -> Unit)? = null
 ) {
     var readerTarget by remember { mutableStateOf("" to "") }
-    val openDetail: (String, Long) -> Unit = { kind, id -> navController.navigateToDestination("field_detail/$kind/$id") }
+    val openDetail: (String, Long) -> Unit = { kind, id ->
+        when (kind) {
+            "question" -> navController.navigateToDestination("field_question_detail/$id")
+            else -> navController.navigateToDestination("field_detail/$kind/$id")
+        }
+    }
     val openReader: (String, String) -> Unit = { url: String, title: String ->
         readerTarget = url to title
         navController.navigateToDestination(FieldMindScreen.Reader.route)
@@ -1044,6 +1052,17 @@ private fun FieldMindNavHost(
                 SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
                     TaskDetailScreen(
                         taskId = taskId,
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onOpenDetail = openDetail
+                    )
+                }
+            }
+            composable("field_question_detail/{questionId}") { entry ->
+                val questionId = entry.arguments?.getString("questionId")?.toLongOrNull() ?: 0L
+                SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
+                    QuestionDetailScreen(
+                        questionId = questionId,
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() },
                         onOpenDetail = openDetail
