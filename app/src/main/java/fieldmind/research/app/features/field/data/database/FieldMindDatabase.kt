@@ -53,7 +53,7 @@ import fieldmind.research.app.features.field.data.database.entity.*
         DrawingEntity::class,
         FigureMetaEntity::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 abstract class FieldMindDatabase : RoomDatabase() {

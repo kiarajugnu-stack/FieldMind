@@ -275,22 +275,58 @@ fun NewDataRecordScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  NEW TASK SCREEN — Full-screen creation form
+//  NEW TASK SCREEN — Full-screen creation form (mockup v2)
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
 fun NewTaskScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    // ── Form state ──
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var taskType by remember { mutableStateOf("Field Survey") }
     var priority by remember { mutableStateOf("Medium") }
+    var projectId by remember { mutableStateOf<Long?>(null) }
     var dueDate by remember { mutableStateOf("") }
-    var assignedTo by remember { mutableStateOf("") }
-    var showAdvanced by remember { mutableStateOf(false) }
+    var dueTime by remember { mutableStateOf("") }
+    var reminder by remember { mutableStateOf(0) }
+    var reminderUnit by remember { mutableStateOf("minute") }
+    var repeatInterval by remember { mutableStateOf(0) }
+    var repeatUnit by remember { mutableStateOf("") }
+    var checklistItems by remember { mutableStateOf(listOf("")) }
+    var attachmentUris by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    val projects by viewModel.projects.collectAsState()
+    val haptics = rememberFieldMindHaptics()
+
+    // ── Priority colors ──
+    val priorityColor = mapOf(
+        "Low" to FieldMindTheme.colors.positive,
+        "Medium" to FieldMindTheme.colors.warning,
+        "High" to MaterialTheme.colorScheme.error
+    )
 
     fun save() {
         if (title.isNotBlank()) {
-            viewModel.addTask(title, description, taskType, priority, dueDate, assignedTo)
+            val checklistArr = org.json.JSONArray()
+            checklistItems.filter { it.isNotBlank() }.forEach { item ->
+                checklistArr.put(org.json.JSONObject().apply {
+                    put("text", item.trim())
+                    put("done", false)
+                })
+            }
+            viewModel.addTask(
+                title = title,
+                description = description,
+                priority = priority,
+                dueDate = dueDate,
+                dueTime = dueTime,
+                projectId = projectId,
+                checklistJson = checklistArr.toString(),
+                attachmentUris = attachmentUris.joinToString(","),
+                reminder = reminder,
+                reminderUnit = "minute",
+                repeatInterval = repeatInterval,
+                repeatUnit = repeatUnit
+            )
             onBack()
         }
     }
@@ -298,29 +334,226 @@ fun NewTaskScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
         StandardScreenHeader(
             title = "New Task",
-            subtitle = "Define a field task, survey, or to-do with priority and due date.",
+            subtitle = "Define a field task, survey, or to-do.",
             icon = MaterialSymbolIcon("checklist"),
             heroColor = FieldMindTheme.colors.flashcard,
             trailing = { BackButton(onClick = onBack) }
         )
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            FieldTextField(title, { title = it }, "What needs to be done?", supportingText = "Short, actionable task title")
-            FieldTextField(description, { description = it }, "Description / instructions", minLines = 3, supportingText = "Details, context, or step-by-step instructions")
-            DividerSection("Classification", MaterialSymbolIcon("category"), FieldMindTheme.colors.flashcard)
-            ChoiceChipsField("Type", taskTypes, taskType) { taskType = it }
-            ChoiceChipsField("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
-            DividerSection("Scheduling & assignment", MaterialSymbolIcon("calendar_month"), FieldMindTheme.colors.flashcard)
-            FieldTextField(dueDate, { dueDate = it }, "Due date (YYYY-MM-DD)", supportingText = "Leave blank if no deadline")
-            FieldTextField(assignedTo, { assignedTo = it }, "Assigned to", supportingText = "Team member name — leave blank if self-assigned")
-            CollapsibleSection("Advanced options", "Links to questions, observations, and species", icon = MaterialSymbolIcon("link"), expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
-                Text("Linked entities can be set after the task is created from the task detail screen.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // ── Task Name ──
+            FieldTextField(title, { title = it }, "Task Name", supportingText = "Short, actionable title")
+
+            // ── Description ──
+            FieldTextField(description, { description = it }, "Description", minLines = 3, supportingText = "Details, context, or step-by-step instructions")
+
+            // ── Priority (radio-style) ──
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Priority", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    listOf("Low", "Medium", "High").forEach { level ->
+                        val isSelected = priority == level
+                        val accent = priorityColor[level]!!
+                        Surface(
+                            onClick = { haptics.light(); priority = level },
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) accent.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, accent) else null,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                // Radio circle
+                                Box(
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(if (isSelected) accent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                                        .then(
+                                            if (isSelected) Modifier
+                                            else Modifier
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isSelected) {
+                                        Box(
+                                            Modifier.size(8.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                                                .background(accent)
+                                        )
+                                    }
+                                }
+                                Text(level, style = MaterialTheme.typography.labelMedium, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal, color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
             }
+
+            // ── Project ──
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Project", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (projects.isNotEmpty()) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        ChoiceChips(listOf("None") + projects.take(6).map { it.title.take(20) }, projects.firstOrNull { it.id == projectId }?.title?.take(20) ?: "None") { selected ->
+                            projectId = projects.firstOrNull { it.title.startsWith(selected) }?.id
+                        }
+                    }
+                } else {
+                    Text("No projects yet. Create a project first.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+            // ── Due Date & Time ──
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FieldTextField(dueDate, { dueDate = it }, "Due Date", supportingText = "YYYY-MM-DD", modifier = Modifier.weight(1f))
+                FieldTextField(dueTime, { dueTime = it }, "Due Time", supportingText = "HH:MM", modifier = Modifier.weight(1f))
+            }
+
+            // ── Reminder ──
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Reminder", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    val reminderOptions = listOf("None" to 0, "5 min" to 5, "15 min" to 15, "30 min" to 30, "1 hour" to 60, "1 day" to 1440)
+                    reminderOptions.forEach { (label, mins) ->
+                        val isSelected = reminder == mins
+                        Surface(
+                            onClick = { haptics.light(); reminder = mins },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ── Repeat ──
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Repeat", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    val repeatOptions = listOf("None" to "" to 0, "Daily" to "day" to 1, "Weekly" to "week" to 1, "Monthly" to "month" to 1, "Yearly" to "year" to 1)
+                    repeatOptions.forEach { (pair, interval) ->
+                        val (label, unit) = pair
+                        val isSelected = repeatUnit == unit
+                        Surface(
+                            onClick = { haptics.light(); repeatUnit = unit; repeatInterval = interval },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+            // ── Checklist ──
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Checklist", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = { haptics.light(); checklistItems = checklistItems + "" }) {
+                        Icon(MaterialSymbolIcon("add"), null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("Add item", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                checklistItems.forEachIndexed { index, item ->
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = item,
+                            onValueChange = { newVal ->
+                                checklistItems = checklistItems.toMutableList().also { it[index] = newVal }
+                            },
+                            placeholder = { Text("Checklist item", style = MaterialTheme.typography.bodySmall) },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodySmall
+                        )
+                        if (checklistItems.size > 1) {
+                            IconButton(onClick = { haptics.light(); checklistItems = checklistItems.toMutableList().also { it.removeAt(index) } }, modifier = Modifier.size(32.dp)) {
+                                Icon(MaterialSymbolIcon("close"), "Remove", size = 16.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Attachments ──
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Attachments", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = { haptics.light() /* File picker would go here */ }) {
+                        Icon(MaterialSymbolIcon("attach_file"), null, size = 16.dp)
+                        Spacer(Modifier.size(4.dp))
+                        Text("Add file", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                if (attachmentUris.isEmpty()) {
+                    Text(
+                        "No attachments yet. Tap \"Add file\" to attach images, PDFs, or audio.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                } else {
+                    attachmentUris.forEach { uri ->
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(MaterialSymbolIcon("attachment"), null, size = 16.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(uri.substringAfterLast("/").take(30), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                            IconButton(onClick = { haptics.light(); attachmentUris = attachmentUris - uri }, modifier = Modifier.size(24.dp)) {
+                                Icon(MaterialSymbolIcon("close"), "Remove", size = 14.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(Modifier.height(8.dp))
-            Button(onClick = ::save, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank()) {
-                Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Create task")
+
+            // ── Save ──
+            Button(
+                onClick = ::save,
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(16.dp),
+                enabled = title.isNotBlank()
+            ) {
+                Icon(FieldMindIcons.Check, null, size = 20.dp)
+                Spacer(Modifier.size(8.dp))
+                Text("Save", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -390,8 +623,6 @@ fun NewReportScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 // ══════════════════════════════════════════════════════════════════════
 //  Shared helpers
 // ══════════════════════════════════════════════════════════════════════
-
-private val taskTypes = listOf("Field Survey", "Observation Collection", "Species Count", "Audio Recording", "Photo Collection", "Video Collection", "Habitat Mapping", "Literature Review", "Data Analysis", "Report Writing", "Verification", "Sample Collection", "GPS Tracking", "Custom")
 
 private fun defaultUnitForTool(tool: String): String = when (tool) {
     "Weather Log" -> "°C"

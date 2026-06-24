@@ -152,6 +152,9 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object FieldLog : FieldMindScreen("field_log", "Field Log", FieldMindIcons.List)
     data object TimerTool : FieldMindScreen("field_timer", "Timer", FieldMindIcons.Timer)
 
+    // ── Task detail screen ──
+    data object TaskDetail : FieldMindScreen("field_task_detail/{taskId}", "Task", MaterialSymbolIcon("checklist"))
+
     // ── Project detail screen ──
     data object ProjectDetail : FieldMindScreen("field_project_detail/{projectId}", "Project", FieldMindIcons.Project)
 
@@ -1036,6 +1039,17 @@ private fun FieldMindNavHost(
             composable(FieldMindScreen.SiteLogTool.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { SiteLogToolScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.ComparisonTable.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { ComparisonTableScreen(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.TimerTool.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { TimerToolScreen(onBack = { navController.popBackStack() }) } }
+            composable("field_task_detail/{taskId}") { entry ->
+                val taskId = entry.arguments?.getString("taskId")?.toLongOrNull() ?: 0L
+                SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
+                    TaskDetailScreen(
+                        taskId = taskId,
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onOpenDetail = openDetail
+                    )
+                }
+            }
             composable("field_project_detail/{projectId}") { entry ->
                 val projectId = entry.arguments?.getString("projectId")?.toLongOrNull() ?: 0L
                 SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {

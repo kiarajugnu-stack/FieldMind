@@ -153,7 +153,8 @@ fun TasksScreen(
                             haptics.light()
                             completedTaskIds[task.id] = true
                             viewModel.updateTaskEntity(task.copy(status = "Done"))
-                        }
+                        },
+                        onTap = { onNavigate("field_task_detail/${task.id}") }
                     )
                 }
             }
@@ -188,7 +189,8 @@ fun TasksScreen(
                             haptics.light()
                             completedTaskIds[task.id] = true
                             viewModel.updateTaskEntity(task.copy(status = "Done"))
-                        }
+                        },
+                        onTap = { onNavigate("field_task_detail/${task.id}") }
                     )
                 }
             }
@@ -223,7 +225,8 @@ fun TasksScreen(
                             haptics.light()
                             completedTaskIds.remove(task.id)
                             viewModel.updateTaskEntity(task.copy(status = "Pending"))
-                        }
+                        },
+                        onTap = { onNavigate("field_task_detail/${task.id}") }
                     )
                 }
             }
@@ -311,7 +314,8 @@ private fun TaskCard(
     task: TaskEntity,
     isChecked: Boolean,
     accentColor: Color,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    onTap: () -> Unit = {}
 ) {
     val priorityColor = when (task.priority) {
         "High" -> MaterialTheme.colorScheme.error
@@ -327,6 +331,7 @@ private fun TaskCard(
     )
 
     Card(
+        onClick = onTap,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
