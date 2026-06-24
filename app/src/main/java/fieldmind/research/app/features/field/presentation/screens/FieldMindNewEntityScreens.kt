@@ -848,10 +848,425 @@ fun NewReportScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
+//  NEW OBSERVATION SCREEN — Full-screen creation form for observations
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun NewObservationScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val context = LocalContext.current
+    val haptics = rememberFieldMindHaptics()
+    var subject by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }
+    var facts by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf("Likely") }
+    var location by remember { mutableStateOf("") }; var latitude by remember { mutableStateOf("") }; var longitude by remember { mutableStateOf("") }
+    var tags by remember { mutableStateOf("") }; var evidence by remember { mutableStateOf("") }; var fieldContext by remember { mutableStateOf("") }
+    var showAdvanced by remember { mutableStateOf(false) }
+
+    fun save() {
+        if (subject.isNotBlank() || facts.isNotBlank()) {
+            val effectiveSubject = subject.ifBlank { facts.take(48).ifBlank { "$category observation" } }
+            viewModel.addObservation(
+                subject = effectiveSubject,
+                category = category,
+                facts = facts.ifBlank { "Quick $category observation." },
+                confidence = confidence,
+                manualLocation = location.ifBlank { "" },
+                latitude = latitude.toDoubleOrNull(),
+                longitude = longitude.toDoubleOrNull(),
+                tags = if (tags.isNotBlank()) "$tags, $category" else category,
+                evidence = evidence,
+                context = fieldContext
+            )
+            onBack()
+        }
+    }
+
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
+        StandardScreenHeader(
+            title = "New Observation",
+            subtitle = "Record what you observed — species, conditions, evidence.",
+            icon = FieldMindIcons.Observation,
+            heroColor = FieldMindTheme.colors.observation,
+            trailing = { BackButton(onClick = onBack) }
+        )
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            FieldTextField(subject, { subject = it }, "Species / Subject", supportingText = "Monarch Butterfly, Red-tailed Hawk…")
+            FieldTextField(facts, { facts = it }, "Description", minLines = 3, supportingText = "What exactly did you see, hear, or measure?")
+            DividerSection("Classification", FieldMindIcons.Category, FieldMindTheme.colors.observation)
+            ChoiceChipsField("Category", observationCategories, category) { category = it }
+            ChoiceChipsField("Confidence", confidenceOptions, confidence) { confidence = it }
+            DividerSection("Location", FieldMindIcons.Location, FieldMindTheme.colors.observation)
+            FieldTextField(location, { location = it }, "Location", supportingText = "e.g. Trailhead, Zone A, GPS coordinate")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
+                FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
+            }
+            DividerSection("Tags", FieldMindIcons.Tag, FieldMindTheme.colors.observation)
+            FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords — e.g. Butterfly, Pollinator")
+            CollapsibleSection("Advanced", "Evidence summary & field context", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+                FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2)
+                FieldTextField(fieldContext, { fieldContext = it }, "Field context", minLines = 2)
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = ::save, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = subject.isNotBlank() || facts.isNotBlank()) {
+                Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save observation")
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  NEW NOTE SCREEN — Full-screen creation form for notes
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun NewNoteScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    var title by remember { mutableStateOf("") }; var body by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("Other") }; var tags by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
+
+    fun save() {
+        if (title.isNotBlank() || body.isNotBlank()) {
+            val fallbackTitle = body.lineSequence().firstOrNull { it.isNotBlank() }?.take(48) ?: "Untitled note"
+            viewModel.addNote(
+                title = title.ifBlank { fallbackTitle },
+                body = body,
+                category = category,
+                tags = tags,
+                onSaved = { onBack() }
+            )
+            onBack()
+        }
+    }
+
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
+        StandardScreenHeader(
+            title = "New Note",
+            subtitle = "Capture a quick idea, observation, or thought.",
+            icon = FieldMindIcons.Note,
+            heroColor = FieldMindTheme.colors.source,
+            trailing = { BackButton(onClick = onBack) }
+        )
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
+            FieldTextField(body, { body = it }, "Content", minLines = 6, supportingText = "Start writing…")
+            DividerSection("Classification", FieldMindIcons.Category, FieldMindTheme.colors.source)
+            ChoiceChipsField("Category", observationCategories, category) { category = it }
+            DividerSection("Tags", FieldMindIcons.Tag, FieldMindTheme.colors.source)
+            FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
+            CollapsibleSection("Advanced", "Location & metadata", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+                FieldTextField(location, { location = it }, "Location", supportingText = "Where was this note taken?")
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = ::save, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank() || body.isNotBlank()) {
+                Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save note")
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  NEW SOURCE SCREEN — Full-screen creation form for sources
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun NewSourceScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val projects by viewModel.projects.collectAsState()
+    var type by remember { mutableStateOf("Article") }
+    var title by remember { mutableStateOf("") }; var author by remember { mutableStateOf("") }
+    var dateOrYear by remember { mutableStateOf("") }; var doiOrIsbn by remember { mutableStateOf("") }
+    var publisherOrJournal by remember { mutableStateOf("") }; var accessDate by remember { mutableStateOf(today()) }
+    var link by remember { mutableStateOf("") }; var fileUri by remember { mutableStateOf("") }
+    var citationStyleNote by remember { mutableStateOf("") }
+    var importance by remember { mutableStateOf("Normal") }; var readingStatus by remember { mutableStateOf("In progress") }
+    var summary by remember { mutableStateOf("") }; var taught by remember { mutableStateOf("") }
+    var findings by remember { mutableStateOf("") }; var questions by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }; var reliability by remember { mutableStateOf(3f) }
+    var projectId by remember { mutableStateOf<Long?>(null) }
+
+    fun save() {
+        if (title.isNotBlank()) {
+            viewModel.addSource(
+                type = type, title = title.trim(), author = author.trim(),
+                link = link.trim(), summary = summary.trim(), taught = taught.trim(),
+                reliability = reliability.toInt(), keyFindings = findings.trim(),
+                questionsGenerated = questions.trim(), paperNotes = notes.trim(),
+                projectId = projectId, dateOrYear = dateOrYear.trim(), doiOrIsbn = doiOrIsbn.trim(),
+                publisherOrJournal = publisherOrJournal.trim(), accessDate = accessDate.trim(),
+                fileUri = fileUri.trim(), citationStyleNote = citationStyleNote.trim(),
+                importance = importance, readingStatus = readingStatus
+            )
+            onBack()
+        }
+    }
+
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
+        StandardScreenHeader(
+            title = "New Source",
+            subtitle = "Start with title + type. Fill in what you have.",
+            icon = FieldMindIcons.Source,
+            heroColor = FieldMindTheme.colors.source,
+            trailing = { BackButton(onClick = onBack) }
+        )
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            ChoiceChipsField("Source type", sourceLibraryTypes, type) { type = it }
+            DividerSection("Identity", FieldMindIcons.Article, FieldMindTheme.colors.source)
+            FieldTextField(title, { title = it }, "Title")
+            FieldTextField(author, { author = it }, "Author / creator")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FieldTextField(dateOrYear, { dateOrYear = it }, "Date / year", modifier = Modifier.weight(1f))
+                FieldTextField(accessDate, { accessDate = it }, "Accessed", modifier = Modifier.weight(1f))
+            }
+            FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN")
+            FieldTextField(publisherOrJournal, { publisherOrJournal = it }, "Publisher / journal")
+            DividerSection("Link & notes", FieldMindIcons.Link, FieldMindTheme.colors.source)
+            FieldTextField(link, { link = it }, "Web link")
+            FieldTextField(summary, { summary = it }, "Main idea", minLines = 2)
+            FieldTextField(findings, { findings = it }, "Key findings", minLines = 2)
+            FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2)
+            FieldTextField(questions, { questions = it }, "New questions", minLines = 2)
+            FieldTextField(notes, { notes = it }, "Paper / Cornell notes", minLines = 3)
+            DividerSection("Status", FieldMindIcons.Check, FieldMindTheme.colors.source)
+            ChoiceChipsField("Reading status", readingStatuses, readingStatus) { readingStatus = it }
+            ChoiceChipsField("Importance", sourceImportanceLevels, importance) { importance = it }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Credibility", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("${reliability.toInt()}/5", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            }
+            Slider(reliability, { reliability = it }, valueRange = 1f..5f, steps = 3)
+            if (projects.isNotEmpty()) {
+                ChoiceChipsField("Link to project", listOf("No project") + projects.map { it.title }, projects.firstOrNull { it.id == projectId }?.title ?: "No project") { selected ->
+                    projectId = projects.firstOrNull { it.title == selected }?.id
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = ::save, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank()) {
+                Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save source")
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  NEW ATTACHMENT SCREEN — File type picker grid (standalone)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun NewAttachmentScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val context = LocalContext.current
+    val haptics = rememberFieldMindHaptics()
+    var capturedUri by remember { mutableStateOf<String?>(null) }
+    var capturedType by remember { mutableStateOf("") }
+
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; capturedUri = it.toString(); capturedType = "Image" }
+    }
+    val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; capturedUri = it.toString(); capturedType = "Video" }
+    }
+    val audioPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; capturedUri = it.toString(); capturedType = "Audio" }
+    }
+    val pdfPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let { runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; capturedUri = it.toString(); capturedType = "PDF" }
+    }
+    val sheetPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let { runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; capturedUri = it.toString(); capturedType = "Sheet" }
+    }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let { runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }; capturedUri = it.toString(); capturedType = "File" }
+    }
+
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
+        StandardScreenHeader(
+            title = "Add Attachment",
+            subtitle = "Attach an image, video, audio, PDF, sheet, or other file.",
+            icon = MaterialSymbolIcon("attach_file"),
+            heroColor = FieldMindTheme.colors.warning,
+            trailing = { BackButton(onClick = onBack) }
+        )
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text("Choose attachment type", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    AttachmentTypeItem("Image", MaterialSymbolIcon("photo"), FieldMindTheme.colors.observation, Modifier.weight(1f)) { haptics.light(); imagePicker.launch("image/*") }
+                    AttachmentTypeItem("Video", MaterialSymbolIcon("videocam"), FieldMindTheme.colors.question, Modifier.weight(1f)) { haptics.light(); videoPicker.launch("video/*") }
+                    AttachmentTypeItem("Audio", MaterialSymbolIcon("mic"), FieldMindTheme.colors.project, Modifier.weight(1f)) { haptics.light(); audioPicker.launch("audio/*") }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    AttachmentTypeItem("PDF", MaterialSymbolIcon("picture_as_pdf"), MaterialTheme.colorScheme.error, Modifier.weight(1f)) { haptics.light(); pdfPicker.launch(arrayOf("application/pdf")) }
+                    AttachmentTypeItem("Sheet", MaterialSymbolIcon("table_chart"), FieldMindTheme.colors.data, Modifier.weight(1f)) { haptics.light(); sheetPicker.launch(arrayOf("text/csv", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) }
+                    AttachmentTypeItem("File", MaterialSymbolIcon("description"), FieldMindTheme.colors.hypothesis, Modifier.weight(1f)) { haptics.light(); filePicker.launch(arrayOf("*/*")) }
+                }
+            }
+            if (capturedUri != null) {
+                Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.positive.copy(alpha = 0.08f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Icon(MaterialSymbolIcon("check_circle"), null, tint = FieldMindTheme.colors.positive, size = 24.dp)
+                        Column(Modifier.weight(1f)) {
+                            Text("$capturedType attached", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            Text(capturedUri!!.substringAfterLast("/").take(40), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {
+                if (capturedUri != null) {
+                    viewModel.addNote(
+                        title = "Attachment: $capturedType",
+                        body = "Attached on ${java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault()).format(java.util.Date())}\nURI: $capturedUri",
+                        category = capturedType, tags = "attachment, $capturedType",
+                        onSaved = { onBack() }
+                    )
+                }
+            }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = capturedUri != null) {
+                Icon(MaterialSymbolIcon("attach_file"), null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Attach")
+            }
+        }
+    }
+}
+
+@Composable
+private fun AttachmentTypeItem(
+    label: String, icon: MaterialSymbolIcon, accent: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier, onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.10f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(accent.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = accent, size = 22.dp) }
+            Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = accent)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  NEW FOLDER SCREEN — Create a folder (organizational note)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+fun NewFolderScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    var folderName by remember { mutableStateOf("") }
+    var selectedColor by remember { mutableStateOf(0xFF5F7F52) }
+    val haptics = rememberFieldMindHaptics()
+
+    val colorOptions = listOf(
+        0xFF4CAF50L to "Green",
+        0xFF2196F3L to "Blue",
+        0xFF9C27B0L to "Purple",
+        0xFFFF9800L to "Orange",
+        0xFFF44336L to "Red"
+    )
+    val colors = FieldMindTheme.colors
+
+    Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
+        StandardScreenHeader(
+            title = "New Folder",
+            subtitle = "Organize project entities into a folder.",
+            icon = MaterialSymbolIcon("folder"),
+            heroColor = colors.hypothesis,
+            trailing = { BackButton(onClick = onBack) }
+        )
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            FieldTextField(folderName, { folderName = it }, "Folder Name", supportingText = "e.g. Butterflies, Water Samples")
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Color", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    colorOptions.forEach { (colorLong, colorName) ->
+                        val isSelected = selectedColor == colorLong
+                        Box(
+                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(Color(colorLong))
+                                .then(if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(14.dp)) else Modifier)
+                                .clickable { haptics.light(); selectedColor = colorLong },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) Icon(MaterialSymbolIcon("check"), null, tint = Color.White, size = 22.dp)
+                        }
+                    }
+                }
+            }
+            Text("Parent folder", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("None (root folder)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = {
+                if (folderName.isNotBlank()) {
+                    viewModel.addNote(
+                        title = "📁 $folderName",
+                        body = "Folder created on ${java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault()).format(java.util.Date())}",
+                        category = "Folder",
+                        tags = "folder, ${folderName.lowercase().replace(" ", "-")}",
+                        onSaved = { onBack() }
+                    )
+                }
+            }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = folderName.isNotBlank()) {
+                Icon(MaterialSymbolIcon("folder"), null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Create Folder")
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
 //  Shared helpers
 // ══════════════════════════════════════════════════════════════════════
 
 private fun defaultUnitForTool(tool: String): String = when (tool) {
+    "Weather Log" -> "°C"
+    "Measurement Log" -> "cm"
+    "Counter", "Species Tracker" -> "count"
+    "Event Log" -> "event"
+    "Site Log" -> "site"
+    "Checklist" -> "done/total"
+    "Comparison Table" -> "score"
+    else -> ""
+}
+
+private fun defaultLabelForTool(tool: String): String = when (tool) {
+    "Weather Log" -> "Air temperature"
+    "Measurement Log" -> "Measured length"
+    "Species Tracker" -> "Species count"
+    "Checklist" -> "Checklist item"
+    "Event Log" -> "Observed event"
+    "Site Log" -> "Site condition"
+    "Comparison Table" -> "Comparison variable"
+    else -> ""
+}
+
+@Composable
+private fun ChoiceChipsField(label: String, options: List<String>, selected: String, onSelected: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ChoiceChips(options, selected, onSelected = onSelected)
+    }
+}
+
+@Composable
+private fun DividerSection(title: String, icon: MaterialSymbolIcon? = null, accent: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (icon != null) { Icon(icon, null, tint = accent, size = 18.dp) }
+        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+    }
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+}
+
     "Weather Log" -> "°C"
     "Measurement Log" -> "cm"
     "Counter", "Species Tracker" -> "count"
