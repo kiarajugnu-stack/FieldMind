@@ -93,6 +93,7 @@ private val PAGE_HEIGHT_DP = PAGE_WIDTH_DP * A4_ASPECT
  * @param drawingState shared drawing tool state (null = no drawing enabled)
  * @param drawings saved drawing entities for rendering
  * @param onStrokeComplete called when user finishes a stroke
+ * @param onDeselectAll called when user taps empty space to deselect (for haptics, etc.)
  * @param onEraseDrawing called when user taps a stroke with eraser
  */
 @Composable
@@ -105,6 +106,7 @@ fun PageCanvas(
     onBlockMovedFinal: ((Long, Float, Float, Float, Float) -> Unit)? = null,
     onBlockResized: ((Long, Float, Float) -> Unit)? = null,
     onBlockResizedFinal: ((Long, Float, Float, Float, Float) -> Unit)? = null,
+    onDeselectAll: (() -> Unit)? = null,
     onBlockTapped: ((Long) -> Unit)? = null,
     onBlockDelete: ((Long) -> Unit)? = null,
     onBlockDuplicate: ((Long) -> Unit)? = null,
@@ -204,6 +206,7 @@ fun PageCanvas(
                             }
                             if (hitBlock == null) {
                                 canvasState.clearSelection()
+                                onDeselectAll?.invoke()
                             }
                         }
                     }
