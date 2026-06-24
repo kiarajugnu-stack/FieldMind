@@ -483,6 +483,34 @@ class FieldMindSettings private constructor(context: Context) {
     fun setDecoyPinEnabled(value: Boolean) = edit(KEY_DECOY_PIN_ENABLED, value) { _decoyPinEnabled.value = value }
     fun setDecoyPinHash(value: String) = edit(KEY_DECOY_PIN_HASH, value) { _decoyPinHash.value = value }
     fun setDecoyPinLabel(value: String) = edit(KEY_DECOY_PIN_LABEL, value) { _decoyPinLabel.value = value }
+
+    fun verifyExportPassword(input: String): Boolean {
+        val hash = _exportPasswordHash.value
+        if (hash.isBlank() || input.isBlank()) return false
+        val inputHash = android.util.Base64.encodeToString(
+            java.security.MessageDigest.getInstance("SHA-256").digest(input.toByteArray()),
+            android.util.Base64.NO_WRAP
+        )
+        return inputHash == hash
+    }
+
+    fun hashExportPassword(input: String): String {
+        return android.util.Base64.encodeToString(
+            java.security.MessageDigest.getInstance("SHA-256").digest(input.toByteArray()),
+            android.util.Base64.NO_WRAP
+        )
+    }
+
+    fun verifyDecoyPin(input: String): Boolean {
+        val hash = _decoyPinHash.value
+        if (hash.isBlank() || input.isBlank()) return false
+        val inputHash = android.util.Base64.encodeToString(
+            java.security.MessageDigest.getInstance("SHA-256").digest(input.toByteArray()),
+            android.util.Base64.NO_WRAP
+        )
+        return inputHash == hash
+    }
+
     fun setWeatherShowCloudAnimation(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD_ANIMATION, value) { _weatherShowCloudAnimation.value = value }
     fun setWeatherProvider(value: String) = edit(KEY_WEATHER_PROVIDER, value) { _weatherProvider.value = value }
     fun setWeatherProviders(value: String) = edit(KEY_WEATHER_PROVIDERS, value) {
