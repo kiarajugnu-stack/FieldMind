@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for the infinite canvas feature.
+ * ViewModel for the canvas feature.
  *
  * Responsibilities:
- * - Wires [CanvasBlockEntity] objects from Room to [InfiniteCanvas]
+ * - Wires [CanvasBlockEntity] objects from Room to [PageCanvas]
  * - Auto-saves block content with 500 ms debounce (avoids DB writes on every keystroke)
  * - Persists zoom/pan state to [NoteEntity.canvasZoomLevel] / [canvasPanX] / [canvasPanY]
  * - Provides undo/redo via [CommandHistory]

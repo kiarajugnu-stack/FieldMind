@@ -45,6 +45,27 @@ internal data class FieldMindChangelogEntry(
 
 private val fieldMindChangelog = listOf(
     FieldMindChangelogEntry(
+        version = "1.5.3-infinite-canvas-removed",
+        date = "2026-06-24",
+        title = "Removed Infinite Canvas — Simplified to Page-Only Mode",
+        importance = "Patch",
+        tags = listOf("Canvas", "Simplification", "Cleanup"),
+        sections = listOf(
+            "🗑️ Infinite Canvas Removed" to listOf(
+                "Removed InfiniteCanvas, CanvasBackground (dot grid), and CanvasMinimap composables — the app now uses PageCanvas exclusively.",
+                "Removed CanvasMode enum and canvasMode toggle from CanvasState — the canvas is always in page (document) mode.",
+                "Removed showGrid/toggleGrid from CanvasState — the dot-grid background was only used by the infinite canvas.",
+                "Simplified CanvasTopBar overflow menu: removed canvas mode toggle and grid toggle; Figure Gallery and Drawing tools remain.",
+                "Page indicator in the top bar now always visible since the canvas is always in page mode."
+            ),
+            "🧼 Cleanup" to listOf(
+                "Deleted ~1,500 lines of code across InfiniteCanvas.kt, CanvasBackground.kt, and CanvasMinimap.kt.",
+                "Removed ~250 lines of mode-switching logic from CanvasScreen and CanvasState.",
+                "All canvas blocks, drawing, zoom, and block operations preserved under PageCanvas."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
         version = "1.5.2-predictive-back-canvas",
         date = "2026-06-23",
         title = "Predictive Back Peek Animation & Canvas Improvements",
