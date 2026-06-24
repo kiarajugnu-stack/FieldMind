@@ -544,7 +544,8 @@ private fun CanvasTopBar(
     onToggleLock: () -> Unit = {},
     onToggleGallery: (() -> Unit)? = null,
     currentPage: Int = 0,
-    totalPages: Int = 1 {
+    totalPages: Int = 1
+) {
     var showOverflow by remember { mutableStateOf(false) }
 
     Surface(

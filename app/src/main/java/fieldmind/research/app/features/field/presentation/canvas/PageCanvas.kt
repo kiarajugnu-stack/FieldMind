@@ -3,6 +3,7 @@ package fieldmind.research.app.features.field.presentation.canvas
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -915,7 +916,7 @@ private fun PageBlock(
                             // 300ms long-press delay before drag starts — prevents accidental
                             // drags when tapping to select
                             detectDragGesturesAfterLongPress(
-                                longPressTimeoutMillis = 300,
+                                longPressTimeout = 300L,
                                 onDragStart = {
                                     startX = pageX
                                     startY = pageY
@@ -1082,7 +1083,7 @@ private fun PageBlock(
                             var cumulativeDx = 0f
                             var cumulativeDy = 0f
                             detectDragGesturesAfterLongPress(
-                                longPressTimeoutMillis = 300,
+                                longPressTimeout = 300L,
                                 onDragStart = {
                                     cumulativeDx = 0f
                                     cumulativeDy = 0f
