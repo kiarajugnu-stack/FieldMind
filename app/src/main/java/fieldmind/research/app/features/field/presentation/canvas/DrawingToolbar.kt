@@ -369,7 +369,7 @@ private fun ColorSwatch(
             .scale(scale)
             .clip(CircleShape)
             .background(color)
-            .pressScale(scaleDown = 0.8f)
+            .pressScale(scaleDown = 0.85f)
             .clickable(onClick = onClick)
             .then(
                 if (isSelected) {
