@@ -799,6 +799,7 @@ fun SecuritySettingsPage(
 
     // ── Confirm current PIN before disabling ──
     if (showCurrentPinDialog) {
+        val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
         AlertDialog(
             onDismissRequest = { showCurrentPinDialog = false; currentPinInput = ""; currentPinError = false },
             icon = { Icon(FieldMindIcons.Lock, null, size = 28.dp) },
@@ -810,7 +811,6 @@ fun SecuritySettingsPage(
                     if (currentPinError) Text("Incorrect PIN", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             },
-            val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
             confirmButton = { Button(onClick = { if (settings.verifyAppPin(currentPinInput)) { settings.setAppPinEnabled(false); settings.setAppPinHash(""); showCurrentPinDialog = false; currentPinInput = ""; currentPinError = false } else currentPinError = true }, enabled = currentPinInput.length >= minPinLen) { Text("Disable") } },
             dismissButton = { TextButton(onClick = { showCurrentPinDialog = false; currentPinInput = ""; currentPinError = false }) { Text("Cancel") } }
         )
@@ -837,6 +837,7 @@ fun SecuritySettingsPage(
 
     // ── Decoy PIN setup dialog ──
     if (showDecoyDialog) {
+        val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
         AlertDialog(
             onDismissRequest = { showDecoyDialog = false; decoyInput = ""; decoyConfirm = ""; decoyLabelInput = ""; decoyError = false },
             icon = { Icon(MaterialSymbolIcon("lock_open"), null, size = 28.dp) },
@@ -850,7 +851,6 @@ fun SecuritySettingsPage(
                     if (decoyError) Text("PINs don't match. Try again.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             },
-            val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
             confirmButton = { Button(onClick = { if (decoyInput.length >= minPinLen && decoyInput == decoyConfirm) { val hash = settings.hashAppPin(decoyInput); settings.setDecoyPinHash(hash); settings.setDecoyPinLabel(decoyLabelInput.trim()); settings.setDecoyPinEnabled(true); showDecoyDialog = false; decoyInput = ""; decoyConfirm = ""; decoyLabelInput = ""; decoyError = false } else decoyError = true }, enabled = decoyInput.length >= minPinLen && decoyConfirm.length >= minPinLen) { Text("Save") } },
             dismissButton = { TextButton(onClick = { showDecoyDialog = false; decoyInput = ""; decoyConfirm = ""; decoyLabelInput = ""; decoyError = false }) { Text("Cancel") } }
         )
