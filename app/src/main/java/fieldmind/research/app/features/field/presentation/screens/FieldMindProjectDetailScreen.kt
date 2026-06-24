@@ -45,6 +45,8 @@ fun ProjectDetailScreen(
     val reports by viewModel.reports.collectAsState()
     val notes by viewModel.notes.collectAsState()
 
+    var showNewNote by remember { mutableStateOf(false) }
+
     val project = projects.firstOrNull { it.id == projectId }
     val relatedObs = observations.filter { it.projectId == projectId }
     val relatedQs = questions.filter { it.relatedProjectId == projectId }
@@ -144,7 +146,7 @@ fun ProjectDetailScreen(
                             modifier = Modifier.weight(1f)
                         )
                         ProjectActionButton(
-                            onClick = { onNavigate?.invoke(FieldMindScreen.Observe) },
+                            onClick = { showNewNote = true },
                             icon = MaterialSymbolIcon("edit_note"),
                             label = "Note",
                             accent = colors.project,
@@ -308,6 +310,15 @@ fun ProjectDetailScreen(
                 }
             }
         }
+    }
+
+    // ── New Note Dialog ──
+    if (showNewNote) {
+        NewNoteDialog(
+            viewModel = viewModel,
+            projectId = project.id,
+            onDismiss = { showNewNote = false }
+        )
     }
 }
 

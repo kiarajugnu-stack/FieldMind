@@ -858,7 +858,7 @@ internal fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> 
 }
 
 @Composable
-internal fun NewNoteDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewNoteDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit, projectId: Long? = null) {
     var title by remember { mutableStateOf("") }; var body by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var tags by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
 
     fun save() {
@@ -869,6 +869,7 @@ internal fun NewNoteDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit)
                 body = body,
                 category = category,
                 tags = tags,
+                projectId = projectId,
                 onSaved = { onDismiss() }
             )
             onDismiss()
@@ -881,6 +882,9 @@ internal fun NewNoteDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit)
         FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
         FieldTextField(body, { body = it }, "Note body", minLines = 6)
         FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
+        if (projectId != null) {
+            Text("Linked to project", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.project, fontWeight = FontWeight.SemiBold)
+        }
         DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank() || body.isNotBlank())
     }
 }
