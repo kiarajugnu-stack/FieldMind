@@ -76,7 +76,8 @@ private val PAGE_HEIGHT_DP = PAGE_WIDTH_DP * A4_ASPECT
  * @param blockContent composable factory for each block's content
  * @param onBlockMoved called when a block is dragged (intermediate positions, no undo)
  * @param onBlockMovedFinal called when a block drag ends (final position, records undo)
- * @param onBlockResized called when a block is resized
+ * @param onBlockResized called when a block is resized (intermediate positions, in-memory only, no Room write)
+ * @param onBlockResizedFinal called when a resize drag ends (final position, records undo)
  * @param onBlockTapped called when a block is tapped
  * @param onBlockDelete delete callback
  * @param onBlockDuplicate duplicate callback
@@ -102,6 +103,7 @@ fun PageCanvas(
     onBlockMoved: ((Long, Float, Float) -> Unit)? = null,
     onBlockMovedFinal: ((Long, Float, Float, Float, Float) -> Unit)? = null,
     onBlockResized: ((Long, Float, Float) -> Unit)? = null,
+    onBlockResizedFinal: ((Long, Float, Float, Float, Float) -> Unit)? = null,
     onBlockTapped: ((Long) -> Unit)? = null,
     onBlockDelete: ((Long) -> Unit)? = null,
     onBlockDuplicate: ((Long) -> Unit)? = null,
@@ -182,11 +184,12 @@ fun PageCanvas(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             // Permanent tap-to-deselect on any empty area (including page margins)
+            // Always active unless drawing mode is on (to avoid conflicts with drawing gestures)
             .then(
-                if (drawingState?.showToolbar != true && !canvasState.canvasLocked) {
-                    // Include computedPanX and computedPanY as keys so the handler
-                    // recaptures the correct scroll offset after viewport/scroll changes
-                    Modifier.pointerInput(computedPanX, computedPanY) {
+                if (drawingState?.showToolbar != true) {
+                    // Include blocks + computedPanX/Y as keys so the handler re-evaluates
+                    // when block positions change or viewport/scroll changes
+                    Modifier.pointerInput(blocks, computedPanX, computedPanY) {
                         detectTapGestures { tapOffset ->
                             // Check if tap is on any block across ALL pages
                             val hitBlock = blocks.lastOrNull { block ->
@@ -310,6 +313,9 @@ fun PageCanvas(
                                 onResized = { w, h ->
                                     canvasState.setLiveBlockSize(block.id, w, h)
                                     onBlockResized?.invoke(block.id, w, h)
+                                },
+                                onResizeFinal = { origW, origH, newW, newH ->
+                                    onBlockResizedFinal?.invoke(block.id, origW, origH, newW, newH)
                                 }
                             ) {
                                 blockContent(block, isSelected)
@@ -802,7 +808,8 @@ private fun parseBlockRotation(contentJson: String): Float {
  * @param onToggleCollapse called to toggle collapse state
  * @param onMoved called with new (pageX, pageY) during drag (intermediate, no undo)
  * @param onMovedFinal called with (startX, startY, finalX, finalY) when drag ends
- * @param onResized called with new (width, height)
+ * @param onResized called with new (width, height) during drag (in-memory only, no Room write)
+ * @param onResizeFinal called with (origW, origH, newW, newH) on drag-end or auto-expand (persists to Room + undo)
  * @param content the block's inner content
  */
 @Composable
@@ -819,6 +826,7 @@ private fun PageBlock(
     onMoved: (Float, Float) -> Unit,
     onMovedFinal: ((Float, Float, Float, Float) -> Unit)? = null,
     onResized: (Float, Float) -> Unit,
+    onResizeFinal: ((Float, Float, Float, Float) -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
@@ -848,9 +856,11 @@ private fun PageBlock(
     }
 
     // Sync auto-expanded height to entity (only when not collapsed)
+    // Updates live size and persists to Room (auto-expand is a final position, not intermediate)
     LaunchedEffect(autoHeight) {
         if (!isCollapsed && autoHeight > displayHeight && autoHeight - displayHeight > 15f) {
             onResized(block.width, autoHeight)
+            onResizeFinal?.invoke(block.width, displayHeight, block.width, autoHeight)
         }
     }
 
@@ -1084,13 +1094,14 @@ private fun PageBlock(
                                     val newW = (handleDisplayWidth + cumulativeDx).coerceAtLeast(60f)
                                     val newH = (handleDisplayHeight + cumulativeDy).coerceAtLeast(60f)
                                     canvasState.setLiveBlockSize(block.id, newW, newH)
-                                    onResized(newW, newH)
+                                    onResized(newW, newH)  // in-memory only — no Room write
                                 },
                                 onDragEnd = {
                                     val finalW = (handleDisplayWidth + cumulativeDx).coerceAtLeast(60f)
                                     val finalH = (handleDisplayHeight + cumulativeDy).coerceAtLeast(60f)
                                     canvasState.setLiveBlockSize(block.id, finalW, finalH)
-                                    onResized(finalW, finalH)
+                                    onResized(finalW, finalH)  // update live state one last time
+                                    onResizeFinal?.invoke(handleDisplayWidth, handleDisplayHeight, finalW, finalH)  // persist + undo
                                 },
                                 onDragCancel = {
                                     canvasState.removeLiveBlockSize(block.id)

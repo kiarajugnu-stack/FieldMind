@@ -273,14 +273,28 @@ class CanvasViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     /**
+     * Finalize a block resize after a drag gesture ends.
+     * Saves the final size to Room and records an undo entry. During the drag,
+     * [resizeBlockIntermediate] only updated in-memory [CanvasState.liveBlockSizes]
+     * for smooth visual feedback without per-frame Room writes.
+     */
+    fun resizeBlockFinal(id: Long, originalW: Float, originalH: Float, newW: Float, newH: Float) {
+        if (originalW == newW && originalH == newH) return
+        viewModelScope.launch {
+            repository.updateBlockSize(id, newW, newH)
+            undoRedo.push(CanvasCommand.ResizeBlock(id, originalW, originalH, newW, newH))
+        }
+    }
+
+    /**
      * Resize a block during active resize dragging (intermediate positions).
-     * Saves to DB immediately but does NOT record undo for each drag frame.
-     * Use [resizeBlock] for the final drag-end position to record undo.
+     * In-memory only — live size is already updated by [PageBlock] before calling this.
+     * Room write happens once via [resizeBlockFinal] when the drag gesture ends.
      */
     fun resizeBlockIntermediate(id: Long, w: Float, h: Float) {
-        viewModelScope.launch {
-            repository.updateBlockSize(id, w, h)
-        }
+        // In-memory live size is handled by PageBlock's onResized handler.
+        // This callback exists for symmetry with moveBlockIntermediate but
+        // deliberately does NOT write to Room to avoid per-frame DB writes.
     }
 
     /**

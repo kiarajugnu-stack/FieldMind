@@ -313,6 +313,7 @@ fun CanvasScreen(
                     onBlockMoved = { id, x, y -> canvasViewModel.moveBlockIntermediate(id, x, y) },
                     onBlockMovedFinal = { id, sx, sy, fx, fy -> canvasViewModel.moveBlockFinal(id, sx, sy, fx, fy) },
                     onBlockResized = { id, w, h -> canvasViewModel.resizeBlockIntermediate(id, w, h) },
+                    onBlockResizedFinal = { id, origW, origH, newW, newH -> canvasViewModel.resizeBlockFinal(id, origW, origH, newW, newH) },
                     onBlockTapped = onBlockTappedCallback,
                     onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
                     onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
