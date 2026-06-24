@@ -181,7 +181,7 @@ fun PageCanvas(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFE8E8E8))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             // Permanent tap-to-deselect on any empty area (including page margins)
             .then(
                 if (drawingState?.showToolbar != true && !canvasState.canvasLocked) {
@@ -354,12 +354,12 @@ fun PageCanvas(
                                         MaterialSymbolIcon("description", defaultWeight = 300),
                                         "Empty page",
                                         size = 40.dp,
-                                        tint = Color(0x22000000)
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
                                     )
                                     Text(
                                         "Tap + to add blocks",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0x44000000)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                                     )
                                 }
                             }
@@ -860,20 +860,22 @@ private fun PageBlock(
             .width(with(density) { displayWidth.toDp() })
             .heightIn(min = with(density) { displayHeight.toDp() })
             .wrapContentHeight()
-            // Selection border
+            // Selection border (zoom-aware width matching CanvasBlock)
             .then(
                 if (isSelected) {
                     Modifier.border(
-                        width = 2.dp,
+                        width = (2f / zoom).coerceAtLeast(1f).dp,
                         color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(8.dp)
                     )
                 } else Modifier
             )
-            // Animated shadow/elevation
+            // Animated shadow/elevation with consistent ambient/spot colors
             .shadow(
                 elevation = elevation.dp,
                 shape = RoundedCornerShape(8.dp),
+                ambientColor = Color(0x40000000),
+                spotColor = Color(0x28000000),
                 clip = false
             )
             .clip(RoundedCornerShape(8.dp))

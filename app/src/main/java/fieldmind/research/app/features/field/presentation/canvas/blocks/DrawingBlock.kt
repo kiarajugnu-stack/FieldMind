@@ -63,7 +63,7 @@ fun DrawingBlock(
         modifier = Modifier
             .fillMaxSize()
             .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFFFAFAFA))
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
     ) {
         Canvas(
             modifier = Modifier
