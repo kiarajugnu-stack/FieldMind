@@ -335,6 +335,67 @@ class FieldMindSettings private constructor(context: Context) {
     private val _exportExcludeMedia = MutableStateFlow(prefs.getBoolean(KEY_EXPORT_EXCLUDE_MEDIA, false))
     val exportExcludeMedia: StateFlow<Boolean> = _exportExcludeMedia.asStateFlow()
 
+    // ── Advanced Privacy sub-page settings ──
+    /** App Preview mode: "Normal", "Blur Content", or "Privacy Screen" */
+    private val _appPreviewMode = MutableStateFlow(prefs.getString(KEY_APP_PREVIEW_MODE, "Normal") ?: "Normal")
+    val appPreviewMode: StateFlow<String> = _appPreviewMode.asStateFlow()
+
+    /** Export password protection toggle */
+    private val _exportPasswordProtectionEnabled = MutableStateFlow(prefs.getBoolean(KEY_EXPORT_PASSWORD_PROTECTION, false))
+    val exportPasswordProtectionEnabled: StateFlow<Boolean> = _exportPasswordProtectionEnabled.asStateFlow()
+
+    /** Export password hash (SHA-256) */
+    private val _exportPasswordHash = MutableStateFlow(prefs.getString(KEY_EXPORT_PASSWORD_HASH, "") ?: "")
+    val exportPasswordHash: StateFlow<String> = _exportPasswordHash.asStateFlow()
+
+    /** Export encryption level: "Standard", "Strong", or "Maximum" */
+    private val _exportEncryptionLevel = MutableStateFlow(prefs.getString(KEY_EXPORT_ENCRYPTION_LEVEL, "Standard") ?: "Standard")
+    val exportEncryptionLevel: StateFlow<String> = _exportEncryptionLevel.asStateFlow()
+
+    /** Failed unlock cooldown: "Do Nothing", "30 Second Cooldown", "5 Minute Cooldown" */
+    private val _failedUnlockCooldown = MutableStateFlow(prefs.getString(KEY_FAILED_UNLOCK_COOLDOWN, "Do Nothing") ?: "Do Nothing")
+    val failedUnlockCooldown: StateFlow<String> = _failedUnlockCooldown.asStateFlow()
+
+    /** Require biometrics after failed unlocks */
+    private val _failedUnlockRequireBiometrics = MutableStateFlow(prefs.getBoolean(KEY_FAILED_UNLOCK_BIOMETRICS, false))
+    val failedUnlockRequireBiometrics: StateFlow<Boolean> = _failedUnlockRequireBiometrics.asStateFlow()
+
+    /** Panic lock after failed unlocks (wipes data) */
+    private val _failedUnlockPanicLock = MutableStateFlow(prefs.getBoolean(KEY_FAILED_UNLOCK_PANIC_LOCK, false))
+    val failedUnlockPanicLock: StateFlow<Boolean> = _failedUnlockPanicLock.asStateFlow()
+
+    /** Remove GPS coordinates from exports */
+    private val _metadataRemoveGps = MutableStateFlow(prefs.getBoolean(KEY_METADATA_REMOVE_GPS, false))
+    val metadataRemoveGps: StateFlow<Boolean> = _metadataRemoveGps.asStateFlow()
+
+    /** Remove camera information from exports */
+    private val _metadataRemoveCamera = MutableStateFlow(prefs.getBoolean(KEY_METADATA_REMOVE_CAMERA, false))
+    val metadataRemoveCamera: StateFlow<Boolean> = _metadataRemoveCamera.asStateFlow()
+
+    /** Remove device information from exports */
+    private val _metadataRemoveDevice = MutableStateFlow(prefs.getBoolean(KEY_METADATA_REMOVE_DEVICE, false))
+    val metadataRemoveDevice: StateFlow<Boolean> = _metadataRemoveDevice.asStateFlow()
+
+    /** Remove EXIF data from exports */
+    private val _metadataRemoveExif = MutableStateFlow(prefs.getBoolean(KEY_METADATA_REMOVE_EXIF, false))
+    val metadataRemoveExif: StateFlow<Boolean> = _metadataRemoveExif.asStateFlow()
+
+    /** App PIN length: "4 digits", "5 digits", "6 digits" */
+    private val _appPinLength = MutableStateFlow(prefs.getString(KEY_APP_PIN_LENGTH, "4 digits") ?: "4 digits")
+    val appPinLength: StateFlow<String> = _appPinLength.asStateFlow()
+
+    /** Decoy PIN enabled */
+    private val _decoyPinEnabled = MutableStateFlow(prefs.getBoolean(KEY_DECOY_PIN_ENABLED, false))
+    val decoyPinEnabled: StateFlow<Boolean> = _decoyPinEnabled.asStateFlow()
+
+    /** Decoy PIN hash (SHA-256) */
+    private val _decoyPinHash = MutableStateFlow(prefs.getString(KEY_DECOY_PIN_HASH, "") ?: "")
+    val decoyPinHash: StateFlow<String> = _decoyPinHash.asStateFlow()
+
+    /** Decoy PIN label shown when entered */
+    private val _decoyPinLabel = MutableStateFlow(prefs.getString(KEY_DECOY_PIN_LABEL, "") ?: "")
+    val decoyPinLabel: StateFlow<String> = _decoyPinLabel.asStateFlow()
+
     /** Call explicitly after initialization — avoids scheduling jobs on every getInstance(). */
     fun initializeBackgroundWork() {
         FieldMindBackgroundScheduler.syncAll(
@@ -407,6 +468,21 @@ class FieldMindSettings private constructor(context: Context) {
     fun setClearClipboardAfterExport(value: Boolean) = edit(KEY_CLEAR_CLIPBOARD_AFTER_EXPORT, value) { _clearClipboardAfterExport.value = value }
     fun setExportGpsPrivacy(value: String) = edit(KEY_EXPORT_GPS_PRIVACY, value) { _exportGpsPrivacy.value = value }
     fun setExportExcludeMedia(value: Boolean) = edit(KEY_EXPORT_EXCLUDE_MEDIA, value) { _exportExcludeMedia.value = value }
+    fun setAppPreviewMode(value: String) = edit(KEY_APP_PREVIEW_MODE, value) { _appPreviewMode.value = value }
+    fun setExportPasswordProtectionEnabled(value: Boolean) = edit(KEY_EXPORT_PASSWORD_PROTECTION, value) { _exportPasswordProtectionEnabled.value = value }
+    fun setExportPasswordHash(value: String) = edit(KEY_EXPORT_PASSWORD_HASH, value) { _exportPasswordHash.value = value }
+    fun setExportEncryptionLevel(value: String) = edit(KEY_EXPORT_ENCRYPTION_LEVEL, value) { _exportEncryptionLevel.value = value }
+    fun setFailedUnlockCooldown(value: String) = edit(KEY_FAILED_UNLOCK_COOLDOWN, value) { _failedUnlockCooldown.value = value }
+    fun setFailedUnlockRequireBiometrics(value: Boolean) = edit(KEY_FAILED_UNLOCK_BIOMETRICS, value) { _failedUnlockRequireBiometrics.value = value }
+    fun setFailedUnlockPanicLock(value: Boolean) = edit(KEY_FAILED_UNLOCK_PANIC_LOCK, value) { _failedUnlockPanicLock.value = value }
+    fun setMetadataRemoveGps(value: Boolean) = edit(KEY_METADATA_REMOVE_GPS, value) { _metadataRemoveGps.value = value }
+    fun setMetadataRemoveCamera(value: Boolean) = edit(KEY_METADATA_REMOVE_CAMERA, value) { _metadataRemoveCamera.value = value }
+    fun setMetadataRemoveDevice(value: Boolean) = edit(KEY_METADATA_REMOVE_DEVICE, value) { _metadataRemoveDevice.value = value }
+    fun setMetadataRemoveExif(value: Boolean) = edit(KEY_METADATA_REMOVE_EXIF, value) { _metadataRemoveExif.value = value }
+    fun setAppPinLength(value: String) = edit(KEY_APP_PIN_LENGTH, value) { _appPinLength.value = value }
+    fun setDecoyPinEnabled(value: Boolean) = edit(KEY_DECOY_PIN_ENABLED, value) { _decoyPinEnabled.value = value }
+    fun setDecoyPinHash(value: String) = edit(KEY_DECOY_PIN_HASH, value) { _decoyPinHash.value = value }
+    fun setDecoyPinLabel(value: String) = edit(KEY_DECOY_PIN_LABEL, value) { _decoyPinLabel.value = value }
     fun setWeatherShowCloudAnimation(value: Boolean) = edit(KEY_WEATHER_SHOW_CLOUD_ANIMATION, value) { _weatherShowCloudAnimation.value = value }
     fun setWeatherProvider(value: String) = edit(KEY_WEATHER_PROVIDER, value) { _weatherProvider.value = value }
     fun setWeatherProviders(value: String) = edit(KEY_WEATHER_PROVIDERS, value) {
@@ -589,6 +665,21 @@ class FieldMindSettings private constructor(context: Context) {
         _perenualApiKey.value = ""
         _appPinEnabled.value = false
         _appPinHash.value = ""
+        _appPinLength.value = "4 digits"
+        _decoyPinEnabled.value = false
+        _decoyPinHash.value = ""
+        _decoyPinLabel.value = ""
+        _appPreviewMode.value = "Normal"
+        _exportPasswordProtectionEnabled.value = false
+        _exportPasswordHash.value = ""
+        _exportEncryptionLevel.value = "Standard"
+        _failedUnlockCooldown.value = "Do Nothing"
+        _failedUnlockRequireBiometrics.value = false
+        _failedUnlockPanicLock.value = false
+        _metadataRemoveGps.value = false
+        _metadataRemoveCamera.value = false
+        _metadataRemoveDevice.value = false
+        _metadataRemoveExif.value = false
         _userInterests.value = UserInterests()
         _screenVisibility.value = ScreenVisibility()
         _onboardingExtendedTourCompleted.value = false
@@ -688,6 +779,21 @@ class FieldMindSettings private constructor(context: Context) {
         put(KEY_PERENUAL_API_KEY, _perenualApiKey.value)
         put(KEY_APP_PIN_ENABLED, _appPinEnabled.value)
         put(KEY_APP_PIN_HASH, _appPinHash.value)
+        put(KEY_APP_PIN_LENGTH, _appPinLength.value)
+        put(KEY_DECOY_PIN_ENABLED, _decoyPinEnabled.value)
+        put(KEY_DECOY_PIN_HASH, _decoyPinHash.value)
+        put(KEY_DECOY_PIN_LABEL, _decoyPinLabel.value)
+        put(KEY_APP_PREVIEW_MODE, _appPreviewMode.value)
+        put(KEY_EXPORT_PASSWORD_PROTECTION, _exportPasswordProtectionEnabled.value)
+        put(KEY_EXPORT_PASSWORD_HASH, _exportPasswordHash.value)
+        put(KEY_EXPORT_ENCRYPTION_LEVEL, _exportEncryptionLevel.value)
+        put(KEY_FAILED_UNLOCK_COOLDOWN, _failedUnlockCooldown.value)
+        put(KEY_FAILED_UNLOCK_BIOMETRICS, _failedUnlockRequireBiometrics.value)
+        put(KEY_FAILED_UNLOCK_PANIC_LOCK, _failedUnlockPanicLock.value)
+        put(KEY_METADATA_REMOVE_GPS, _metadataRemoveGps.value)
+        put(KEY_METADATA_REMOVE_CAMERA, _metadataRemoveCamera.value)
+        put(KEY_METADATA_REMOVE_DEVICE, _metadataRemoveDevice.value)
+        put(KEY_METADATA_REMOVE_EXIF, _metadataRemoveExif.value)
         put(KEY_USER_INTERESTS, UserInterests.toJson(_userInterests.value))
         put(KEY_SCREEN_VISIBILITY, ScreenVisibility.toJson(_screenVisibility.value))
         put(KEY_EXTENDED_TOUR_DONE, _onboardingExtendedTourCompleted.value)
@@ -784,6 +890,21 @@ class FieldMindSettings private constructor(context: Context) {
         applyString(KEY_PERENUAL_API_KEY)
         applyBoolean(KEY_APP_PIN_ENABLED)
         applyString(KEY_APP_PIN_HASH)
+        applyString(KEY_APP_PIN_LENGTH)
+        applyBoolean(KEY_DECOY_PIN_ENABLED)
+        applyString(KEY_DECOY_PIN_HASH)
+        applyString(KEY_DECOY_PIN_LABEL)
+        applyString(KEY_APP_PREVIEW_MODE)
+        applyBoolean(KEY_EXPORT_PASSWORD_PROTECTION)
+        applyString(KEY_EXPORT_PASSWORD_HASH)
+        applyString(KEY_EXPORT_ENCRYPTION_LEVEL)
+        applyString(KEY_FAILED_UNLOCK_COOLDOWN)
+        applyBoolean(KEY_FAILED_UNLOCK_BIOMETRICS)
+        applyBoolean(KEY_FAILED_UNLOCK_PANIC_LOCK)
+        applyBoolean(KEY_METADATA_REMOVE_GPS)
+        applyBoolean(KEY_METADATA_REMOVE_CAMERA)
+        applyBoolean(KEY_METADATA_REMOVE_DEVICE)
+        applyBoolean(KEY_METADATA_REMOVE_EXIF)
         if (json.has(KEY_USER_INTERESTS)) {
             val jsonStr = json.optString(KEY_USER_INTERESTS, "")
             val interests = UserInterests.fromJson(jsonStr)
@@ -986,5 +1107,21 @@ class FieldMindSettings private constructor(context: Context) {
         private const val KEY_CLEAR_CLIPBOARD_AFTER_EXPORT = "clear_clipboard_after_export"
         private const val KEY_EXPORT_GPS_PRIVACY = "export_gps_privacy"
         private const val KEY_EXPORT_EXCLUDE_MEDIA = "export_exclude_media"
+        // ── Advanced Privacy ──
+        private const val KEY_APP_PREVIEW_MODE = "app_preview_mode"
+        private const val KEY_EXPORT_PASSWORD_PROTECTION = "export_password_protection"
+        private const val KEY_EXPORT_PASSWORD_HASH = "export_password_hash"
+        private const val KEY_EXPORT_ENCRYPTION_LEVEL = "export_encryption_level"
+        private const val KEY_FAILED_UNLOCK_COOLDOWN = "failed_unlock_cooldown"
+        private const val KEY_FAILED_UNLOCK_BIOMETRICS = "failed_unlock_biometrics"
+        private const val KEY_FAILED_UNLOCK_PANIC_LOCK = "failed_unlock_panic_lock"
+        private const val KEY_METADATA_REMOVE_GPS = "metadata_remove_gps"
+        private const val KEY_METADATA_REMOVE_CAMERA = "metadata_remove_camera"
+        private const val KEY_METADATA_REMOVE_DEVICE = "metadata_remove_device"
+        private const val KEY_METADATA_REMOVE_EXIF = "metadata_remove_exif"
+        private const val KEY_APP_PIN_LENGTH = "app_pin_length"
+        private const val KEY_DECOY_PIN_ENABLED = "decoy_pin_enabled"
+        private const val KEY_DECOY_PIN_HASH = "decoy_pin_hash"
+        private const val KEY_DECOY_PIN_LABEL = "decoy_pin_label"
     }
 }
