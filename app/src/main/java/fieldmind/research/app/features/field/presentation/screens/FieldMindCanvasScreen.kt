@@ -195,7 +195,16 @@ fun CanvasScreen(
 
     // ── PAGES mode: track current page ──
     var currentPage by remember { mutableStateOf(0) }
+    val previousPage = remember { mutableStateOf(currentPage) }
     var totalPages by remember { mutableStateOf(1) }
+
+    // Haptic feedback when switching pages
+    LaunchedEffect(currentPage) {
+        if (currentPage != previousPage.value) {
+            haptics.light()
+            previousPage.value = currentPage
+        }
+    }
 
     // ── Canvas viewport with keyboard shortcuts ──
     Box(
