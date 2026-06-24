@@ -210,6 +210,42 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun linkHypothesisEvidence(hypothesisId: Long, observationId: Long) = viewModelScope.launch {
         repository.linkHypothesisEvidence(hypothesisId, observationId)
     }
+
+    fun linkQuestionObservation(questionId: Long, observationId: Long) = viewModelScope.launch {
+        repository.linkQuestionObservation(questionId, observationId)
+        // Also update the relatedObservationIds string on the question entity
+        val q = questions.value.firstOrNull { it.id == questionId } ?: return@launch
+        val ids = q.relatedObservationIds.split(",").mapNotNull { it.trim().toLongOrNull() }.toMutableSet()
+        if (ids.add(observationId)) {
+            repository.updateQuestion(q.copy(relatedObservationIds = ids.joinToString(",")))
+        }
+    }
+
+    fun unlinkQuestionObservation(questionId: Long, observationId: Long) = viewModelScope.launch {
+        val q = questions.value.firstOrNull { it.id == questionId } ?: return@launch
+        val ids = q.relatedObservationIds.split(",").mapNotNull { it.trim().toLongOrNull() }.toMutableSet()
+        if (ids.remove(observationId)) {
+            repository.updateQuestion(q.copy(relatedObservationIds = ids.joinToString(",")))
+        }
+    }
+
+    fun linkQuestionSource(questionId: Long, sourceId: Long) = viewModelScope.launch {
+        repository.linkQuestionSource(questionId, sourceId)
+        // Also update the relatedSourceIds string on the question entity
+        val q = questions.value.firstOrNull { it.id == questionId } ?: return@launch
+        val ids = q.relatedSourceIds.split(",").mapNotNull { it.trim().toLongOrNull() }.toMutableSet()
+        if (ids.add(sourceId)) {
+            repository.updateQuestion(q.copy(relatedSourceIds = ids.joinToString(",")))
+        }
+    }
+
+    fun unlinkQuestionSource(questionId: Long, sourceId: Long) = viewModelScope.launch {
+        val q = questions.value.firstOrNull { it.id == questionId } ?: return@launch
+        val ids = q.relatedSourceIds.split(",").mapNotNull { it.trim().toLongOrNull() }.toMutableSet()
+        if (ids.remove(sourceId)) {
+            repository.updateQuestion(q.copy(relatedSourceIds = ids.joinToString(",")))
+        }
+    }
     fun deleteHypothesis(id: Long) = viewModelScope.launch { repository.deleteHypothesis(id) }
     fun deleteProject(id: Long) = viewModelScope.launch { repository.deleteProject(id) }
     fun deleteSource(id: Long) = viewModelScope.launch { repository.deleteSource(id) }
