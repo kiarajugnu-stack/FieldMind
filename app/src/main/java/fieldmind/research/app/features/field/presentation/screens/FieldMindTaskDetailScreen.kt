@@ -150,13 +150,12 @@ fun TaskDetailScreen(
                         )
                         HorizontalDivider()
                         DropdownMenuItem(
-                            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
-                            onClick = {
-                                showOverflow = false
-                                haptics.warning()
-                                viewModel.deleteTask(task.id)
-                                onBack()
-                            },
+                            text = { Text("Delete", color = MaterialTheme.colorScheme.error) },                                onClick = {
+                                    showOverflow = false
+                                    haptics.confirm()
+                                    viewModel.deleteTask(task.id)
+                                    onBack()
+                                },
                             leadingIcon = { Icon(MaterialSymbolIcon("delete"), null, size = 18.dp, tint = MaterialTheme.colorScheme.error) }
                         )
                     }

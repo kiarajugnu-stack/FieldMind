@@ -62,6 +62,16 @@ fun ProjectRelationsScreen(
     val sessionCrossRefs by viewModel.sessionObservationCrossRefs.collectAsState()
     val haptics = rememberFieldMindHaptics()
 
+    // ── Pre-compute colors/icons (must be outside remember blocks to avoid composable-in-non-composable errors) ──
+    val colorProject = FieldMindTheme.colors.project
+    val colorQuestion = FieldMindTheme.colors.question
+    val colorSource = FieldMindTheme.colors.source
+    val colorTask = FieldMindTheme.colors.flashcard
+    val colorSpecies = FieldMindTheme.colors.positive
+    val colorHypothesis = FieldMindTheme.colors.hypothesis
+    val colorSession = FieldMindTheme.colors.data
+    val colorObservation = FieldMindTheme.colors.observation
+
     // ── Filter entities to this project ──
     val projectObs = remember(observations, projectId) {
         observations.filter { it.projectId == projectId && it.deletedAt == null }
@@ -98,7 +108,7 @@ fun ProjectRelationsScreen(
                 groups.add(LinkedGroup(
                     kind = "Note",
                     icon = MaterialSymbolIcon("edit_note"),
-                    color = FieldMindTheme.colors.project,
+                    color = colorProject,
                     count = linkedNotes.size,
                     items = linkedNotes.map { it.id to (it.title.ifBlank { "Untitled note" }) }
                 ))
@@ -112,7 +122,7 @@ fun ProjectRelationsScreen(
                 groups.add(LinkedGroup(
                     kind = "Question",
                     icon = FieldMindIcons.Question,
-                    color = FieldMindTheme.colors.question,
+                    color = colorQuestion,
                     count = linkedQs.size,
                     items = linkedQs.map { it.id to it.questionText.take(80) }
                 ))
@@ -123,7 +133,7 @@ fun ProjectRelationsScreen(
                 groups.add(LinkedGroup(
                     kind = "Source",
                     icon = FieldMindIcons.Source,
-                    color = FieldMindTheme.colors.source,
+                    color = colorSource,
                     count = projectSources.size,
                     items = projectSources.map { it.id to (it.title.ifBlank { "Unnamed source" }) }
                 ))
@@ -135,7 +145,7 @@ fun ProjectRelationsScreen(
                 groups.add(LinkedGroup(
                     kind = "Task",
                     icon = MaterialSymbolIcon("checklist"),
-                    color = FieldMindTheme.colors.flashcard,
+                    color = colorTask,
                     count = linkedTasks.size,
                     items = linkedTasks.map { it.id to (it.title.ifBlank { "Unnamed task" }) }
                 ))
@@ -146,7 +156,7 @@ fun ProjectRelationsScreen(
                 groups.add(LinkedGroup(
                     kind = "Species",
                     icon = FieldMindIcons.Nature,
-                    color = FieldMindTheme.colors.positive,
+                    color = colorSpecies,
                     count = projectSpecies.size,
                     items = projectSpecies.map { it.id to (it.commonName.ifBlank { it.scientificName.ifBlank { "Unknown species" } }) }
                 ))
@@ -159,7 +169,7 @@ fun ProjectRelationsScreen(
                 groups.add(LinkedGroup(
                     kind = "Hypothesis",
                     icon = FieldMindIcons.Hypothesis,
-                    color = FieldMindTheme.colors.hypothesis,
+                    color = colorHypothesis,
                     count = linkedHypotheses.size,
                     items = linkedHypotheses.map { it.id to it.prediction.take(80) }
                 ))
@@ -172,7 +182,7 @@ fun ProjectRelationsScreen(
                 groups.add(LinkedGroup(
                     kind = "Session",
                     icon = FieldMindIcons.Bolt,
-                    color = FieldMindTheme.colors.data,
+                    color = colorSession,
                     count = linkedSessions.size,
                     items = linkedSessions.map { it.id to (it.name.ifBlank { "Session #${it.id}" }) }
                 ))
@@ -403,28 +413,6 @@ fun ProjectRelationsScreen(
                 }
             }
         }
-    }
-}
-
-// ══════════════════════════════════════════════════════════════════════
-//  Navigation helper — routes entity kinds to correct detail screens
-// ══════════════════════════════════════════════════════════════════════
-
-/**
- * Navigate to the correct detail screen for an entity kind.
- * The generic [onOpenDetail] only handles kinds recognized by [DetailScreen];
- * task, species, and session need custom routing to their dedicated screens.
- */
-private fun navigateToEntity(
-    kind: String,
-    id: Long,
-    onOpenDetail: (String, Long) -> Unit
-) {
-    when (kind) {
-        "task" -> onOpenDetail("task", id)
-        "species" -> onOpenDetail("species", id)
-        "session" -> onOpenDetail("research_session", id)
-        else -> onOpenDetail(kind, id)
     }
 }
 

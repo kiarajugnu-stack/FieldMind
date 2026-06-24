@@ -184,7 +184,7 @@ fun QuestionDetailScreen(
                                 text = { Text("Archive", color = MaterialTheme.colorScheme.error) },
                                 onClick = {
                                     showOverflow = false
-                                    haptics.warning()
+                                    haptics.confirm()
                                     viewModel.updateQuestionEntity(question.copy(archivedAt = System.currentTimeMillis()))
                                     onBack()
                                 },
