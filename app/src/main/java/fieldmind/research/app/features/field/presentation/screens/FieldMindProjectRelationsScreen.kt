@@ -129,8 +129,8 @@ fun ProjectRelationsScreen(
                 ))
             }
 
-            // 4. Linked Tasks (via linkedObservationId or same project)
-            val linkedTasks = projectTasks.filter { it.linkedObservationId == obs.id || it.projectId == obs.projectId }
+            // 4. Linked Tasks (via linkedObservationId)
+            val linkedTasks = projectTasks.filter { it.linkedObservationId == obs.id }
             if (linkedTasks.isNotEmpty()) {
                 groups.add(LinkedGroup(
                     kind = "Task",
@@ -394,7 +394,7 @@ fun ProjectRelationsScreen(
                                 onClick = { onOpenDetail("observation", obs.id) },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Icon(FieldMindIcons.Open, null, size = 14.dp)
+                                Icon(MaterialSymbolIcon("open_in_new"), null, size = 14.dp)
                                 Spacer(Modifier.size(6.dp))
                                 Text("View observation detail", style = MaterialTheme.typography.labelMedium)
                             }
@@ -403,6 +403,28 @@ fun ProjectRelationsScreen(
                 }
             }
         }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Navigation helper — routes entity kinds to correct detail screens
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Navigate to the correct detail screen for an entity kind.
+ * The generic [onOpenDetail] only handles kinds recognized by [DetailScreen];
+ * task, species, and session need custom routing to their dedicated screens.
+ */
+private fun navigateToEntity(
+    kind: String,
+    id: Long,
+    onOpenDetail: (String, Long) -> Unit
+) {
+    when (kind) {
+        "task" -> onOpenDetail("task", id)
+        "species" -> onOpenDetail("species", id)
+        "session" -> onOpenDetail("research_session", id)
+        else -> onOpenDetail(kind, id)
     }
 }
 
@@ -493,7 +515,7 @@ private fun RelationGroupCard(
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     group.items.forEach { (id, label) ->
                         Surface(
-                            onClick = { onOpenDetail(group.kind.lowercase(), id) },
+                            onClick = { navigateToEntity(group.kind.lowercase(), id, onOpenDetail) },
                             color = Color.Transparent,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -528,5 +550,27 @@ private fun RelationGroupCard(
                 }
             }
         }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Navigation helper — routes entity kinds to correct detail screens
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Navigate to the correct detail screen for an entity kind.
+ * The generic [onOpenDetail] only handles kinds recognized by [DetailScreen];
+ * task, species, and session need custom routing to their dedicated screens.
+ */
+private fun navigateToEntity(
+    kind: String,
+    id: Long,
+    onOpenDetail: (String, Long) -> Unit
+) {
+    when (kind) {
+        "task" -> onOpenDetail("task", id)
+        "species" -> onOpenDetail("species", id)
+        "session" -> onOpenDetail("research_session", id)
+        else -> onOpenDetail(kind, id)
     }
 }
