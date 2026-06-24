@@ -1,52 +1,69 @@
-# FieldMind Color Scheme Unified
+# FieldMind Color Scheme — Unified Palette v2
 
-## Primary Brand Color
-- **Forest Green**: `#1F6B4C` - Used for primary actions, brand identity, and key UI elements
+## Brand Color
+- **Forest Green**: `#1F6B4C` — Primary actions, brand identity, key UI elements
 
-## Semantic Colors (Theme System)
-All accent colors come from `FieldMindTheme.colors` and are theme-aware (auto-adapt to light/dark mode):
+## Theme System
+All accent colors come from `FieldMindTheme.colors` and auto-adapt to light/dark mode via `FieldMindTheme()`.
 
-### Research Entity Types
-- **Observation**: `#2E7D32` (observation green)
-- **Question**: `#1565C0` (question blue)
-- **Hypothesis**: `#8B5000` (hypothesis amber)
-- **Project**: `#00695C` (project teal)
-- **Source**: `#5E35B1` (source purple)
-- **Data**: `#006D7A` (data teal)
-- **Report**: `#A1531F` (report burnt orange)
-- **Flashcard**: `#AD1457` (flashcard magenta)
+---
 
-### Confidence Levels
-- **Sure/High**: `#2E7D32` (confident green)
-- **Guess/Low**: `#8B5000` (guessing amber)
-- **Verify**: `#C62828` (needs verification red)
+## Entity Colors (15 distinct colors)
 
-### States
-- **Positive**: `#2E7D32` (green)
-- **Warning**: `#8B5000` (amber)
-- **Info**: `#455A64` (slate)
+| Token       | Light      | Dark        | Role                          |
+|-------------|------------|-------------|-------------------------------|
+| observation | `#2E7D32`  | `#A5D6A7`   | Observations                  |
+| question    | `#1565C0`  | `#90CAF9`   | Questions                     |
+| hypothesis  | `#8B5000`  | `#FFCC80`   | Hypotheses                    |
+| project     | `#00695C`  | `#80CBC4`   | Projects                      |
+| source      | `#5E35B1`  | `#B39DDB`   | Sources, library, reading     |
+| note        | `#8E24AA`  | `#CE93D8`   | Notes (distinct from source)  |
+| task        | `#00897B`  | `#4DB6AC`   | Tasks, action items           |
+| folder      | `#6D4C41`  | `#BCAAA4`   | Folder containers             |
+| species     | `#43A047`  | `#81C784`   | Species identification        |
+| data        | `#006D7A`  | `#80DEEA`   | Data records                  |
+| report      | `#A1531F`  | `#FFB74D`   | Reports                       |
+| flashcard   | `#E91E63`  | `#F48FB1`   | Flashcards, quizzes           |
 
-## Categorical Colors (10-color palette)
-Used for field categories in setup and other categorical data:
-1. `#2E7D32` - Green (Zoology)
-2. `#1565C0` - Blue (Astronomy)
-3. `#8B5000` - Amber (Ecology)
-4. `#5E35B1` - Violet (Other)
-5. `#006D7A` - Teal (Botany)
-6. `#AD1457` - Magenta
-7. `#00695C` - Deep Teal
-8. `#D84315` - Burnt Orange
-9. `#455A64` - Slate
-10. `#6D4C41` - Brown (Geology)
+## State Colors (distinct from entity colors)
 
-## Pages Updated
-✅ Onboarding Screen (Interests & Permissions)
-✅ Report Screen (Category colors)
-✅ Backup/Export Screen (Format colors)
+| Token    | Light      | Dark        | Role                              |
+|----------|------------|-------------|-----------------------------------|
+| positive | `#00A86B`  | `#69F0AE`   | Success, confirmations, enabled   |
+| warning  | `#E67E22`  | `#FFB74D`   | Warnings, medium priority         |
+| info     | `#546E7A`  | `#B0BEC5`   | Informational, neutral            |
+
+## Confidence Colors (distinct from entity and state)
+
+| Token            | Light      | Dark        | Role                    |
+|------------------|------------|-------------|-------------------------|
+| confidenceSure   | `#27AE60`  | `#81C784`   | High / Confirmed        |
+| confidenceGuess  | `#F39C12`  | `#FFD54F`   | Low / Maybe             |
+| confidenceVerify | `#E53935`  | `#EF9A9A`   | Needs verification      |
+
+## Opacity Helpers
+
+All extension functions on `Color`, available via `FieldMindTheme.colors`:
+
+- `Color.cardBg()` — Background tint for cards/chips (auto-adjusts alpha: 0.14 light, 0.22 dark)
+- `Color.cardBorder()` — Subtle border for selected state (alpha 0.40)
+- `Color.muted()` — Muted text / secondary decoration (alpha 0.60)
+
+Usage: `colors.observation.cardBg()` instead of `colors.observation.copy(alpha = 0.14f)`
+
+---
 
 ## Implementation Rules
-1. **Use `FieldMindTheme.colors.*`** for any semantic meaning (observations, questions, etc.)
+
+1. **Use `FieldMindTheme.colors.*`** for any semantic meaning (entity types, states, confidence)
 2. **Use `MaterialTheme.colorScheme.primary`** for main brand interactions
-3. **Use `FieldMindTheme.colors.categorical[index]`** for arbitrary categories
-4. **Avoid hardcoded color values** - always reference the theme system
-5. Keep light mode observation green (`#2E7D32`) as default for things matching primary brand intent
+3. **Use `MaterialTheme.colorScheme.error`** for error states (not hardcoded red)
+4. **Use `Entity.cardBg()`** instead of `entity.copy(alpha = 0.14f)` for backgrounds
+5. **Use `Entity.muted()`** instead of `entity.copy(alpha = 0.6f)` for muted text
+6. **Never hardcode `Color(0xFF...)`** — always reference the theme system
+7. **Never use an entity color for another entity type** — note uses `colors.note`, task uses `colors.task`, etc.
+
+## Migration History
+
+- v2 (this version): Added note, task, folder, species tokens. Made positive/warning/confidence colors distinct from entity colors. Added opacity helpers. Replaced 30+ hardcoded `Color(0xFF…)` values across the codebase.
+- v1 (original): 8 entity colors, 3 confidence, 3 state — with duplicates (positive=observation, warning=hypothesis, confidenceSure=observation, confidenceGuess=hypothesis).

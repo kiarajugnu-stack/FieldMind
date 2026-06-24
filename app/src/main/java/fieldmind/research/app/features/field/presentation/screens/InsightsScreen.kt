@@ -211,7 +211,7 @@ fun InsightsScreen(
             ResearchAchievement("Project Starter", "Create a research project", FieldMindIcons.Project, colors.project, projects.size, 1),
             ResearchAchievement("Data Logger", "Record 10 data entries", FieldMindIcons.Data, colors.data, dataRecords.size, 10),
             ResearchAchievement("Report Writer", "Draft a research report", FieldMindIcons.Report, colors.report, reports.size, 1),
-            ResearchAchievement("Note Maker", "Save 10 free-form notes", FieldMindIcons.Note, colors.source, notes.size, 10),
+            ResearchAchievement("Note Maker", "Save 10 free-form notes", FieldMindIcons.Note, colors.note, notes.size, 10),
             ResearchAchievement("Flashcard Master", "Create 20 flashcards", FieldMindIcons.Flashcard, colors.flashcard, flashcards.size, 20),
             ResearchAchievement("Session Runner", "Complete 3 research sessions", FieldMindIcons.Session, colors.positive, researchSessions.count { it.status == "Completed" }, 3),
             ResearchAchievement("Map Explorer", "Tag 15 observations with GPS", FieldMindIcons.Map, colors.info, observations.count { it.latitude != null }, 15),

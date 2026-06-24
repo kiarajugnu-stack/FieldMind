@@ -1438,7 +1438,7 @@ private fun NoteDetailContent(
                     Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
                         .background(colors.source.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center
-                ) { Icon(FieldMindIcons.Note, null, tint = colors.source, size = 26.dp) }
+                ) { Icon(FieldMindIcons.Note, null, tint = colors.note, size = 26.dp) }
                 Column(Modifier.weight(1f)) {
                     Text(n.title.ifBlank { "Untitled note" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1472,8 +1472,8 @@ private fun NoteDetailContent(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.source.copy(alpha = 0.12f),
-                        contentColor = colors.source
+                        containerColor = colors.note.cardBg(),
+                        contentColor = colors.note
                     )
                 ) {
                     Icon(MaterialSymbolIcon("dashboard_customize"), null, size = 18.dp)

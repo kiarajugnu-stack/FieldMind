@@ -66,7 +66,7 @@ fun ProjectRelationsScreen(
     val colorProject = FieldMindTheme.colors.project
     val colorQuestion = FieldMindTheme.colors.question
     val colorSource = FieldMindTheme.colors.source
-    val colorTask = FieldMindTheme.colors.flashcard
+    val colorTask = FieldMindTheme.colors.task
     val colorSpecies = FieldMindTheme.colors.positive
     val colorHypothesis = FieldMindTheme.colors.hypothesis
     val colorSession = FieldMindTheme.colors.data

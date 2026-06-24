@@ -1004,7 +1004,7 @@ private fun HomeNoteCaptureDialog(
                             .background(FieldMindTheme.colors.source.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(FieldMindIcons.Note, null, tint = FieldMindTheme.colors.source, size = 24.dp)
+                        Icon(FieldMindIcons.Note, null, tint = FieldMindTheme.colors.note, size = 24.dp)
                     }
                     Column(Modifier.weight(1f)) {
                         Text("New Note", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)

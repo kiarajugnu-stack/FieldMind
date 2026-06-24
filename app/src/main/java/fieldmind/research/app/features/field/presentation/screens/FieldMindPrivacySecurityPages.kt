@@ -74,9 +74,9 @@ fun SecurityScoreDetailPage(settings: FieldMindSettings, onBack: () -> Unit) {
                 Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     // Score circle
                     val scoreColor = when {
-                        score >= 80 -> Color(0xFF4CAF50)
-                        score >= 50 -> Color(0xFFFF9800)
-                        else -> Color(0xFFF44336)
+                        score >= 80 -> FieldMindTheme.colors.positive
+                        score >= 50 -> FieldMindTheme.colors.warning
+                        else -> MaterialTheme.colorScheme.error
                     }
                     Box(
                         Modifier.size(120.dp).clip(CircleShape).background(scoreColor.copy(alpha = 0.12f)),
@@ -122,10 +122,10 @@ fun SecurityScoreDetailPage(settings: FieldMindSettings, onBack: () -> Unit) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Enabled", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF4CAF50))
+                        Text("Enabled", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = FieldMindTheme.colors.positive)
                         enabledItems.filter { it.second }.forEach { (name, _) ->
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(MaterialSymbolIcon("check_circle"), null, tint = Color(0xFF4CAF50), size = 18.dp)
+                                Icon(MaterialSymbolIcon("check_circle"), null, tint = FieldMindTheme.colors.positive, size = 18.dp)
                                 Text(name, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
@@ -142,10 +142,10 @@ fun SecurityScoreDetailPage(settings: FieldMindSettings, onBack: () -> Unit) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Recommended", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFFFF9800))
+                        Text("Recommended", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = FieldMindTheme.colors.warning)
                         recommendedItems.forEach { item ->
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(MaterialSymbolIcon("warning"), null, tint = Color(0xFFFF9800), size = 18.dp)
+                                Icon(MaterialSymbolIcon("warning"), null, tint = FieldMindTheme.colors.warning, size = 18.dp)
                                 Text(item, style = MaterialTheme.typography.bodyMedium)
                             }
                         }

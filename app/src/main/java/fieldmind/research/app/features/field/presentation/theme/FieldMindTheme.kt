@@ -110,20 +110,27 @@ private val BrandDark = darkColorScheme(
  */
 data class FieldMindColors(
     val isDark: Boolean,
+    // ── Research entity colors ──
     val observation: Color,
     val question: Color,
     val hypothesis: Color,
     val project: Color,
     val source: Color,
+    val note: Color,
+    val task: Color,
+    val folder: Color,
+    val species: Color,
     val data: Color,
     val report: Color,
     val flashcard: Color,
-    val confidenceSure: Color,
-    val confidenceGuess: Color,
-    val confidenceVerify: Color,
+    // ── Semantic state colors ──
     val positive: Color,
     val warning: Color,
     val info: Color,
+    // ── Confidence level colors ──
+    val confidenceSure: Color,
+    val confidenceGuess: Color,
+    val confidenceVerify: Color,
     /** Distinct, harmonious series colors for charts and per-category accents. */
     val categorical: List<Color>
 ) {
@@ -140,7 +147,11 @@ data class FieldMindColors(
         "question", "questions" -> question
         "hypothesis", "hypotheses" -> hypothesis
         "project", "projects" -> project
-        "source", "sources", "read", "reading", "library", "note", "notes" -> source
+        "source", "sources", "read", "reading", "library" -> source
+        "note", "notes" -> note
+        "task", "tasks" -> task
+        "folder", "folders" -> folder
+        "species" -> species
         "data", "data record", "datarecord" -> data
         "report", "reports" -> report
         "flashcard", "flashcards", "card", "cards" -> flashcard
@@ -153,65 +164,91 @@ data class FieldMindColors(
         "guess", "low", "maybe" -> confidenceGuess
         else -> confidenceVerify
     }
+
+    // ── Opacity helpers ──
+    /** Background tint for cards, chips – auto-adapts alpha to dark mode. */
+    fun Color.cardBg(): Color = copy(alpha = if (isDark) 0.22f else 0.14f)
+    /** Subtle border for selected state. */
+    fun Color.cardBorder(): Color = copy(alpha = 0.40f)
+    /** Muted text / secondary decoration. */
+    fun Color.muted(): Color = copy(alpha = 0.60f)
 }
 
 private val LightFieldMindColors = FieldMindColors(
     isDark = false,
+    // Entity colors
     observation = Color(0xFF2E7D32),
     question = Color(0xFF1565C0),
     hypothesis = Color(0xFF8B5000),
     project = Color(0xFF00695C),
     source = Color(0xFF5E35B1),
+    note = Color(0xFF8E24AA),
+    task = Color(0xFF00897B),
+    folder = Color(0xFF6D4C41),
+    species = Color(0xFF43A047),
     data = Color(0xFF006D7A),
     report = Color(0xFFA1531F),
-    flashcard = Color(0xFFAD1457),
-    confidenceSure = Color(0xFF2E7D32),
-    confidenceGuess = Color(0xFF8B5000),
-    confidenceVerify = Color(0xFFC62828),
-    positive = Color(0xFF2E7D32),
-    warning = Color(0xFF8B5000),
-    info = Color(0xFF455A64),
+    flashcard = Color(0xFFE91E63),
+    // State colors (distinct from entity colors)
+    positive = Color(0xFF00A86B),
+    warning = Color(0xFFE67E22),
+    info = Color(0xFF546E7A),
+    // Confidence colors (distinct from entity and state)
+    confidenceSure = Color(0xFF27AE60),
+    confidenceGuess = Color(0xFFF39C12),
+    confidenceVerify = Color(0xFFE53935),
     categorical = listOf(
-        Color(0xFF2E7D32), // green
-        Color(0xFF1565C0), // blue
-        Color(0xFF8B5000), // amber
-        Color(0xFF5E35B1), // violet
-        Color(0xFF006D7A), // teal
-        Color(0xFFAD1457), // magenta
-        Color(0xFF00695C), // deep teal
-        Color(0xFFD84315), // burnt orange
-        Color(0xFF455A64), // slate
-        Color(0xFF6D4C41)  // brown
+        Color(0xFF2E7D32), // observation green
+        Color(0xFF1565C0), // question blue
+        Color(0xFF8B5000), // hypothesis amber
+        Color(0xFF5E35B1), // source violet
+        Color(0xFF8E24AA), // note purple
+        Color(0xFF00897B), // task teal
+        Color(0xFF6D4C41), // folder brown
+        Color(0xFF43A047), // species green
+        Color(0xFF006D7A), // data teal
+        Color(0xFFE91E63), // flashcard pink
+        Color(0xFF00A86B), // positive jade
+        Color(0xFFE67E22), // warning orange
     )
 )
 
 private val DarkFieldMindColors = FieldMindColors(
     isDark = true,
+    // Entity colors
     observation = Color(0xFFA5D6A7),
     question = Color(0xFF90CAF9),
     hypothesis = Color(0xFFFFCC80),
     project = Color(0xFF80CBC4),
     source = Color(0xFFB39DDB),
+    note = Color(0xFFCE93D8),
+    task = Color(0xFF4DB6AC),
+    folder = Color(0xFFBCAAA4),
+    species = Color(0xFF81C784),
     data = Color(0xFF80DEEA),
     report = Color(0xFFFFB74D),
     flashcard = Color(0xFFF48FB1),
-    confidenceSure = Color(0xFFA5D6A7),
-    confidenceGuess = Color(0xFFFFCC80),
-    confidenceVerify = Color(0xFFEF9A9A),
-    positive = Color(0xFFA5D6A7),
-    warning = Color(0xFFFFCC80),
+    // State colors (distinct from entity colors)
+    positive = Color(0xFF69F0AE),
+    warning = Color(0xFFFFB74D),
     info = Color(0xFFB0BEC5),
+    // Confidence colors (distinct from entity and state)
+    confidenceSure = Color(0xFF81C784),
+    confidenceGuess = Color(0xFFFFD54F),
+    confidenceVerify = Color(0xFFEF9A9A),
     categorical = listOf(
-        Color(0xFFA5D6A7), // green
-        Color(0xFF90CAF9), // blue
-        Color(0xFFFFCC80), // amber
-        Color(0xFFB39DDB), // violet
-        Color(0xFF80DEEA), // teal
-        Color(0xFFF48FB1), // magenta
-        Color(0xFF80CBC4), // deep teal
-        Color(0xFFFFAB91), // burnt orange
-        Color(0xFFB0BEC5), // slate
-        Color(0xFFBCAAA4)  // brown
+        Color(0xFFA5D6A7), // observation green
+        Color(0xFF90CAF9), // question blue
+        Color(0xFFFFCC80), // hypothesis amber
+        Color(0xFFB39DDB), // source violet
+        Color(0xFFCE93D8), // note purple
+        Color(0xFF4DB6AC), // task teal
+        Color(0xFFBCAAA4), // folder brown
+        Color(0xFF81C784), // species green
+        Color(0xFF80DEEA), // data teal
+        Color(0xFFF48FB1), // flashcard pink
+        Color(0xFF69F0AE), // positive jade
+        Color(0xFFFFB74D), // warning orange
     )
 )
 

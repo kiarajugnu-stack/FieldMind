@@ -48,11 +48,11 @@ fun NewProjectScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
     val projectIcons = listOf("🌿", "🦋", "🐦", "🌲", "📷")
     val colorOptions = listOf(
-        0xFF4CAF50L to Color(0xFF4CAF50L),  // Green
-        0xFF2196F3L to Color(0xFF2196F3L),  // Blue
-        0xFF9C27B0L to Color(0xFF9C27B0L),  // Purple
-        0xFFFF9800L to Color(0xFFFF9800L),  // Orange
-        0xFFF44336L to Color(0xFFF44336L)   // Red
+        0xFF2E7D32L to FieldMindTheme.colors.observation,  // Observation green
+        0xFF1565C0L to FieldMindTheme.colors.question,    // Question blue
+        0xFF5E35B1L to FieldMindTheme.colors.source,      // Source violet
+        0xFF8B5000L to FieldMindTheme.colors.hypothesis,  // Hypothesis amber
+        0xFFE91E63L to FieldMindTheme.colors.flashcard    // Flashcard pink
     )
     val templates = listOf(
         "Empty Project",

@@ -169,7 +169,7 @@ fun ProjectDetailScreen(
                 }
                 displayNotes.forEach { n ->
                     add(FeedItem("Note", n.id, n.title.ifBlank { "Untitled" }, n.category,
-                        n.body, "", n.createdAt, accentColor = colors.source))
+                        n.body, "", n.createdAt, accentColor = colors.note))
                 }
                 displayQs.forEach { q ->
                     add(FeedItem("Question", q.id, q.questionText.take(80), q.category,
@@ -182,7 +182,7 @@ fun ProjectDetailScreen(
                 displayTasks.forEach { t ->
                     val dueStr = if (t.dueDate.isNotBlank()) "Due ${t.dueDate}" else "No due date"
                     add(FeedItem("Task", t.id, t.title, t.priority,
-                        t.description.ifBlank { t.taskType }, dueStr, t.createdAt, accentColor = colors.flashcard))
+                        t.description.ifBlank { t.taskType }, dueStr, t.createdAt, accentColor = colors.task))
                 }
             }.sortedByDescending { it.timestamp }
             ProjectTab.Observations -> displayObs.map { o ->
@@ -213,7 +213,7 @@ fun ProjectDetailScreen(
             ProjectTab.Tasks -> displayTasks.map { t ->
                 val dueStr = if (t.dueDate.isNotBlank()) "Due ${t.dueDate}" else "No due date"
                 FeedItem("Task", t.id, t.title, t.priority,
-                    t.description.ifBlank { t.taskType }, dueStr, t.createdAt, accentColor = colors.flashcard)
+                    t.description.ifBlank { t.taskType }, dueStr, t.createdAt, accentColor = colors.task)
             }
         }
     }
@@ -350,10 +350,10 @@ fun ProjectDetailScreen(
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                         StatItem("${relatedObs.size}", "Obs", colors.observation)
-                        StatItem("${relatedNotes.size}", "Notes", colors.source)
+                        StatItem("${relatedNotes.size}", "Notes", colors.note)
                         StatItem("${relatedQs.size}", "Qs", colors.question)
                         StatItem("${relatedSources.size}", "Src", colors.info)
-                        StatItem("${relatedTasks.size}", "Tasks", colors.flashcard)
+                        StatItem("${relatedTasks.size}", "Tasks", colors.task)
                     }
                     if (relatedFolders.isNotEmpty() || relatedData.isNotEmpty() || relatedReports.isNotEmpty()) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -737,7 +737,7 @@ private fun ProjectCreateSheetV2(
 
                     // ── ANALYZE ──
                     CreateSectionTitle("ANALYZE", colors.question)
-                    CreateOptionRow(MaterialSymbolIcon("edit_note"), "Note", "Write findings", colors.source) { onSelect("Note") }
+                    CreateOptionRow(MaterialSymbolIcon("edit_note"), "Note", "Write findings", colors.note) { onSelect("Note") }
                     CreateOptionRow(FieldMindIcons.Question, "Question", "Track unknowns", colors.question) { onSelect("Question") }
                     CreateOptionRow(FieldMindIcons.Hypothesis, "Hypothesis", "Proposed explanation", colors.hypothesis) { onSelect("Hypothesis") }
                     CreateOptionRow(MaterialSymbolIcon("science"), "Experiment", "Test an idea", colors.flashcard) { onSelect("Experiment") }
@@ -753,8 +753,8 @@ private fun ProjectCreateSheetV2(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
 
                     // ── PLAN ──
-                    CreateSectionTitle("PLAN", colors.flashcard)
-                    CreateOptionRow(MaterialSymbolIcon("checklist"), "Task", "Action item", colors.flashcard) { onSelect("Task") }
+                    CreateSectionTitle("PLAN", colors.task)
+                    CreateOptionRow(MaterialSymbolIcon("checklist"), "Task", "Action item", colors.task) { onSelect("Task") }
                     CreateOptionRow(MaterialSymbolIcon("play_circle"), "Survey Session", "Collect responses", colors.positive) { onSelect("Survey Session") }
                     CreateOptionRow(MaterialSymbolIcon("event"), "Field Visit", "Plan a trip", colors.data) { onSelect("Field Visit") }
                     CreateOptionRow(MaterialSymbolIcon("folder"), "Folder", "Organize entities", colors.hypothesis) { onSelect("Folder") }

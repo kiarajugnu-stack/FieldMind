@@ -124,7 +124,7 @@ fun CreateEntitySheet(
                     CreateItemCard("Observation", FieldMindIcons.Observation, colors.observation) {
                         pendingEntityKind = "Observation"; showProjectSelector = true
                     }
-                    CreateItemCard("Note", FieldMindIcons.Note, colors.source) {
+                    CreateItemCard("Note", FieldMindIcons.Note, colors.note) {
                         pendingEntityKind = "Note"; showProjectSelector = true
                     }
                     CreateItemCard("Question", MaterialSymbolIcon("question_answer"), colors.question) {
@@ -136,7 +136,7 @@ fun CreateEntitySheet(
 
                     // ── Planning ──
                     SectionTitle("Planning", colors.hypothesis)
-                    CreateItemCard("Task", MaterialSymbolIcon("checklist"), colors.flashcard) {
+                    CreateItemCard("Task", MaterialSymbolIcon("checklist"), colors.task) {
                         pendingEntityKind = "Task"; showProjectSelector = true
                     }
 

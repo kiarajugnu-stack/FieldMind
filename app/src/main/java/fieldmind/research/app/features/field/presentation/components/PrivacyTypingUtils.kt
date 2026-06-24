@@ -371,16 +371,16 @@ fun PrivacyStatusCard(
                                 .clip(CircleShape)
                                 .background(
                                     if (row.enabled)
-                                        Color(0xFF4CAF50) // green
+                                        FieldMindTheme.colors.positive
                                     else
-                                        Color(0xFFFF9800) // amber
+                                        FieldMindTheme.colors.warning
                                 )
                         )
                         Text(
                             if (row.enabled) "On" else "Off",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (row.enabled) Color(0xFF4CAF50) else Color(0xFFFF9800)
+                            color = if (row.enabled) FieldMindTheme.colors.positive else FieldMindTheme.colors.warning
                         )
                     }
                 }
