@@ -1090,7 +1090,8 @@ private fun FieldMindNavHost(
                         onBack = { navController.popBackStack() },
                         onOpenDetail = openDetail,
                         onNavigate = { navController.navigateToDestination(it.route) },
-                        onOpenRelations = { navController.navigateToDestination("field_project_relations/$projectId") }
+                        onOpenRelations = { navController.navigateToDestination("field_project_relations/$projectId") },
+                        onOpenSettings = { id -> navController.navigateToDestination("field_project_settings/$id") }
                     )
                 }
             }

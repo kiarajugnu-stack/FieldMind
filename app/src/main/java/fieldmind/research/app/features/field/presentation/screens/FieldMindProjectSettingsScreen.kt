@@ -658,7 +658,7 @@ fun ProjectSettingsScreen(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-internal fun SectionCard(
+private fun SectionCard(
     icon: MaterialSymbolIcon,
     title: String,
     iconTint: Color = FieldMindTheme.colors.flashcard,

@@ -38,7 +38,8 @@ fun ProjectDetailScreen(
     onBack: () -> Unit = {},
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
     onNavigate: ((FieldMindScreen) -> Unit)? = null,
-    onOpenRelations: (() -> Unit)? = null
+    onOpenRelations: (() -> Unit)? = null,
+    onOpenSettings: ((Long) -> Unit)? = null
 ) {
     val projects by viewModel.projects.collectAsState()
     val observations by viewModel.observations.collectAsState()
@@ -359,7 +360,7 @@ fun ProjectDetailScreen(
                         icon = MaterialSymbolIcon("settings"),
                         label = "Project Settings",
                         subtitle = "Name, description, export, archive & more",
-                        onClick = { onNavigate?.invoke(FieldMindScreen.ProjectSettings) }
+                        onClick = { onOpenSettings?.invoke(project.id) }
                     )
                     ProjectActionTile(
                         icon = MaterialSymbolIcon("archive"),
