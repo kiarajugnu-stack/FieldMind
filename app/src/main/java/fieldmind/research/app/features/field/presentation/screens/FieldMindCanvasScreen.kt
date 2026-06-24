@@ -239,7 +239,7 @@ fun CanvasScreen(
                     onZoomIn = { canvasViewModel.canvasState.applyZoom(1.2f, androidx.compose.ui.geometry.Offset(100f, 100f)) },
                     onZoomOut = { canvasViewModel.canvasState.applyZoom(0.83f, androidx.compose.ui.geometry.Offset(100f, 100f)) },
                     onZoomReset = { canvasViewModel.canvasState.resetView() },
-                    onToggleLock = { canvasViewModel.canvasState.toggleCanvasLock() },
+                    onToggleLock = { haptics.light(); canvasViewModel.canvasState.toggleCanvasLock() },
                     onToggleGallery = { showFigureGallery = !showFigureGallery },
                     currentPage = currentPage,
                     totalPages = totalPages
