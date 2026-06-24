@@ -275,8 +275,10 @@ fun NewProjectScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 //  NEW QUESTION SCREEN — Full-screen creation form
 // ══════════════════════════════════════════════════════════════════════
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NewQuestionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val haptics = rememberFieldMindHaptics()
     var question by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Other") }
     var source by remember { mutableStateOf("Observation") }
@@ -284,6 +286,13 @@ fun NewQuestionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     var priority by remember { mutableStateOf("Medium") }
     var answer by remember { mutableStateOf("") }
     var showAdvanced by remember { mutableStateOf(false) }
+
+    val colors = FieldMindTheme.colors
+    val priorityColor = mapOf(
+        "Low" to colors.positive,
+        "Medium" to colors.warning,
+        "High" to MaterialTheme.colorScheme.error
+    )
 
     fun save() {
         if (question.isNotBlank()) {
@@ -297,25 +306,71 @@ fun NewQuestionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             title = "New Question",
             subtitle = "Turn curiosity into something observable, measurable, comparable, or verifiable.",
             icon = FieldMindIcons.Question,
-            heroColor = FieldMindTheme.colors.question,
-            trailing = { BackButton(onClick = onBack) }
+            heroColor = colors.question,
+            trailing = { BackButton(onClick = onBack) },
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            FieldTextField(question, { question = it }, "What do you want to find out?", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
-            DividerSection("Classification", FieldMindIcons.Category)
+            // ── Research Question ──
+            FieldTextField(question, { question = it }, "Research Question", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
+
+            // ── Classification ──
+            DividerSection("Classification", FieldMindIcons.Category, colors.question)
             ChoiceChipsField("Category", observationCategories, category) { category = it }
             ChoiceChipsField("Source", sourceTypes, source) { source = it }
-            ChoiceChipsField("Priority", listOf("Low", "Medium", "High"), priority) { priority = it }
+
+            // ── Priority (radio-style cards) ──
+            DividerSection("Priority", FieldMindIcons.Streak, colors.question)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    listOf("Low", "Medium", "High").forEach { level ->
+                        val isSelected = priority == level
+                        val accent = priorityColor[level]!!
+                        Surface(
+                            onClick = { haptics.light(); priority = level },
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) accent.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, accent) else null,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier.size(18.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(if (isSelected) accent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isSelected) {
+                                        Box(Modifier.size(8.dp).clip(androidx.compose.foundation.shape.CircleShape).background(accent))
+                                    }
+                                }
+                                Text(level, style = MaterialTheme.typography.labelMedium, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal, color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Status ──
+            DividerSection("Status", FieldMindIcons.Check, colors.question)
             ChoiceChipsField("Status", questionStatuses, status) { status = it }
+
+            // ── Advanced ──
             CollapsibleSection("Advanced options", "Answer, cross-links, and metadata", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
                 FieldTextField(answer, { answer = it }, "Preliminary answer", minLines = 2, supportingText = "Optional — add if you already have a working answer")
             }
+
             Spacer(Modifier.height(8.dp))
-            Button(onClick = ::save, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = question.isNotBlank()) {
-                Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Create question")
+
+            Button(onClick = ::save, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(16.dp), enabled = question.isNotBlank()) {
+                Icon(FieldMindIcons.Question, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Create", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -923,6 +978,7 @@ fun NewObservationScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 @Composable
 fun NewNoteScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val colors = FieldMindTheme.colors
     var title by remember { mutableStateOf("") }; var body by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Other") }; var tags by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
@@ -946,8 +1002,9 @@ fun NewNoteScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             title = "New Note",
             subtitle = "Capture a quick idea, observation, or thought.",
             icon = FieldMindIcons.Note,
-            heroColor = FieldMindTheme.colors.source,
-            trailing = { BackButton(onClick = onBack) }
+            heroColor = colors.source,
+            trailing = { BackButton(onClick = onBack) },
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
@@ -955,16 +1012,16 @@ fun NewNoteScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
         ) {
             FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
             FieldTextField(body, { body = it }, "Content", minLines = 6, supportingText = "Start writing…")
-            DividerSection("Classification", FieldMindIcons.Category, FieldMindTheme.colors.source)
+            DividerSection("Classification", FieldMindIcons.Category, colors.source)
             ChoiceChipsField("Category", observationCategories, category) { category = it }
-            DividerSection("Tags", FieldMindIcons.Tag, FieldMindTheme.colors.source)
+            DividerSection("Tags", FieldMindIcons.Tag, colors.source)
             FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
             CollapsibleSection("Advanced", "Location & metadata", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
                 FieldTextField(location, { location = it }, "Location", supportingText = "Where was this note taken?")
             }
             Spacer(Modifier.height(8.dp))
-            Button(onClick = ::save, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank() || body.isNotBlank()) {
-                Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save note")
+            Button(onClick = ::save, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank() || body.isNotBlank()) {
+                Icon(FieldMindIcons.Note, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -976,6 +1033,7 @@ fun NewNoteScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 @Composable
 fun NewSourceScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val colors = FieldMindTheme.colors
     val projects by viewModel.projects.collectAsState()
     var type by remember { mutableStateOf("Article") }
     var title by remember { mutableStateOf("") }; var author by remember { mutableStateOf("") }
@@ -1010,8 +1068,9 @@ fun NewSourceScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             title = "New Source",
             subtitle = "Start with title + type. Fill in what you have.",
             icon = FieldMindIcons.Source,
-            heroColor = FieldMindTheme.colors.source,
-            trailing = { BackButton(onClick = onBack) }
+            heroColor = colors.source,
+            trailing = { BackButton(onClick = onBack) },
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
         )
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
@@ -1027,14 +1086,14 @@ fun NewSourceScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             }
             FieldTextField(doiOrIsbn, { doiOrIsbn = it }, "DOI / ISBN")
             FieldTextField(publisherOrJournal, { publisherOrJournal = it }, "Publisher / journal")
-            DividerSection("Link & notes", FieldMindIcons.Link, FieldMindTheme.colors.source)
+            DividerSection("Link & notes", FieldMindIcons.Link, colors.source)
             FieldTextField(link, { link = it }, "Web link")
             FieldTextField(summary, { summary = it }, "Main idea", minLines = 2)
             FieldTextField(findings, { findings = it }, "Key findings", minLines = 2)
             FieldTextField(taught, { taught = it }, "What this taught me", minLines = 2)
             FieldTextField(questions, { questions = it }, "New questions", minLines = 2)
             FieldTextField(notes, { notes = it }, "Paper / Cornell notes", minLines = 3)
-            DividerSection("Status", FieldMindIcons.Check, FieldMindTheme.colors.source)
+            DividerSection("Status", FieldMindIcons.Check, colors.source)
             ChoiceChipsField("Reading status", readingStatuses, readingStatus) { readingStatus = it }
             ChoiceChipsField("Importance", sourceImportanceLevels, importance) { importance = it }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -1048,8 +1107,8 @@ fun NewSourceScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Button(onClick = ::save, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank()) {
-                Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save source")
+            Button(onClick = ::save, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank()) {
+                Icon(FieldMindIcons.Source, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Save", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             }
         }
     }
