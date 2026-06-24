@@ -356,6 +356,12 @@ fun ProjectDetailScreen(
                         onClick = { onOpenRelations?.invoke() }
                     )
                     ProjectActionTile(
+                        icon = MaterialSymbolIcon("settings"),
+                        label = "Project Settings",
+                        subtitle = "Name, description, export, archive & more",
+                        onClick = { onNavigate?.invoke(FieldMindScreen.ProjectSettings) }
+                    )
+                    ProjectActionTile(
                         icon = MaterialSymbolIcon("archive"),
                         label = if (project.status == "Archived") "Unarchive Project" else "Archive Project",
                         subtitle = if (project.status == "Archived") "Restore to active projects" else "Move to archive",
