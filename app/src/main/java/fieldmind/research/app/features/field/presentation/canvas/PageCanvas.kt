@@ -9,7 +9,6 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
-import androidx.compose.foundation.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -283,7 +282,9 @@ fun PageCanvas(
                             val pageRelativeY = posY - page.startY
                             val isSelected = block.id in canvasState.selectedBlockIds
                             val isCollapsed = block.id in canvasState.collapsedBlockIds
-                            val rotation = parseBlockRotation(block.contentJson)
+                            val rotation = remember(block.id, block.contentJson) {
+                                parseBlockRotation(block.contentJson)
+                            }
                             PageBlock(
                                 block = block,
                                 pageX = posX,
