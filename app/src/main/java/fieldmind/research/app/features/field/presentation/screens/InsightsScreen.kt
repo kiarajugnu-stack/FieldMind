@@ -38,8 +38,6 @@ import java.util.Locale
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import androidx.activity.compose.BackHandler
-
 // ══════════════════════════════════════════════════════════════════════
 //  Research Dashboard — Insights Redesign
 //  Sections: Profile, Metrics, Timeseries, Category, KG, Health, Weather, Achievements, Export
@@ -53,8 +51,6 @@ fun InsightsScreen(
     onOpenDetail: (String, Long) -> Unit = { _, _ -> },
     onBack: () -> Unit = {}
 ) {
-    // Handle device back button
-    BackHandler(enabled = true) { onBack() }
     val observations by viewModel.observations.collectAsState()
     val questions by viewModel.questions.collectAsState()
     val hypotheses by viewModel.hypotheses.collectAsState()

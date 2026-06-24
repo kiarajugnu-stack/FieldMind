@@ -41,8 +41,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.activity.compose.BackHandler
-
 // ══════════════════════════════════════════════════════════════════════
 //  Report Generation Screen
 // ══════════════════════════════════════════════════════════════════════
@@ -54,8 +52,6 @@ fun FieldMindReportScreen(
     viewModel: FieldMindViewModel,
     onBack: () -> Unit
 ) {
-    // Handle device back button
-    BackHandler(enabled = true) { onBack() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }

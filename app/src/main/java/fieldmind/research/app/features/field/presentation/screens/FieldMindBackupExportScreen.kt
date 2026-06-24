@@ -59,7 +59,6 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.activity.compose.BackHandler
 
 // Data models moved to FieldMindBackupExportModels.kt
 // BackupTab, ExportScopeType, FormatOption, exportFormats, ExportRecord, ExportHistoryStore, etc.
@@ -74,8 +73,6 @@ fun BackupAndRestoreScreen(
     viewModel: FieldMindViewModel,
     onBack: () -> Unit
 ) {
-    // Handle device back button
-    BackHandler(enabled = true) { onBack() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }

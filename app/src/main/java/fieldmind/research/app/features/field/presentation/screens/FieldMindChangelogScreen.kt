@@ -32,7 +32,6 @@ import fieldmind.research.app.features.field.presentation.components.StandardScr
 import fieldmind.research.app.features.field.presentation.components.InfoChip
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
-import androidx.activity.compose.BackHandler
 
 internal data class FieldMindChangelogEntry(
     val version: String,
@@ -479,7 +478,6 @@ private val fieldMindChangelog = listOf(
 
 @Composable
 fun FieldMindChangelogScreen(onBack: () -> Unit) {
-    BackHandler(enabled = true) { onBack() }
     LazyColumn(
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp),

@@ -58,7 +58,6 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.activity.compose.BackHandler
 
 // ══════════════════════════════════════════════════════════════════════
 //  Detail Screen — Entity-specific rich layouts
@@ -74,8 +73,6 @@ fun SharedTransitionScope.DetailScreen(
     onOpenReader: (String, String) -> Unit = { _, _ -> },
     onOpenCanvas: ((Long) -> Unit)? = null
 ) {
-    // Handle device back button
-    BackHandler(enabled = true) { onBack() }
     val observations by viewModel.observations.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
