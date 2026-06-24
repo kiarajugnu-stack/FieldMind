@@ -515,11 +515,6 @@ fun LocalModelSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Security Settings Page (NEW — moved from Backup & Import)
-// ══════════════════════════════════════════════════════════════════════
-
-@Composable
-// ══════════════════════════════════════════════════════════════════════
 //  Security Settings Page (ALL settings inline, no sub-pages)
 // ══════════════════════════════════════════════════════════════════════
 
@@ -847,6 +842,7 @@ fun SecuritySettingsPage(
         )
     }
 }
+@Composable
 fun BackupImportSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, onOpenExport: () -> Unit) {
     val settings = viewModel.fieldSettings
     val autoBackupEnabled by settings.autoBackupEnabled.collectAsState()
@@ -2023,7 +2019,7 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 /** Wraps a sub-page with consistent StandardScreenHeader and scrollable content. */
 @Composable
-private fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () -> Unit, content: LazyListScope.() -> Unit) {
+internal fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () -> Unit, content: LazyListScope.() -> Unit) {
     BackHandler(enabled = true) { onBack() }
     LazyColumn(
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
@@ -2044,7 +2040,7 @@ private fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () 
 }
 
 @Composable
-private fun SettingsGroupCard(content: @Composable ColumnScope.() -> Unit) {
+internal fun SettingsGroupCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -2053,7 +2049,7 @@ private fun SettingsGroupCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun ToggleItem(title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: MaterialSymbolIcon? = null) {
+internal fun ToggleItem(title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: MaterialSymbolIcon? = null) {
     Row(
         Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }.padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -2093,7 +2089,7 @@ private fun StepperItem(title: String, body: String, value: Int, icon: MaterialS
 }
 
 @Composable
-private fun ChoiceItemForm(title: String, options: List<String>, selected: String, icon: MaterialSymbolIcon? = null, onSelected: (String) -> Unit) {
+internal fun ChoiceItemForm(title: String, options: List<String>, selected: String, icon: MaterialSymbolIcon? = null, onSelected: (String) -> Unit) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) {

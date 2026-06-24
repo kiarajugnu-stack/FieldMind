@@ -382,15 +382,8 @@ fun AppPreviewPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 private fun Modifier.blur(radius: androidx.compose.ui.unit.Dp): Modifier = this.then(
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-        Modifier.renderEffect(
-            android.graphics.RenderEffect.createBlurEffect(
-                radius.toPx(), radius.toPx(), android.graphics.Shader.TileMode.CLAMP
-            )
-        )
-    } else this
+    Modifier.alpha(0.4f)
 )
 
 // ══════════════════════════════════════════════════════════════════════
