@@ -46,6 +46,7 @@ import fieldmind.research.app.features.field.presentation.canvas.VoiceBlock
 import fieldmind.research.app.features.field.presentation.canvas.EquationBlock
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.SwipeableAlertDialog
+import fieldmind.research.app.features.field.presentation.components.pressScale
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -619,7 +620,9 @@ private fun CanvasTopBar(
                     enabled = canUndo,
                     shape = RoundedCornerShape(8.dp),
                     color = Color.Transparent,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(32.dp)
+                        .pressScale(scaleDown = 0.9f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -638,7 +641,9 @@ private fun CanvasTopBar(
                     enabled = canRedo,
                     shape = RoundedCornerShape(8.dp),
                     color = Color.Transparent,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(32.dp)
+                        .pressScale(scaleDown = 0.9f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -662,7 +667,9 @@ private fun CanvasTopBar(
                     MaterialTheme.colorScheme.primaryContainer
                 else
                     MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier
+                    .size(32.dp)
+                    .pressScale(scaleDown = 0.9f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -714,7 +721,9 @@ private fun CanvasTopBar(
                     onClick = { showOverflow = true },
                     shape = RoundedCornerShape(8.dp),
                     color = Color.Transparent,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(32.dp)
+                        .pressScale(scaleDown = 0.9f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -1082,7 +1091,10 @@ private fun AddBlockMenu(
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.clickable { onSelect(type) }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pressScale(scaleDown = 0.96f)
+                        .clickable { onSelect(type) }
                 ) {
                     Row(
                         modifier = Modifier
