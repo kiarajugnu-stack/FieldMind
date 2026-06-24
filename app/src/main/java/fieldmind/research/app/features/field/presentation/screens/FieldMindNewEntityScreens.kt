@@ -22,6 +22,11 @@ import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 
@@ -296,6 +301,26 @@ fun NewTaskScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
     val projects by viewModel.projects.collectAsState()
     val haptics = rememberFieldMindHaptics()
+    val context = LocalContext.current
+    var showAttachmentMenu by remember { mutableStateOf(false) }
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            attachmentUris = attachmentUris + it.toString()
+        }
+    }
+
+    val filePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            attachmentUris = attachmentUris + it.toString()
+        }
+    }
 
     // ── Priority colors ──
     val priorityColor = mapOf(
@@ -517,10 +542,42 @@ fun NewTaskScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Attachments", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    TextButton(onClick = { haptics.light() /* File picker would go here */ }) {
-                        Icon(MaterialSymbolIcon("attach_file"), null, size = 16.dp)
-                        Spacer(Modifier.size(4.dp))
-                        Text("Add file", style = MaterialTheme.typography.labelSmall)
+                    Box {
+                        TextButton(onClick = { haptics.light(); showAttachmentMenu = true }) {
+                            Icon(MaterialSymbolIcon("attach_file"), null, size = 16.dp)
+                            Spacer(Modifier.size(4.dp))
+                            Text("Add file", style = MaterialTheme.typography.labelSmall)
+                        }
+                        DropdownMenu(
+                            expanded = showAttachmentMenu,
+                            onDismissRequest = { showAttachmentMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Photo from gallery") },
+                                onClick = {
+                                    showAttachmentMenu = false
+                                    haptics.light()
+                                    imagePicker.launch("image/*")
+                                },
+                                leadingIcon = { Icon(MaterialSymbolIcon("photo_library"), null, size = 18.dp) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Document / PDF") },
+                                onClick = {
+                                    showAttachmentMenu = false
+                                    haptics.light()
+                                    filePicker.launch(arrayOf(
+                                        "application/pdf",
+                                        "text/*",
+                                        "application/msword",
+                                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        "audio/*",
+                                        "image/*"
+                                    ))
+                                },
+                                leadingIcon = { Icon(MaterialSymbolIcon("description"), null, size = 18.dp) }
+                            )
+                        }
                     }
                 }
                 if (attachmentUris.isEmpty()) {
