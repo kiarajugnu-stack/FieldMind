@@ -42,7 +42,33 @@ internal data class FieldMindChangelogEntry(
     val sections: List<Pair<String, List<String>>>
 )
 
-private val fieldMindChangelog = listOf(
+private val fieldMindChangelog = listOf(    FieldMindChangelogEntry(
+        version = "2.2.26.22",
+        date = "2026-06-24",
+        title = "Quick Capture FAB with Voice Notes",
+        importance = "Patch",
+        tags = listOf("FAB", "Quick Capture", "Voice Notes", "UI"),
+        sections = listOf(
+            "📷 Floating Quick Capture FAB" to listOf(
+                "Added floating + button (FAB) on the Home Screen that opens a Quick Capture bottom sheet with 5 options: Observation, Note, Voice Note, Photo, and Question.",
+                "Each option shows an icon, label, and description with themed accent colors and press animations.",
+                "Observation and Photo open the built-in camera for immediate field capture.",
+                "Note opens the existing note creation dialog for quick thoughts and ideas.",
+                "Voice Note opens a dedicated recording dialog with MediaRecorder AAC recording.",
+                "Question navigates to the Questions screen for recording research questions.",
+                "FAB sits at the bottom-right corner with proper elevation and accessible touch target."
+            ),
+            "🎤 Voice Note Recording Dialog" to listOf(
+                "Full-featured voice note recorder with microphone permission handling via ActivityResultContracts.",
+                "Record button starts AAC audio capture to app-internal storage using the existing createFieldMindFile pattern.",
+                "Live recording timer displayed during capture with red recording indicator.",
+                "Stop button releases the MediaRecorder and shows the Save option.",
+                "Title input field for naming voice notes before saving.",
+                "Save creates a Note entity with the audio file attached as DraftEvidenceAttachment for permanent storage.",
+                "Existing voice notes section lists previously recorded audio notes filtered from the notes database."
+            )
+        )
+    ),
     FieldMindChangelogEntry(
         version = "2.2.26.21",
         date = "2026-06-24",

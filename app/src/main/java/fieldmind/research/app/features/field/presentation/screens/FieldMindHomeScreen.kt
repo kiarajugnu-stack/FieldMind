@@ -36,10 +36,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import android.Manifest
+import android.media.MediaRecorder
 import android.net.Uri
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.File
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.data.settings.*
 import fieldmind.research.app.features.field.data.location.FieldLocationProvider
@@ -133,6 +138,10 @@ fun SharedTransitionScope.HomeScreen(
 
     // ── Note creation dialog state ──
     var showNoteDialog by remember { mutableStateOf(false) }
+    
+    // ── Quick Capture Sheet state ──
+    var showQuickCaptureSheet by remember { mutableStateOf(false) }
+    var showVoiceNoteDialog by remember { mutableStateOf(false) }
     
     // Centered snackbar host state
     val captureSnackbarHostState = remember { SnackbarHostState() }
@@ -451,6 +460,20 @@ fun SharedTransitionScope.HomeScreen(
                 .align(Alignment.TopCenter)
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp)
         )
+
+        // ── Floating Quick Capture FAB ──
+        FloatingActionButton(
+            onClick = { showQuickCaptureSheet = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 16.dp),
+            shape = CircleShape,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)
+        ) {
+            Icon(MaterialSymbolIcon("add"), "Quick capture", size = 24.dp)
+        }
     }
 
     // ── GpsOffDialog ──
@@ -700,6 +723,42 @@ fun SharedTransitionScope.HomeScreen(
                 }
             }
         }
+    }
+
+    // ── Quick Capture Sheet ──
+    if (showQuickCaptureSheet) {
+        QuickCaptureSheet(
+            onDismiss = { showQuickCaptureSheet = false },
+            onObservation = {
+                showQuickCaptureSheet = false
+                showCamera = true
+            },
+            onNote = {
+                showQuickCaptureSheet = false
+                showNoteDialog = true
+            },
+            onVoiceNote = {
+                showQuickCaptureSheet = false
+                showVoiceNoteDialog = true
+            },
+            onPhoto = {
+                showQuickCaptureSheet = false
+                showCamera = true
+            },
+            onQuestion = {
+                showQuickCaptureSheet = false
+                onNavigate(FieldMindScreen.Questions)
+            }
+        )
+    }
+
+    // ── Voice Note Capture Dialog ──
+    if (showVoiceNoteDialog) {
+        VoiceNoteCaptureDialog(
+            viewModel = viewModel,
+            onDismiss = { showVoiceNoteDialog = false },
+            showSnackbar = { msg -> showFastSnackbar(captureSnackbarHostState, scope, msg) }
+        )
     }
 }
 
@@ -2502,6 +2561,567 @@ private fun DataToolMiniCard(
             Column {
                 Text(title, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(description, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Quick Capture Sheet — Modal bottom sheet with 5 capture options
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun QuickCaptureSheet(
+    onDismiss: () -> Unit,
+    onObservation: () -> Unit,
+    onNote: () -> Unit,
+    onVoiceNote: () -> Unit,
+    onPhoto: () -> Unit,
+    onQuestion: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            // Semi-transparent scrim
+            Box(
+                Modifier.fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .clickable { onDismiss() }
+            )
+
+            // Sheet content
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 4.dp
+            ) {
+                Column(
+                    Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Drag handle
+                    Box(
+                        Modifier.width(40.dp).height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                            .align(Alignment.CenterHorizontally)
+                    )
+                    Spacer(Modifier.height(8.dp))
+
+                    // Header
+                    Text(
+                        "Quick Capture",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Choose what to capture",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+
+                    // Option: Observation
+                    QuickCaptureOption(
+                        icon = MaterialSymbolIcon("pets"),
+                        label = "Observation",
+                        description = "Record a field observation with photo",
+                        accent = FieldMindTheme.colors.observation,
+                        onClick = onObservation
+                    )
+
+                    // Option: Note
+                    QuickCaptureOption(
+                        icon = MaterialSymbolIcon("sticky_note_2"),
+                        label = "Note",
+                        description = "Capture a quick thought or idea",
+                        accent = FieldMindTheme.colors.source,
+                        onClick = onNote
+                    )
+
+                    // Option: Voice Note
+                    QuickCaptureOption(
+                        icon = MaterialSymbolIcon("mic"),
+                        label = "Voice Note",
+                        description = "Record an audio voice note",
+                        accent = FieldMindTheme.colors.flashcard,
+                        onClick = onVoiceNote
+                    )
+
+                    // Option: Photo
+                    QuickCaptureOption(
+                        icon = MaterialSymbolIcon("photo_camera"),
+                        label = "Photo",
+                        description = "Capture a photo without creating an observation",
+                        accent = FieldMindTheme.colors.data,
+                        onClick = onPhoto
+                    )
+
+                    // Option: Question
+                    QuickCaptureOption(
+                        icon = MaterialSymbolIcon("help"),
+                        label = "Question",
+                        description = "Record a research question",
+                        accent = FieldMindTheme.colors.question,
+                        onClick = onQuestion
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // Cancel button
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text("Cancel", fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickCaptureOption(
+    icon: MaterialSymbolIcon,
+    label: String,
+    description: String,
+    accent: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit
+) {
+    val haptics = rememberFieldMindHaptics()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pressScale(scaleDown = 0.97f)
+            .clickable { haptics.light(); onClick() },
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            Modifier.padding(16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                Modifier.size(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(accent.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, null, tint = accent, size = 24.dp)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Icon(
+                MaterialSymbolIcon("chevron_right"),
+                null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                size = 20.dp
+            )
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Voice Note Capture Dialog — Record audio + list existing voice notes
+// ══════════════════════════════════════════════════════════════════════
+
+
+@Composable
+private fun VoiceNoteCaptureDialog(
+    viewModel: FieldMindViewModel,
+    onDismiss: () -> Unit,
+    showSnackbar: (String) -> Unit = {}
+) {
+    val haptics = rememberFieldMindHaptics()
+    val context = LocalContext.current
+
+    // ── Recording state ──
+    var recording by remember { mutableStateOf(false) }
+    var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
+    var audioFile by remember { mutableStateOf<File?>(null) }
+    var recordingDurationMs by remember { mutableLongStateOf(0L) }
+    var recordingTitle by remember { mutableStateOf("") }
+
+    // ── Existing voice notes from the notes list ──
+    val notes by viewModel.notes.collectAsState()
+    val voiceNotes = remember(notes) {
+        notes.filter { note ->
+            note.attachmentUris.contains("audio", ignoreCase = true) ||
+            note.attachmentUris.contains("m4a", ignoreCase = true) ||
+            note.attachmentUris.contains("mp4", ignoreCase = true) ||
+            note.tags.contains("voice", ignoreCase = true)
+        }.sortedByDescending { it.updatedAt }
+    }
+
+    // ── Duration timer ──
+    LaunchedEffect(recording) {
+        if (recording) {
+            val startTime = System.currentTimeMillis()
+            while (true) {
+                recordingDurationMs = System.currentTimeMillis() - startTime
+                delay(200)
+            }
+        } else {
+            recordingDurationMs = 0L
+        }
+    }
+
+    // ── Audio permission launcher ──
+    val audioPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            // Start recording
+            val file = createFieldMindFile(context, "voice_note", ".m4a")
+            val newRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(context)
+            } else {
+                MediaRecorder()
+            }
+            runCatching {
+                newRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+                newRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                newRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                newRecorder.setOutputFile(file.absolutePath)
+                newRecorder.prepare()
+                newRecorder.start()
+                audioFile = file
+                recorder = newRecorder
+                recording = true
+                haptics.confirm()
+            }.onFailure {
+                newRecorder.release()
+                showSnackbar("Could not start recording: ${it.localizedMessage}")
+            }
+        } else {
+            showSnackbar("Microphone permission is required to record voice notes.")
+        }
+    }
+
+    fun formatDuration(ms: Long): String {
+        val seconds = (ms / 1000) % 60
+        val minutes = (ms / 60000) % 60
+        return if (minutes > 0) "${minutes}m ${seconds}s" else "${seconds}s"
+    }
+
+    fun formatTimestamp(ms: Long): String {
+        val sdf = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
+        return sdf.format(Date(ms))
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .wrapContentHeight()
+                .padding(vertical = 24.dp),
+            shape = RoundedCornerShape(32.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // ── Header ──
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Box(
+                        Modifier.size(48.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(FieldMindTheme.colors.flashcard.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            MaterialSymbolIcon("mic"),
+                            null,
+                            tint = FieldMindTheme.colors.flashcard,
+                            size = 24.dp
+                        )
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Voice Note",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "Record a voice note or choose from existing",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // ── Recording Controls ──
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Recording indicator
+                        if (recording) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    Modifier.size(12.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFE53935))
+                                )
+                                Text(
+                                    "Recording...",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFFE53935),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Text(
+                                formatDuration(recordingDurationMs),
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Title input
+                        OutlinedTextField(
+                            value = recordingTitle,
+                            onValueChange = { recordingTitle = it },
+                            label = { Text("Voice note title") },
+                            placeholder = { Text("e.g. Bird call observation") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            singleLine = true,
+                            enabled = !recording
+                        )
+
+                        // Record / Stop / Save buttons
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (recording) {
+                                // Stop recording
+                                Button(
+                                    onClick = {
+                                        runCatching {
+                                            recorder?.apply {
+                                                stop()
+                                                release()
+                                            }
+                                        }
+                                        recorder = null
+                                        recording = false
+                                        haptics.confirm()
+                                        showSnackbar("Recording saved. Add a title and save.")
+                                    },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFE53935)
+                                    )
+                                ) {
+                                    Icon(
+                                        MaterialSymbolIcon("stop"),
+                                        null,
+                                        size = 20.dp
+                                    )
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("Stop", fontWeight = FontWeight.SemiBold)
+                                }
+                            } else {
+                                // Start recording
+                                Button(
+                                    onClick = {
+                                        audioPermissionLauncher.launch(
+                                            Manifest.permission.RECORD_AUDIO
+                                        )
+                                    },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = FieldMindTheme.colors.flashcard
+                                    )
+                                ) {
+                                    Icon(
+                                        MaterialSymbolIcon("mic"),
+                                        null,
+                                        size = 20.dp
+                                    )
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("Record", fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+
+                            // Save button (visible when we have a recording)
+                            if (audioFile != null && !recording) {
+                                Button(
+                                    onClick = {
+                                        val file = audioFile
+                                        if (file != null && file.exists()) {
+                                            val title = recordingTitle.ifBlank { "Voice note ${formatTimestamp(System.currentTimeMillis())}" }
+                                            val attachment = DraftEvidenceAttachment(
+                                                type = "Audio",
+                                                caption = title,
+                                                uri = Uri.fromFile(file).toString(),
+                                                localPath = file.absolutePath,
+                                                mimeType = "audio/mp4"
+                                            )
+                                            viewModel.addNote(
+                                                title = title,
+                                                body = "Voice note recording",
+                                                category = "Voice Note",
+                                                tags = "voice, audio",
+                                                attachments = listOf(attachment),
+                                                onSaved = {
+                                                    haptics.confirm()
+                                                    showSnackbar("Voice note saved!")
+                                                    audioFile = null
+                                                    recordingTitle = ""
+                                                    onDismiss()
+                                                }
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f).height(48.dp),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Icon(
+                                        MaterialSymbolIcon("save"),
+                                        null,
+                                        size = 20.dp
+                                    )
+                                    Spacer(Modifier.size(6.dp))
+                                    Text("Save", fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── Existing Voice Notes ──
+                if (voiceNotes.isNotEmpty()) {
+                    Text(
+                        "Existing Voice Notes",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        voiceNotes.take(10).forEach { note ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                Row(
+                                    Modifier.padding(14.dp).fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        Modifier.size(40.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(
+                                                FieldMindTheme.colors.flashcard.copy(alpha = 0.12f)
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            MaterialSymbolIcon("music_note"),
+                                            null,
+                                            tint = FieldMindTheme.colors.flashcard,
+                                            size = 22.dp
+                                        )
+                                    }
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            note.title,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            formatTimestamp(note.updatedAt),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Icon(
+                                        MaterialSymbolIcon("play_arrow"),
+                                        "Play",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        size = 22.dp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── Cancel button ──
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = {
+                        // Clean up recorder if active
+                        if (recording) {
+                            runCatching { recorder?.stop() }
+                            recorder?.release()
+                            recorder = null
+                            recording = false
+                        }
+                        onDismiss()
+                    }) {
+                        Text("Close", fontWeight = FontWeight.SemiBold)
+                    }
+                }
             }
         }
     }
