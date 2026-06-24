@@ -878,6 +878,8 @@ private fun FieldMindNavHost(
     val openDetail: (String, Long) -> Unit = { kind, id ->
         when (kind) {
             "question" -> navController.navigateToDestination("field_question_detail/$id")
+            "task" -> navController.navigateToDestination("field_task_detail/$id")
+            "species" -> navController.navigateToDestination("field_species_detail/$id")
             else -> navController.navigateToDestination("field_detail/$kind/$id")
         }
     }
