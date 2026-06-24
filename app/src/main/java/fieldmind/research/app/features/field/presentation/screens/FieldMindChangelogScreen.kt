@@ -43,6 +43,36 @@ internal data class FieldMindChangelogEntry(
 )
 
 private val fieldMindChangelog = listOf(        FieldMindChangelogEntry(
+        version = "2.2.26.28",
+        date = "2026-06-24",
+        title = "Security & Auto-Lock Overhaul",
+        importance = "Patch",
+        tags = listOf("Security", "PIN", "Auto-Lock", "Decoy", "Clipboard", "Fixes"),
+        sections = listOf(
+            "🔐 PIN & Lock Screen Fixes" to listOf(
+                "Fixed PIN lockout bug: entering a 5 or 6-digit PIN no longer accepts only the first 4 digits — PIN validation now respects the configured length (4, 5, or 6 digits).",
+                "All PIN fields now use the number-pad keyboard (KeyboardType.NumberPassword) instead of the full keyboard for faster, more reliable entry.",
+                "PIN setup, disable, and decoy PIN dialogs all validate against the user's selected PIN length setting instead of a hardcoded minimum of 4.",
+                "Customizable failed-unlock cooldown (30 sec or 5 min) with lockout timer display."
+            ),
+            "🎭 Decoy PIN — Fully Functional" to listOf(
+                "Decoy PIN now properly opens a clean, empty version of FieldMind with no real data visible — no more confusing partial state.",
+                "Once in decoy mode, the app stays in decoy mode until restarted, preventing any accidental data exposure.",
+                "Decoy PIN setup/management is integrated into the Security settings page with label customization."
+            ),
+            "🔋 Auto-Lock & Keep Screen On" to listOf(
+                "Auto-lock on background now works correctly — AppLifecycleManager is wired into MainActivity's onPause/onResume lifecycle callbacks.",
+                "Auto-lock respects the \"Lock on background\" toggle setting.",
+                "Keep screen on (alwaysOnScreenEnabled) now works reactively via LaunchedEffect and responds immediately to setting changes.",
+                "Lock timeout setting (Immediate / 1 min / 5 min / 15 min) properly schedules lock after backgrounding."
+            ),
+            "🧹 Clipboard & Category Picker Improvements" to listOf(
+                "Auto clear clipboard now works — clipboard is cleared when the app goes to background if clipboardAutoCleanupEnabled is on.",
+                "All category/option pickers unified to dialog-based (ChoiceChips replaced by dialog) for a consistent selection experience across the entire app.",
+                "Added top-level cardBg import to fix compilation errors from the refactored extension function."
+            )
+        )
+    ),FieldMindChangelogEntry(
         version = "2.2.26.27",
         date = "2026-06-24",
         title = "Per-Category Color Customizer",

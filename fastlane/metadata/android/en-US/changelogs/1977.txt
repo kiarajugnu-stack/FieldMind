@@ -1,0 +1,6 @@
+• PIN lock screen now accepts 5/6 digit codes correctly — no more lockout
+• Decoy PIN opens a clean empty FieldMind when entered under duress
+• Auto-lock on background and keep-screen-on now actually work
+• All PIN fields use number-pad keyboard for faster entry
+• Clipboard auto-clear on background, unified dialog-based category pickers
+• Fixed compilation errors from refactored color helpers
