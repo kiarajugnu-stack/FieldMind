@@ -20,6 +20,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import fieldmind.research.app.features.field.data.database.entity.*
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
@@ -100,6 +102,10 @@ fun TaskDetailScreen(
         animationSpec = spring(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow),
         label = "taskProgress"
     )
+
+    // ── Picker dialogs state ──
+    var showObservationPicker by remember { mutableStateOf(false) }
+    var obsPickerSearch by remember { mutableStateOf("") }
 
     // ── Overflow menu ──
     var showOverflow by remember { mutableStateOf(false) }
@@ -380,12 +386,18 @@ fun TaskDetailScreen(
         // ════════════════════════════════════════════════════════════
         //  Linked Records
         // ════════════════════════════════════════════════════════════
-        if (linkedObs.isNotEmpty() || task.linkedQuestionId != null || task.linkedSpeciesId != null) {
-            item {
-                SectionCard(
-                    icon = MaterialSymbolIcon("link"),
-                    title = "Linked Records"
-                ) {
+        item {
+            SectionCard(
+                icon = MaterialSymbolIcon("link"),
+                title = "Linked Records"
+            ) {
+                if (linkedObs.isEmpty() && task.linkedQuestionId == null && task.linkedSpeciesId == null) {
+                    Text(
+                        "Link observations or other records to this task.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                } else {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         linkedObs.forEach { obs ->
                             Surface(
@@ -410,11 +422,31 @@ fun TaskDetailScreen(
                                         Text("Observation #${obs.id}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         Text(obs.subject, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     }
+                                    // Unlink button
+                                    IconButton(
+                                        onClick = {
+                                            viewModel.updateTaskEntity(task.copy(linkedObservationId = null))
+                                        },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(MaterialSymbolIcon("link_off"), "Unlink", size = 14.dp, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+                                    }
                                     Icon(MaterialSymbolIcon("chevron_right"), null, size = 16.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                                 }
                             }
                         }
                     }
+                }
+                // Link button
+                Spacer(Modifier.size(8.dp))
+                OutlinedButton(
+                    onClick = { showObservationPicker = true },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(MaterialSymbolIcon("add_link"), null, size = 16.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text("Link observation")
                 }
             }
         }
@@ -497,6 +529,172 @@ fun TaskDetailScreen(
                             date = task.updatedAt
                         )
                     }
+                }
+            }
+        }
+    }
+    // ════════════════════════════════════════════════════════════════
+    //  Observation Picker Dialog
+    // ════════════════════════════════════════════════════════════════
+    if (showObservationPicker) {
+        EntityPickerDialog(
+            title = "Link Observation",
+            searchQuery = obsPickerSearch,
+            onSearchChange = { obsPickerSearch = it },
+            onDismiss = {
+                showObservationPicker = false
+                obsPickerSearch = ""
+            },
+            items = observations.filter { obs ->
+                obs.deletedAt == null && obs.id != task.linkedObservationId &&
+                (obsPickerSearch.isBlank() ||
+                 obs.subject.contains(obsPickerSearch, ignoreCase = true) ||
+                 obs.category.contains(obsPickerSearch, ignoreCase = true))
+            },
+            itemIcon = { Icon(FieldMindIcons.Observation, null, tint = FieldMindTheme.colors.observation, size = 16.dp) },
+            itemPrimaryText = { it.subject.ifBlank { "Observation #${it.id}" } },
+            itemSecondaryText = { "${it.category} • ${it.date}" },
+            onSelect = { obs ->
+                haptics.confirm()
+                viewModel.updateTaskEntity(task.copy(linkedObservationId = obs.id))
+                showObservationPicker = false
+                obsPickerSearch = ""
+            }
+        )
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  Entity Picker Dialog (reusable searchable list)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun <T> EntityPickerDialog(
+    title: String,
+    searchQuery: String,
+    onSearchChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    items: List<T>,
+    itemIcon: @Composable (T) -> Unit,
+    itemPrimaryText: @Composable (T) -> String,
+    itemSecondaryText: @Composable (T) -> String,
+    onSelect: (T) -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp)
+                    .padding(top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Title
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                // Search field
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    placeholder = { Text("Search...") },
+                    leadingIcon = { Icon(MaterialSymbolIcon("search"), null, size = 18.dp) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    )
+                )
+
+                if (items.isEmpty()) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No items found",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        items(items) { item ->
+                            Surface(
+                                onClick = { onSelect(item) },
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ) {
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Box(
+                                        Modifier
+                                            .size(32.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        itemIcon(item)
+                                    }
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            itemPrimaryText(item),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontWeight = FontWeight.Medium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            itemSecondaryText(item),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Close button
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(end = 8.dp, bottom = 8.dp)
+                ) {
+                    Text("Cancel")
                 }
             }
         }

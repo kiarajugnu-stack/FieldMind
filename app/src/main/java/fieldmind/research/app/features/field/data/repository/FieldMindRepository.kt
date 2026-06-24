@@ -88,7 +88,9 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     suspend fun linkQuestionObservation(questionId: Long, observationId: Long) = dao.linkQuestionObservation(QuestionObservationCrossRef(questionId, observationId))
     suspend fun linkQuestionSource(questionId: Long, sourceId: Long) = dao.linkQuestionSource(QuestionSourceCrossRef(questionId, sourceId))
     suspend fun linkProjectObservation(projectId: Long, observationId: Long) = dao.linkProjectObservation(ProjectObservationCrossRef(projectId, observationId))
+    suspend fun unlinkProjectObservation(projectId: Long, observationId: Long) = dao.deleteProjectObservationCrossRef(projectId, observationId)
     suspend fun linkProjectSource(projectId: Long, sourceId: Long) = dao.linkProjectSource(ProjectSourceCrossRef(projectId, sourceId))
+    suspend fun unlinkProjectSource(projectId: Long, sourceId: Long) = dao.deleteProjectSourceCrossRef(projectId, sourceId)
     suspend fun linkReportSource(reportId: Long, sourceId: Long) = dao.linkReportSource(ReportSourceCrossRef(reportId, sourceId))
     suspend fun linkProjectDataRecord(projectId: Long, dataRecordId: Long) = dao.linkProjectDataRecord(ProjectDataRecordCrossRef(projectId, dataRecordId))
     suspend fun linkHypothesisEvidence(hypothesisId: Long, observationId: Long) = dao.linkHypothesisEvidence(HypothesisEvidenceCrossRef(hypothesisId, observationId))
@@ -135,6 +137,7 @@ class FieldMindRepository(private val dao: FieldMindDao) {
     // ── Cross-reference link methods (missing ones) ──
     suspend fun linkObservationTag(observationId: Long, tagId: Long) = dao.linkObservationTag(ObservationTagCrossRef(observationId, tagId))
     suspend fun linkTaskObservation(taskId: Long, observationId: Long) = dao.linkTaskObservation(TaskObservationCrossRef(taskId, observationId))
+    suspend fun unlinkTaskObservation(taskId: Long, observationId: Long) = dao.deleteTaskObservationCrossRef(taskId, observationId)
 
     suspend fun linkTaskEvidence(taskId: Long, evidenceId: Long) = dao.linkTaskEvidence(TaskEvidenceCrossRef(taskId, evidenceId))
     suspend fun linkSpeciesObservation(speciesId: Long, observationId: Long) = dao.linkSpeciesObservation(SpeciesObservationCrossRef(speciesId, observationId))

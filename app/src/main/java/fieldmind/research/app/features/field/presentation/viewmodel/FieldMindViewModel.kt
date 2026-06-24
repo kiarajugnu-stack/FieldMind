@@ -901,6 +901,24 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun unlinkObservationFromSession(sessionId: Long, observationId: Long) = viewModelScope.launch {
         repository.unlinkSessionObservation(sessionId, observationId)
     }
+    fun linkTaskObservation(taskId: Long, observationId: Long) = viewModelScope.launch {
+        repository.linkTaskObservation(taskId, observationId)
+    }
+    fun unlinkTaskObservation(taskId: Long, observationId: Long) = viewModelScope.launch {
+        repository.unlinkTaskObservation(taskId, observationId)
+    }
+    fun linkProjectObservation(projectId: Long, observationId: Long) = viewModelScope.launch {
+        repository.linkProjectObservation(projectId, observationId)
+    }
+    fun unlinkProjectObservation(projectId: Long, observationId: Long) = viewModelScope.launch {
+        repository.unlinkProjectObservation(projectId, observationId)
+    }
+    fun linkProjectSource(projectId: Long, sourceId: Long) = viewModelScope.launch {
+        repository.linkProjectSource(projectId, sourceId)
+    }
+    fun unlinkProjectSource(projectId: Long, sourceId: Long) = viewModelScope.launch {
+        repository.unlinkProjectSource(projectId, sourceId)
+    }
     val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val sessionObservationCrossRefs: StateFlow<List<SessionObservationCrossRef>> = repository.sessionObservationCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val hypothesisEvidenceCrossRefs: StateFlow<List<HypothesisEvidenceCrossRef>> = repository.hypothesisEvidenceCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
