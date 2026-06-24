@@ -118,6 +118,7 @@ fun ProjectsScreen(
     var sortOption by remember { mutableStateOf("Updated") }
     var showSortMenu by remember { mutableStateOf(false) }
     var showFilterSheet by remember { mutableStateOf(false) }
+    var showCreateSheet by remember { mutableStateOf(false) }
 
     val filterOptions = listOf("All", "Active", "Archived", "Not Synced")
 
@@ -199,15 +200,16 @@ fun ProjectsScreen(
                         ) {
                             Icon(if (showSearch) MaterialSymbolIcon("close") else FieldMindIcons.Search, null, size = 20.dp)
                         }
-                        FilledTonalButton(
-                            onClick = { onNavigate?.invoke(FieldMindScreen.NewProject) },
-                            shape = RoundedCornerShape(14.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            colors = ButtonDefaults.filledTonalButtonColors(containerColor = colors.project.copy(alpha = 0.16f))
+                        FilledTonalIconButton(
+                            onClick = { showCreateSheet = true },
+                            modifier = Modifier.size(40.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = colors.project.copy(alpha = 0.16f),
+                                contentColor = colors.project
+                            )
                         ) {
-                            Icon(FieldMindIcons.Add, null, size = 18.dp, tint = colors.project)
-                            Spacer(Modifier.size(6.dp))
-                            Text("New", fontWeight = FontWeight.SemiBold)
+                            Icon(FieldMindIcons.Add, null, size = 22.dp)
                         }
                     }
                 }
@@ -406,6 +408,15 @@ fun ProjectsScreen(
     // ── Snackbar overlay (inside outer Box, outside LazyColumn) ──
     Box(Modifier.align(Alignment.BottomCenter).padding(16.dp).padding(bottom = 80.dp)) {
         SnackbarHost(hostState = snackbarHostState)
+    }
+
+    // ── Create Entity Sheet ──
+    if (showCreateSheet) {
+        CreateEntitySheet(
+            projects = projects,
+            onNavigate = { screen -> onNavigate?.invoke(screen) },
+            onDismiss = { showCreateSheet = false }
+        )
     }
 }
 }
