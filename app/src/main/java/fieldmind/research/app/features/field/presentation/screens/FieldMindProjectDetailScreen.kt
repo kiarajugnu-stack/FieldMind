@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -23,6 +26,10 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -56,6 +63,10 @@ fun ProjectDetailScreen(
     var showNewNote by remember { mutableStateOf(false) }
     var showNewQuestion by remember { mutableStateOf(false) }
     var showNewSource by remember { mutableStateOf(false) }
+    var showNewTask by remember { mutableStateOf(false) }
+    var showNewAttachment by remember { mutableStateOf(false) }
+    var showNewFolder by remember { mutableStateOf(false) }
+    var showCreateSheet by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
 
     // ── Picker dialogs state ──
@@ -110,6 +121,13 @@ fun ProjectDetailScreen(
                         Icon(MaterialSymbolIcon("arrow_back"), "Back", size = 22.dp)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        // + Create button — opens the create sheet
+                        FilledTonalIconButton(
+                            onClick = { haptics.light(); showCreateSheet = true },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(MaterialSymbolIcon("add"), "Add", size = 22.dp)
+                        }
                         IconButton(onClick = { showRenameDialog = true }, modifier = Modifier.size(40.dp)) {
                             Icon(MaterialSymbolIcon("more_vert"), "Menu", size = 22.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -143,49 +161,6 @@ fun ProjectDetailScreen(
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis
                     )
-                }
-            }
-        }
-
-        // ── Action buttons: Add Observation, Note, Question, Source ──
-        item {
-            Card(
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Add to project", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        ProjectActionButton(
-                            onClick = { showNewObservation = true },
-                            icon = FieldMindIcons.Observation,
-                            label = "Observation",
-                            accent = colors.observation,
-                            modifier = Modifier.weight(1f)
-                        )
-                        ProjectActionButton(
-                            onClick = { showNewNote = true },
-                            icon = MaterialSymbolIcon("edit_note"),
-                            label = "Note",
-                            accent = colors.project,
-                            modifier = Modifier.weight(1f)
-                        )
-                        ProjectActionButton(
-                            onClick = { showNewQuestion = true },
-                            icon = FieldMindIcons.Question,
-                            label = "Question",
-                            accent = colors.question,
-                            modifier = Modifier.weight(1f)
-                        )
-                        ProjectActionButton(
-                            onClick = { showNewSource = true },
-                            icon = FieldMindIcons.Source,
-                            label = "Source",
-                            accent = colors.source,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
                 }
             }
         }
@@ -249,7 +224,6 @@ fun ProjectDetailScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    // Kind icon
                                     val kindIcon = when (item.kind) {
                                         "Observation" -> FieldMindIcons.Observation to colors.observation
                                         "Note" -> MaterialSymbolIcon("edit_note") to colors.project
@@ -587,6 +561,54 @@ fun ProjectDetailScreen(
     }
 
     // ════════════════════════════════════════════════════════════════
+    //  Project Create Sheet — Grouped create menu
+    // ════════════════════════════════════════════════════════════════
+    if (showCreateSheet) {
+        ProjectCreateSheet(
+            onSelect = { kind ->
+                showCreateSheet = false
+                when (kind) {
+                    "Observation" -> showNewObservation = true
+                    "Note" -> showNewNote = true
+                    "Question" -> showNewQuestion = true
+                    "Source" -> showNewSource = true
+                    "Task" -> showNewTask = true
+                    "Survey Session" -> onNavigate?.invoke(FieldMindScreen.ResearchSession)
+                    "Attachment" -> showNewAttachment = true
+                    "Folder" -> showNewFolder = true
+                }
+            },
+            onDismiss = { showCreateSheet = false }
+        )
+    }
+
+    // ── New Task Dialog ──
+    if (showNewTask) {
+        NewTaskDialog(
+            viewModel = viewModel,
+            projectId = project.id,
+            onDismiss = { showNewTask = false }
+        )
+    }
+
+    // ── New Attachment Dialog ──
+    if (showNewAttachment) {
+        NewAttachmentDialog(
+            viewModel = viewModel,
+            onDismiss = { showNewAttachment = false }
+        )
+    }
+
+    // ── New Folder Dialog ──
+    if (showNewFolder) {
+        NewFolderDialog(
+            viewModel = viewModel,
+            projectId = project.id,
+            onDismiss = { showNewFolder = false }
+        )
+    }
+
+    // ════════════════════════════════════════════════════════════════
     //  Observation Picker Dialog
     // ════════════════════════════════════════════════════════════════
     if (showObservationPicker) {
@@ -648,6 +670,396 @@ fun ProjectDetailScreen(
 }
 
 // ══════════════════════════════════════════════════════════════════════
+//  Project Create Sheet — Grouped options dialog
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun ProjectCreateSheet(
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val colors = FieldMindTheme.colors
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            // Scrim
+            Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)).clickable(onClick = onDismiss))
+            // Sheet
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
+                shape = RoundedCornerShape(32.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = 4.dp,
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    // Handle bar
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Box(Modifier.width(40.dp).height(4.dp).clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)))
+                    }
+
+                    // Header
+                    Text("Create", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+
+                    // ── Research ──
+                    GroupTitle("Research", colors.observation)
+                    CreateOption("Observation", FieldMindIcons.Observation, colors.observation) { onSelect("Observation") }
+                    CreateOption("Note", MaterialSymbolIcon("edit_note"), colors.project) { onSelect("Note") }
+                    CreateOption("Question", MaterialSymbolIcon("question_answer"), colors.question) { onSelect("Question") }
+                    CreateOption("Source", FieldMindIcons.Source, colors.source) { onSelect("Source") }
+                    CreateOption("Task", MaterialSymbolIcon("checklist"), colors.flashcard) { onSelect("Task") }
+
+                    // ── Divider ──
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+                    // ── Tools ──
+                    GroupTitle("Tools", colors.data)
+                    CreateOption("Survey Session", MaterialSymbolIcon("play_circle"), colors.positive) { onSelect("Survey Session") }
+                    CreateOption("Attachment", MaterialSymbolIcon("attach_file"), colors.warning) { onSelect("Attachment") }
+
+                    // ── Divider ──
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
+
+                    // ── Organize ──
+                    GroupTitle("Organize", colors.hypothesis)
+                    CreateOption("Folder", MaterialSymbolIcon("folder"), colors.hypothesis) { onSelect("Folder") }
+
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupTitle(title: String, accent: Color) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(title, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = accent)
+        HorizontalDivider(modifier = Modifier.weight(1f), color = accent.copy(alpha = 0.15f))
+    }
+}
+
+@Composable
+private fun CreateOption(label: String, icon: MaterialSymbolIcon, accent: Color, onClick: () -> Unit) {
+    val haptics = rememberFieldMindHaptics()
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable { haptics.light(); onClick() },
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.08f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(accent.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = accent, size = 24.dp)
+            }
+            Column(Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text("Create a new ${label.lowercase()}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(MaterialSymbolIcon("add_circle"), "Add $label", tint = accent, size = 24.dp)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  New Task Dialog — Simplified version for in-project creation
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun NewTaskDialog(
+    viewModel: FieldMindViewModel,
+    projectId: Long,
+    onDismiss: () -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var priority by remember { mutableStateOf("Medium") }
+    var dueDate by remember { mutableStateOf("") }
+    val haptics = rememberFieldMindHaptics()
+
+    val priorityColor = mapOf(
+        "Low" to FieldMindTheme.colors.positive,
+        "Medium" to FieldMindTheme.colors.warning,
+        "High" to MaterialTheme.colorScheme.error
+    )
+
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { title.isNotBlank() || description.isNotBlank() }) {
+        DialogHeader(
+            icon = MaterialSymbolIcon("checklist"),
+            title = "New Task",
+            subtitle = "Define a field task, survey, or to-do for this project.",
+            accent = FieldMindTheme.colors.flashcard
+        )
+        Text("Linked to project", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.project, fontWeight = FontWeight.SemiBold)
+        FieldTextField(title, { title = it }, "Task Name", supportingText = "Short, actionable title")
+        FieldTextField(description, { description = it }, "Description", minLines = 3)
+        FieldTextField(dueDate, { dueDate = it }, "Due Date", supportingText = "YYYY-MM-DD")
+
+        // Priority radio
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Priority", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                listOf("Low", "Medium", "High").forEach { level ->
+                    val isSelected = priority == level
+                    val accent = priorityColor[level]!!
+                    Surface(
+                        onClick = { haptics.light(); priority = level },
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (isSelected) accent.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.5.dp, accent) else null,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier.size(18.dp).clip(CircleShape)
+                                    .background(if (isSelected) accent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSelected) {
+                                    Box(Modifier.size(8.dp).clip(CircleShape).background(accent))
+                                }
+                            }
+                            Text(level, style = MaterialTheme.typography.labelMedium, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal, color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        }
+
+        DialogActions(onCancel = onDismiss, onSave = {
+            if (title.isNotBlank()) {
+                viewModel.addTask(title = title, description = description, priority = priority, dueDate = dueDate, projectId = projectId)
+                onDismiss()
+            }
+        }, saveEnabled = title.isNotBlank())
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  New Attachment Dialog — Grid of file type pickers
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun NewAttachmentDialog(
+    viewModel: FieldMindViewModel,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val haptics = rememberFieldMindHaptics()
+    var capturedUri by remember { mutableStateOf<String?>(null) }
+    var capturedType by remember { mutableStateOf("") }
+
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            capturedUri = it.toString()
+            capturedType = "Image"
+        }
+    }
+    val videoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            capturedUri = it.toString()
+            capturedType = "Video"
+        }
+    }
+    val audioPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            capturedUri = it.toString()
+            capturedType = "Audio"
+        }
+    }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            capturedUri = it.toString()
+            capturedType = "File"
+        }
+    }
+    val pdfPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            capturedUri = it.toString()
+            capturedType = "PDF"
+        }
+    }
+    val sheetPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            capturedUri = it.toString()
+            capturedType = "Sheet"
+        }
+    }
+
+    DialogWrapper(onDismiss = onDismiss, isDirty = { capturedUri != null }) {
+        DialogHeader(
+            icon = MaterialSymbolIcon("attach_file"),
+            title = "Add Attachment",
+            subtitle = "Attach a file to this project.",
+            accent = FieldMindTheme.colors.warning
+        )
+        Text("Choose attachment type", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+
+        // 3x2 grid of attachment type buttons
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                AttachmentTypeButton("Image", MaterialSymbolIcon("photo"), FieldMindTheme.colors.observation, Modifier.weight(1f)) { haptics.light(); imagePicker.launch("image/*") }
+                AttachmentTypeButton("Video", MaterialSymbolIcon("videocam"), FieldMindTheme.colors.question, Modifier.weight(1f)) { haptics.light(); videoPicker.launch("video/*") }
+                AttachmentTypeButton("Audio", MaterialSymbolIcon("mic"), FieldMindTheme.colors.project, Modifier.weight(1f)) { haptics.light(); audioPicker.launch("audio/*") }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                AttachmentTypeButton("PDF", MaterialSymbolIcon("picture_as_pdf"), MaterialTheme.colorScheme.error, Modifier.weight(1f)) { haptics.light(); pdfPicker.launch(arrayOf("application/pdf")) }
+                AttachmentTypeButton("Sheet", MaterialSymbolIcon("table_chart"), FieldMindTheme.colors.data, Modifier.weight(1f)) { haptics.light(); sheetPicker.launch(arrayOf("text/csv", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) }
+                AttachmentTypeButton("File", MaterialSymbolIcon("description"), FieldMindTheme.colors.hypothesis, Modifier.weight(1f)) { haptics.light(); filePicker.launch(arrayOf("*/*")) }
+            }
+        }
+
+        // Captured file preview
+        if (capturedUri != null) {
+            Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.positive.copy(alpha = 0.08f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Icon(MaterialSymbolIcon("check_circle"), null, tint = FieldMindTheme.colors.positive, size = 24.dp)
+                    Column(Modifier.weight(1f)) {
+                        Text("$capturedType attached", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text(capturedUri!!.substringAfterLast("/").take(40), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+        }
+
+        DialogActions(onCancel = onDismiss, onSave = {
+            // Attach the URI to the project via a note attachment or data record
+            if (capturedUri != null) {
+                viewModel.addNote(
+                    title = "Attachment: $capturedType",
+                    body = "Attached on ${SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date())}\nURI: $capturedUri",
+                    category = capturedType,
+                    tags = "attachment, $capturedType",
+                    onSaved = { onDismiss() }
+                )
+            }
+        }, saveEnabled = capturedUri != null, saveLabel = "Attach")
+    }
+}
+
+@Composable
+private fun AttachmentTypeButton(
+    label: String,
+    icon: MaterialSymbolIcon,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = accent.copy(alpha = 0.10f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                    .background(accent.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, null, tint = accent, size = 22.dp)
+            }
+            Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = accent)
+        }
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  New Folder Dialog — Create a folder (organizational note)
+// ══════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun NewFolderDialog(
+    viewModel: FieldMindViewModel,
+    projectId: Long,
+    onDismiss: () -> Unit
+) {
+    var folderName by remember { mutableStateOf("") }
+    var selectedColor by remember { mutableStateOf(0xFF5F7F52) }
+    val haptics = rememberFieldMindHaptics()
+
+    val colorOptions = listOf(
+        0xFF4CAF50L to "Green",
+        0xFF2196F3L to "Blue",
+        0xFF9C27B0L to "Purple",
+        0xFFFF9800L to "Orange",
+        0xFFF44336L to "Red"
+    )
+
+    DialogWrapper(onDismiss = onDismiss, isDirty = { folderName.isNotBlank() }) {
+        DialogHeader(
+            icon = MaterialSymbolIcon("folder"),
+            title = "New Folder",
+            subtitle = "Organize project entities into a folder.",
+            accent = FieldMindTheme.colors.hypothesis
+        )
+        FieldTextField(folderName, { folderName = it }, "Folder Name", supportingText = "e.g. Butterflies, Water Samples")
+
+        // Color picker
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Color", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                colorOptions.forEach { (colorLong, colorName) ->
+                    val isSelected = selectedColor == colorLong
+                    val color = Color(colorLong)
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(color)
+                            .then(
+                                if (isSelected) Modifier
+                                    .border(3.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(14.dp))
+                                else Modifier
+                            )
+                            .clickable { haptics.light(); selectedColor = colorLong },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isSelected) {
+                            Icon(MaterialSymbolIcon("check"), null, tint = Color.White, size = 22.dp)
+                        }
+                    }
+                }
+            }
+        }
+
+        Text("Parent folder", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("None (root folder)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        DialogActions(onCancel = onDismiss, onSave = {
+            if (folderName.isNotBlank()) {
+                // Create a note to represent the folder (persistable without new entity type)
+                viewModel.addNote(
+                    title = "📁 $folderName",
+                    body = "Folder created on ${SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date())}",
+                    category = "Folder",
+                    tags = "folder, ${folderName.lowercase().replace(" ", "-")}",
+                    projectId = projectId,
+                    onSaved = { onDismiss() }
+                )
+            }
+        }, saveEnabled = folderName.isNotBlank(), saveLabel = "Create Folder")
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════
 //  Entity Picker Dialog (reusable searchable list)
 // ══════════════════════════════════════════════════════════════════════
 
@@ -682,21 +1094,16 @@ private fun <T> EntityPickerDialog(
                     .padding(top = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Title
                 Text(
                     title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
-
-                // Search field
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = onSearchChange,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     placeholder = { Text("Search...") },
                     leadingIcon = { Icon(MaterialSymbolIcon("search"), null, size = 18.dp) },
                     singleLine = true,
@@ -706,25 +1113,13 @@ private fun <T> EntityPickerDialog(
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     )
                 )
-
                 if (items.isEmpty()) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "No items found",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
+                    Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                        Text("No items found", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
+                        modifier = Modifier.fillMaxWidth().weight(1f),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
@@ -735,48 +1130,23 @@ private fun <T> EntityPickerDialog(
                                 color = MaterialTheme.colorScheme.surfaceContainerHigh
                             ) {
                                 Row(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
+                                    Modifier.fillMaxWidth().padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    Box(
-                                        Modifier
-                                            .size(32.dp)
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                                        contentAlignment = Alignment.Center
-                                    ) {
+                                    Box(Modifier.size(32.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest), contentAlignment = Alignment.Center) {
                                         itemIcon(item)
                                     }
                                     Column(Modifier.weight(1f)) {
-                                        Text(
-                                            itemPrimaryText(item),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Medium,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            itemSecondaryText(item),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                                        Text(itemPrimaryText(item), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(itemSecondaryText(item), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
                             }
                         }
                     }
                 }
-
-                // Close button
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(end = 8.dp, bottom = 8.dp)
-                ) {
+                TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End).padding(end = 8.dp, bottom = 8.dp)) {
                     Text("Cancel")
                 }
             }
@@ -804,11 +1174,7 @@ private fun ProjectActionButton(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Box(
-                Modifier.size(36.dp).clip(RoundedCornerShape(10.dp))
-                    .background(accent.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(accent.copy(alpha = 0.14f)), contentAlignment = Alignment.Center) {
                 Icon(icon, null, tint = accent, size = 20.dp)
             }
             Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -830,16 +1196,8 @@ private fun ProjectActionTile(
         tonalElevation = 0.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            Modifier.fillMaxWidth().padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Box(
-                Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
-                    .background(FieldMindTheme.colors.project.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
+        Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.project.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
                 Icon(icon, null, tint = FieldMindTheme.colors.project, size = 22.dp)
             }
             Column(Modifier.weight(1f)) {
@@ -865,13 +1223,7 @@ internal fun StatusBadge(status: String) {
         color = color.copy(alpha = 0.12f),
         tonalElevation = 0.dp
     ) {
-        Text(
-            status,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = color,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-        )
+        Text(status, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = color, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
     }
 }
 
