@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -31,73 +32,242 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 
 // ══════════════════════════════════════════════════════════════════════
-//  NEW PROJECT SCREEN — Full-screen creation form
+//  NEW PROJECT SCREEN — Redesigned: name, description, icon, color, template
 // ══════════════════════════════════════════════════════════════════════
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NewProjectScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val haptics = rememberFieldMindHaptics()
     var title by remember { mutableStateOf("") }
-    var topic by remember { mutableStateOf("Biology") }
-    var objective by remember { mutableStateOf("") }
-    var question by remember { mutableStateOf("") }
-    var background by remember { mutableStateOf("") }
-    var methods by remember { mutableStateOf("") }
-    var hypothesis by remember { mutableStateOf("") }
-    var dataPlan by remember { mutableStateOf("") }
-    var analysis by remember { mutableStateOf("") }
-    var conclusion by remember { mutableStateOf("") }
-    var nextAction by remember { mutableStateOf("") }
-    var projectType by remember { mutableStateOf("Observation") }
-    var selectedMethods by remember { mutableStateOf("") }
-    var connectionMap by remember { mutableStateOf("") }
-    var tags by remember { mutableStateOf("") }
-    var showAdvanced by remember { mutableStateOf(false) }
+    var description by remember { mutableStateOf("") }
+    var selectedIcon by remember { mutableStateOf("🌿") }
+    var selectedColor by remember { mutableStateOf(0xFF4CAF50L) }
+    var selectedTemplate by remember { mutableStateOf("Empty Project") }
+    var showTemplatePicker by remember { mutableStateOf(false) }
+
+    val projectIcons = listOf("🌿", "🦋", "🐦", "🌲", "📷")
+    val colorOptions = listOf(
+        0xFF4CAF50L to Color(0xFF4CAF50L),  // Green
+        0xFF2196F3L to Color(0xFF2196F3L),  // Blue
+        0xFF9C27B0L to Color(0xFF9C27B0L),  // Purple
+        0xFFFF9800L to Color(0xFFFF9800L),  // Orange
+        0xFFF44336L to Color(0xFFF44336L)   // Red
+    )
+    val templates = listOf(
+        "Empty Project",
+        "Field Survey",
+        "Species Observation",
+        "Weather Log",
+        "Site Monitoring",
+        "Literature Review",
+        "Experiment"
+    )
 
     fun save() {
         if (title.isNotBlank()) {
-            viewModel.addProject(title, topic, objective, question, methods, nextAction, background, hypothesis, dataPlan, analysis, conclusion, projectType = projectType, selectedMethods = selectedMethods, connectionMap = connectionMap)
+            // Store icon in tags, color as hex in connectionMap, template as topicType
+            val colorHex = "#%06X".format(selectedColor and 0xFFFFFF)
+            viewModel.addProject(
+                title = title,
+                topic = selectedTemplate,
+                objective = description,
+                question = "",
+                methods = "",
+                nextAction = "",
+                background = "",
+                hypothesis = "",
+                dataPlan = "",
+                analysis = "",
+                conclusion = "",
+                projectType = selectedTemplate,
+                selectedMethods = selectedIcon,
+                connectionMap = colorHex
+            )
             onBack()
         }
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding().background(MaterialTheme.colorScheme.background)) {
-        StandardScreenHeader(
-            title = "New Project",
-            subtitle = "Define the question, evidence plan, data fields, and report direction.",
-            icon = FieldMindIcons.Project,
-            heroColor = FieldMindTheme.colors.project,
-            trailing = { BackButton(onClick = onBack) },
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
-        )
-        Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        // ── Custom header: back button + title/subtitle ──
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.4f),
+            tonalElevation = 0.dp
         ) {
-            FieldTextField(title, { title = it }, "Project title")
-            ChoiceChipsField("Topic", listOf("Biology", "Geology", "Wildlife", "Ecology", "Plant Study", "Weather", "Human Pattern", "Other"), topic) { topic = it }
-            DividerSection("Research purpose", FieldMindIcons.School, FieldMindTheme.colors.project)
-            FieldTextField(objective, { objective = it }, "Objective", minLines = 2)
-            FieldTextField(question, { question = it }, "Research question", minLines = 2)
-            FieldTextField(background, { background = it }, "Background / context", minLines = 2)
-            DividerSection("Evidence plan", FieldMindIcons.Data, FieldMindTheme.colors.project)
-            FieldTextField(methods, { methods = it }, "Method / data plan", minLines = 3)
-            FieldTextField(hypothesis, { hypothesis = it }, "Hypothesis summary", minLines = 2)
-            FieldTextField(dataPlan, { dataPlan = it }, "Data fields / units", minLines = 2, supportingText = "Example: temperature °C, height cm, water clarity, count")
-            DividerSection("Report direction", FieldMindIcons.Report, FieldMindTheme.colors.project)
-            FieldTextField(analysis, { analysis = it }, "Analysis plan", minLines = 2)
-            FieldTextField(conclusion, { conclusion = it }, "Early conclusion / expected output", minLines = 2)
-            FieldTextField(nextAction, { nextAction = it }, "Next action", supportingText = "Example: observe the same site at sunset for 3 days")
-            CollapsibleSection("Advanced options", "Methods, connection map, and tags", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
-                FieldTextField(selectedMethods, { selectedMethods = it }, "Selected methods", supportingText = "e.g. transect, quadrat, interview, water test")
-                FieldTextField(connectionMap, { connectionMap = it }, "Connection map", minLines = 2)
-                FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated tags")
-            }
-            Spacer(Modifier.height(8.dp))
-            Button(onClick = ::save, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), enabled = title.isNotBlank()) {
-                Icon(FieldMindIcons.Check, null, size = 18.dp); Spacer(Modifier.size(8.dp)); Text("Create project")
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Surface(
+                    onClick = onBack,
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(44.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(FieldMindIcons.Back, null, tint = MaterialTheme.colorScheme.onSurface, size = 22.dp)
+                    }
+                }
+                Column {
+                    Text("New Project", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Create a research workspace", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
+
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp).padding(bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            // ── Project Name ──
+            FieldTextField(
+                title, { title = it },
+                "Project Name",
+                supportingText = "Short, descriptive name for your research"
+            )
+
+            // ── Description (Optional) ──
+            FieldTextField(
+                description, { description = it },
+                "Description (Optional)",
+                minLines = 3,
+                supportingText = "What is this project about?"
+            )
+
+            // ── Project Icon ──
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Project Icon", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    projectIcons.forEach { icon ->
+                        val isSelected = selectedIcon == icon
+                        Surface(
+                            onClick = { haptics.light(); selectedIcon = icon },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) FieldMindTheme.colors.project.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, FieldMindTheme.colors.project) else null,
+                            modifier = Modifier.size(60.dp)
+                        ) {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text(icon, style = MaterialTheme.typography.headlineMedium)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Project Color ──
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Project Color", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    colorOptions.forEach { (colorLong, color) ->
+                        val isSelected = selectedColor == colorLong
+                        Box(
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(color)
+                                .then(
+                                    if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(16.dp))
+                                    else Modifier
+                                )
+                                .clickable { haptics.light(); selectedColor = colorLong },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isSelected) {
+                                Icon(MaterialSymbolIcon("check"), null, tint = Color.White, size = 24.dp)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Template Selector ──
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Template", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Surface(
+                    onClick = { haptics.light(); showTemplatePicker = true },
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Box(
+                                Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
+                                    .background(FieldMindTheme.colors.project.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 22.dp)
+                            }
+                            Column {
+                                Text(selectedTemplate, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                Text("Pre-filled fields for $selectedTemplate", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        Icon(MaterialSymbolIcon("chevron_right"), null, size = 20.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            // ── Create Button ──
+            Button(
+                onClick = ::save,
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                shape = RoundedCornerShape(18.dp),
+                enabled = title.isNotBlank()
+            ) {
+                Icon(FieldMindIcons.Project, null, size = 20.dp)
+                Spacer(Modifier.size(8.dp))
+                Text("Create", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+
+    // ── Template Picker Dialog ──
+    if (showTemplatePicker) {
+        AlertDialog(
+            onDismissRequest = { showTemplatePicker = false },
+            icon = { Icon(FieldMindIcons.Project, null, size = 28.dp) },
+            title = { Text("Choose a template") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Pre-filled templates help you get started faster.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            },
+            confirmButton = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    templates.forEach { template ->
+                        val isSelected = selectedTemplate == template
+                        Surface(
+                            onClick = { haptics.light(); selectedTemplate = template; showTemplatePicker = false },
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isSelected) FieldMindTheme.colors.project.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surfaceContainerHigh
+                        ) {
+                            Row(
+                                Modifier.fillMaxWidth().padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(template, style = MaterialTheme.typography.bodyMedium, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal)
+                                if (isSelected) {
+                                    Icon(FieldMindIcons.Check, null, tint = FieldMindTheme.colors.project, size = 18.dp)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTemplatePicker = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 
