@@ -340,12 +340,12 @@ fun CanvasScreen(
             }
         }
 
-        // ── Drawing toolbar (floating, bottom-center) ──
+        // ── Drawing toolbar (floating, above the FAB stack) ──
         if (canvasViewModel.drawingState.showToolbar) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 72.dp),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 DrawingToolbar(
@@ -385,8 +385,9 @@ fun CanvasScreen(
         }
 
         // ── Floating action buttons (bottom-right stack) ──
+        val isDrawingActive = canvasViewModel.drawingState.showToolbar
         if (!showAddMenu && !isKeyboardVisible) {
-            // Drawing toggle FAB (secondary, sits above add-block FAB)
+            // Drawing toggle FAB (always visible unless keyboard is open)
             SmallFloatingActionButton(
                 onClick = {
                     haptics.light()
@@ -394,40 +395,42 @@ fun CanvasScreen(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 160.dp),
+                    .padding(end = 16.dp, bottom = if (isDrawingActive) 100.dp else 160.dp),
                 shape = CircleShape,
-                containerColor = if (canvasViewModel.drawingState.showToolbar)
-                    MaterialTheme.colorScheme.primaryContainer
+                containerColor = if (isDrawingActive)
+                    MaterialTheme.colorScheme.primary
                 else
                     MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = if (canvasViewModel.drawingState.showToolbar)
-                    MaterialTheme.colorScheme.onPrimaryContainer
+                contentColor = if (isDrawingActive)
+                    MaterialTheme.colorScheme.onPrimary
                 else
                     MaterialTheme.colorScheme.onSurfaceVariant,
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 3.dp)
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = if (isDrawingActive) 6.dp else 3.dp)
             ) {
                 Icon(
-                    MaterialSymbolIcon("draw"),
-                    if (canvasViewModel.drawingState.showToolbar) "Hide drawing tools" else "Drawing tools",
+                    MaterialSymbolIcon(if (isDrawingActive) "close" else "draw"),
+                    if (isDrawingActive) "Close drawing tools" else "Open drawing tools",
                     size = 20.dp
                 )
             }
 
-            // Add block FAB (primary)
-            FloatingActionButton(
-                onClick = {
-                    haptics.light()
-                    showAddMenu = true
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 100.dp),
-                shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)
-            ) {
-                Icon(MaterialSymbolIcon("add"), "Add block", size = 24.dp)
+            // Add block FAB (primary) — hidden during drawing mode to reduce clutter
+            if (!isDrawingActive) {
+                FloatingActionButton(
+                    onClick = {
+                        haptics.light()
+                        showAddMenu = true
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 100.dp),
+                    shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)
+                ) {
+                    Icon(MaterialSymbolIcon("add"), "Add block", size = 24.dp)
+                }
             }
         }
 
