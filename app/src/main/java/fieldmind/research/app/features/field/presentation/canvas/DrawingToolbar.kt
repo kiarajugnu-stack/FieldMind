@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.presentation.components.pressScale
+import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 
@@ -53,6 +54,8 @@ fun DrawingToolbar(
     onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val haptics = rememberFieldMindHaptics()
+
     // ── Local state for UI interactions ──
     var showColorPicker by remember { mutableStateOf(false) }
     var showWidthSlider by remember { mutableStateOf(false) }
@@ -96,6 +99,7 @@ fun DrawingToolbar(
                             tool = tool,
                             isActive = drawingState.activeTool == tool,
                             onClick = {
+                                haptics.light()
                                 drawingState.setTool(tool)
                                 showColorPicker = false
                                 showWidthSlider = false
