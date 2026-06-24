@@ -414,11 +414,13 @@ fun ProjectsScreen(
                 )
             }
         }
-        // ── Snackbar overlay ──
-        Box(Modifier.align(Alignment.BottomCenter).padding(16.dp).padding(bottom = 80.dp)) {
-            SnackbarHost(hostState = snackbarHostState)
-        }
     }
+
+    // ── Snackbar overlay (inside outer Box, outside LazyColumn) ──
+    Box(Modifier.align(Alignment.BottomCenter).padding(16.dp).padding(bottom = 80.dp)) {
+        SnackbarHost(hostState = snackbarHostState)
+    }
+}
 }
 
 // ══════════════════════════════════════════════════════════════════════
