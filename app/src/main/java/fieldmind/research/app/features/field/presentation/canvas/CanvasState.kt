@@ -8,20 +8,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 
-enum class CanvasMode {
-    INFINITE,  // Infinite scrollable canvas
-    PAGES      // Page-by-page (like document)
-}
-
 /**
- * Mutable state holder for the infinite canvas.
+ * Mutable state holder for the page canvas.
  *
  * Manages:
  * - Camera zoom level (clamped 0.1x – 5x)
  * - Camera pan offset (the logical origin at the canvas center)
  * - Selection state (set of selected block IDs)
  *
- * Designed to be observed by both the GL rendering layer
+ * Designed to be observed by both the rendering layer
  * and the Compose overlay layer simultaneously.
  */
 class CanvasState(
@@ -53,18 +48,14 @@ class CanvasState(
     var collapsedBlockIds: Set<Long> by mutableStateOf(emptySet())
         private set
 
-    /** Whether to show the dot grid background. */
-    var showGrid: Boolean by mutableStateOf(true)
-        private set
-
-    /** Canvas mode: infinite or page-by-page. */
-    var canvasMode: CanvasMode by mutableStateOf(CanvasMode.INFINITE)
+    /** Whether the canvas is locked (blocks cannot be dragged or resized). */
+    var canvasLocked: Boolean by mutableStateOf(false)
         private set
 
     /**
      * In-memory overrides for block positions during active drag gestures.
      * Key = block ID, Value = canvas-space position (x, y).
-     * Written on every drag frame, read by [InfiniteCanvas] for visual placement.
+     * Written on every drag frame, read by [PageCanvas] for visual placement.
      * Cleared when the drag gesture ends (final position is flushed to Room once).
      */
     val liveBlockPositions: MutableMap<Long, Offset> = mutableStateMapOf()
@@ -212,14 +203,12 @@ class CanvasState(
         collapsedBlockIds = collapsedBlockIds - id
     }
 
-    /** Toggle the dot grid visibility. */
-    fun toggleGrid() {
-        showGrid = !showGrid
-    }
-
-    /** Toggle between infinite and page-by-page modes. */
-    fun toggleCanvasMode() {
-        canvasMode = if (canvasMode == CanvasMode.INFINITE) CanvasMode.PAGES else CanvasMode.INFINITE
+    /** Toggle the canvas lock — when locked, blocks cannot be dragged or resized. */
+    fun toggleCanvasLock() {
+        canvasLocked = !canvasLocked
+        if (canvasLocked) {
+            clearSelection()
+        }
     }
 
     // ── Coordinate transforms ──

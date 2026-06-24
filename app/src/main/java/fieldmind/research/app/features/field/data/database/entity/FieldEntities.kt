@@ -101,6 +101,8 @@ data class QuestionEntity(
     val status: String,
     val priority: String = "Medium",
     val answer: String = "",
+    val confidence: Int = 80,
+    val notes: String = "",
     val answeredAt: Long? = null,
     val relatedObservationIds: String = "",
     val relatedSourceIds: String = "",
@@ -348,6 +350,26 @@ data class ResearchSessionEntity(
 data class SessionObservationCrossRef(val sessionId: Long, val observationId: Long)
 
 // ══════════════════════════════════════════════════════════════════════
+//  Folder Entity — Organizational folders for projects
+// ══════════════════════════════════════════════════════════════════════
+
+@Entity(tableName = "field_folders")
+data class FolderEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val color: Long = 0xFF5F7F52,
+    val iconName: String = "folder",
+    val parentFolderId: Long? = null,
+    val projectId: Long? = null,
+    val description: String = "",
+    val status: String = "Active",
+    val archivedAt: Long? = null,
+    val deletedAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
+)
+
+// ══════════════════════════════════════════════════════════════════════
 //  New Entities for Full Spec (Phase 4 — Tasks, Species, Evidence Reports)
 // ══════════════════════════════════════════════════════════════════════
 
@@ -359,8 +381,16 @@ data class TaskEntity(
     val taskType: String = "Field Survey",
     val priority: String = "Medium",
     val dueDate: String = "",
+    val dueTime: String = "",
     val assignedTo: String = "",
     val status: String = "Pending",
+    val progress: Int = 0,
+    val checklistJson: String = "",
+    val attachmentUris: String = "",
+    val reminder: Int = 0,
+    val reminderUnit: String = "minute",
+    val repeatInterval: Int = 0,
+    val repeatUnit: String = "",
     val linkedQuestionId: Long? = null,
     val linkedObservationId: Long? = null,
     val linkedSpeciesId: Long? = null,

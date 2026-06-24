@@ -1,7 +1,6 @@
 package fieldmind.research.app.features.field.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -39,7 +38,6 @@ import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
 import fieldmind.research.app.features.field.data.database.entity.NoteEntity
 import fieldmind.research.app.features.field.data.database.entity.ObservationEntity
 import fieldmind.research.app.features.field.presentation.canvas.*
-import fieldmind.research.app.features.field.presentation.canvas.CanvasMode
 import fieldmind.research.app.features.field.presentation.canvas.FigureSidePanel
 import fieldmind.research.app.features.field.presentation.canvas.LinkToEntityDialog
 import fieldmind.research.app.features.field.presentation.canvas.PdfBlock
@@ -48,8 +46,8 @@ import fieldmind.research.app.features.field.presentation.canvas.VoiceBlock
 import fieldmind.research.app.features.field.presentation.canvas.EquationBlock
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
 import fieldmind.research.app.features.field.presentation.components.SwipeableAlertDialog
+import fieldmind.research.app.features.field.presentation.components.pressScale
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
-import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
@@ -59,7 +57,7 @@ import androidx.activity.compose.BackHandler
 /**
  * Full-screen canvas editor for a single note.
  *
- * Wires [InfiniteCanvas] to [CanvasViewModel], providing:
+ * Renders blocks on A4-sized pages in a document-style layout via [PageCanvas].
  * - Block rendering for all supported block types (text, image, sticky, table)
  * - Top bar with note title, undo/redo buttons, and save indicator
  * - Keyboard shortcuts: Ctrl+Z (undo), Ctrl+Shift+Z / Ctrl+Y (redo)
@@ -197,7 +195,16 @@ fun CanvasScreen(
 
     // ── PAGES mode: track current page ──
     var currentPage by remember { mutableStateOf(0) }
+    val previousPage = remember { mutableStateOf(currentPage) }
     var totalPages by remember { mutableStateOf(1) }
+
+    // Haptic feedback when switching pages
+    LaunchedEffect(currentPage) {
+        if (currentPage != previousPage.value) {
+            haptics.light()
+            previousPage.value = currentPage
+        }
+    }
 
     // ── Canvas viewport with keyboard shortcuts ──
     Box(
@@ -234,21 +241,17 @@ fun CanvasScreen(
                     undoLabel = undoLabel,
                     redoLabel = redoLabel,
                     zoom = canvasViewModel.canvasState.zoom,
-                    canvasMode = canvasViewModel.canvasState.canvasMode,
+                    canvasLocked = canvasViewModel.canvasState.canvasLocked,
                     onBack = { handleBack() },
                     onUndo = { haptics.light(); canvasViewModel.undo() },
                     onRedo = { haptics.light(); canvasViewModel.redo() },
                     onZoomIn = { canvasViewModel.canvasState.applyZoom(1.2f, androidx.compose.ui.geometry.Offset(100f, 100f)) },
                     onZoomOut = { canvasViewModel.canvasState.applyZoom(0.83f, androidx.compose.ui.geometry.Offset(100f, 100f)) },
                     onZoomReset = { canvasViewModel.canvasState.resetView() },
-                    onToggleCanvasMode = { canvasViewModel.canvasState.toggleCanvasMode() },
+                    onToggleLock = { haptics.light(); canvasViewModel.canvasState.toggleCanvasLock() },
                     onToggleGallery = { showFigureGallery = !showFigureGallery },
                     currentPage = currentPage,
-                    totalPages = totalPages,
-                    showDrawingToolbar = canvasViewModel.drawingState.showToolbar,
-                    onToggleDrawing = { canvasViewModel.drawingState.toggleToolbar() },
-                    showGrid = canvasViewModel.canvasState.showGrid,
-                    onToggleGrid = { canvasViewModel.canvasState.toggleGrid() }
+                    totalPages = totalPages
                 )
 
             // ── Canvas body (Infinite or Pages mode) ──
@@ -311,71 +314,48 @@ fun CanvasScreen(
 
                 val drawingState = canvasViewModel.drawingState
 
-                if (canvasViewModel.canvasState.canvasMode == CanvasMode.PAGES) {
-                    PageCanvas(
-                        canvasState = canvasViewModel.canvasState,
-                        blocks = blocks,
-                        modifier = Modifier.fillMaxSize(),
-                        blockContent = blockContentCallback,
-                        onBlockMoved = { id, x, y -> canvasViewModel.moveBlockIntermediate(id, x, y) },
-                        onBlockMovedFinal = { id, sx, sy, fx, fy -> canvasViewModel.moveBlockFinal(id, sx, sy, fx, fy) },
-                        onBlockResized = { id, w, h -> canvasViewModel.resizeBlockIntermediate(id, w, h) },
-                        onBlockTapped = onBlockTappedCallback,
-                        onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
-                        onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
-                        onBlockMoveForward = { id -> canvasViewModel.moveBlockForward(id) },
-                        onBlockMoveBackward = { id -> canvasViewModel.moveBlockBackward(id) },
-                        onBlockCopy = onBlockCopyCallback,
-                        onBlockLinkToEntity = { id -> linkDialogBlockId = id },
-                        onBlockOpenLinkedEntity = onBlockOpenLinkedCallback,
-                        currentPage = { page -> currentPage = page },
-                        totalPages = { pages -> totalPages = pages },
-                        viewportSize = viewportSize,
-                        drawingState = drawingState,
-                        drawings = drawings,
-                        onStrokeComplete = { stroke -> canvasViewModel.saveStroke(stroke) },
-                        onEraseDrawing = { id -> canvasViewModel.eraseDrawing(id) }
-                    )
-                } else {
-                    InfiniteCanvas(
-                        canvasState = canvasViewModel.canvasState,
-                        blocks = blocks,
-                        modifier = Modifier.fillMaxSize(),
-                        blockContent = blockContentCallback,
-                        onBlockMoved = { id, x, y -> canvasViewModel.moveBlockIntermediate(id, x, y) },
-                        onBlockResized = { id, w, h -> canvasViewModel.resizeBlockIntermediate(id, w, h) },
-                        onBlockTapped = onBlockTappedCallback,
-                        onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
-                        onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
-                        onBlockMoveForward = { id -> canvasViewModel.moveBlockForward(id) },
-                        onBlockMoveBackward = { id -> canvasViewModel.moveBlockBackward(id) },
-                        onBlockCopy = onBlockCopyCallback,
-                        onBlockLinkToEntity = { id -> linkDialogBlockId = id },
-                        onBlockOpenLinkedEntity = onBlockOpenLinkedCallback,
-                        showMinimap = true,
-                        viewportSize = viewportSize,
-                        drawingState = drawingState,
-                        drawings = drawings,
-                        onStrokeComplete = { stroke -> canvasViewModel.saveStroke(stroke) },
-                        onEraseDrawing = { id -> canvasViewModel.eraseDrawing(id) }
-                    )
+                PageCanvas(
+                    canvasState = canvasViewModel.canvasState,
+                    blocks = blocks,
+                    modifier = Modifier.fillMaxSize(),
+                    blockContent = blockContentCallback,
+                    onBlockMoved = { id, x, y -> canvasViewModel.moveBlockIntermediate(id, x, y) },
+                    onBlockMovedFinal = { id, sx, sy, fx, fy -> canvasViewModel.moveBlockFinal(id, sx, sy, fx, fy) },
+                    onBlockResized = { id, w, h -> canvasViewModel.resizeBlockIntermediate(id, w, h) },
+                    onBlockResizedFinal = { id, origW, origH, newW, newH -> canvasViewModel.resizeBlockFinal(id, origW, origH, newW, newH) },
+                    onDeselectAll = { haptics.light() },
+                    onBlockTapped = onBlockTappedCallback,
+                    onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
+                    onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
+                    onBlockMoveForward = { id -> canvasViewModel.moveBlockForward(id) },
+                    onBlockMoveBackward = { id -> canvasViewModel.moveBlockBackward(id) },
+                    onBlockCopy = onBlockCopyCallback,
+                    onBlockLinkToEntity = { id -> linkDialogBlockId = id },
+                    onBlockOpenLinkedEntity = onBlockOpenLinkedCallback,
+                    currentPage = { page -> currentPage = page },
+                    totalPages = { pages -> totalPages = pages },
+                    viewportSize = viewportSize,
+                    drawingState = drawingState,
+                    drawings = drawings,
+                    onStrokeComplete = { stroke -> canvasViewModel.saveStroke(stroke) },
+                    onEraseDrawing = { id -> canvasViewModel.eraseDrawing(id) }
+                )
 
-                    // ── Signal pan/zoom persistence when viewport changes ──
-                    LaunchedEffect(viewportSize, canvasViewModel.canvasState.zoom, canvasViewModel.canvasState.panX, canvasViewModel.canvasState.panY) {
-                        if (viewportSize != Size.Zero) {
-                            canvasViewModel.onCanvasViewChanged()
-                        }
+                // ── Signal pan/zoom persistence when viewport changes ──
+                LaunchedEffect(viewportSize, canvasViewModel.canvasState.zoom, canvasViewModel.canvasState.panX, canvasViewModel.canvasState.panY) {
+                    if (viewportSize != Size.Zero) {
+                        canvasViewModel.onCanvasViewChanged()
                     }
                 }
             }
         }
 
-        // ── Drawing toolbar (floating, bottom-center) ──
+        // ── Drawing toolbar (floating, above the FAB stack) ──
         if (canvasViewModel.drawingState.showToolbar) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 72.dp),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 DrawingToolbar(
@@ -414,22 +394,53 @@ fun CanvasScreen(
             )
         }
 
-        // ── FAB: Add block ──
+        // ── Floating action buttons (bottom-right stack) ──
+        val isDrawingActive = canvasViewModel.drawingState.showToolbar
         if (!showAddMenu && !isKeyboardVisible) {
-            FloatingActionButton(
+            // Drawing toggle FAB (always visible unless keyboard is open)
+            SmallFloatingActionButton(
                 onClick = {
                     haptics.light()
-                    showAddMenu = true
+                    canvasViewModel.drawingState.toggleToolbar()
                 },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 100.dp),
+                    .padding(end = 16.dp, bottom = 160.dp),
                 shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)
+                containerColor = if (isDrawingActive)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = if (isDrawingActive)
+                    MaterialTheme.colorScheme.onPrimary
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = if (isDrawingActive) 6.dp else 3.dp)
             ) {
-                Icon(MaterialSymbolIcon("add"), "Add block", size = 24.dp)
+                Icon(
+                    MaterialSymbolIcon(if (isDrawingActive) "close" else "draw"),
+                    if (isDrawingActive) "Close drawing tools" else "Open drawing tools",
+                    size = 20.dp
+                )
+            }
+
+            // Add block FAB (primary) — hidden during drawing mode to reduce clutter
+            if (!isDrawingActive) {
+                FloatingActionButton(
+                    onClick = {
+                        haptics.light()
+                        showAddMenu = true
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 100.dp),
+                    shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp)
+                ) {
+                    Icon(MaterialSymbolIcon("add"), "Add block", size = 24.dp)
+                }
             }
         }
 
@@ -519,14 +530,10 @@ fun CanvasScreen(
 // ══════════════════════════════════════════════════════════════════════
 //
 // Layout:
-//   [Back]  [Title · save dot]  [Page indicator*]  [Undo/Redo]  [Zoom]  [⋮]
-//                                                                    └─ overflow menu
-//                                                                       - Canvas mode
-//                                                                       - Gallery
-//                                                                       - Drawing tool
-//                                                                       - Grid toggle
-//
-// * Page indicator only shown in PAGES mode.
+//   [Back]  [Title · save dot]  [Page indicator]  [Undo/Redo]  [Zoom]  [⋮]
+//                                                                   └─ overflow menu
+//                                                                      - Figure Gallery
+//                                                                      - Drawing tools
 
 @Composable
 private fun CanvasTopBar(
@@ -537,21 +544,17 @@ private fun CanvasTopBar(
     undoLabel: String?,
     redoLabel: String?,
     zoom: Float = 1f,
-    canvasMode: CanvasMode = CanvasMode.INFINITE,
+    canvasLocked: Boolean = false,
     onBack: () -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
     onZoomIn: () -> Unit = {},
     onZoomOut: () -> Unit = {},
     onZoomReset: () -> Unit = {},
-    onToggleCanvasMode: () -> Unit = {},
+    onToggleLock: () -> Unit = {},
     onToggleGallery: (() -> Unit)? = null,
     currentPage: Int = 0,
-    totalPages: Int = 1,
-    showDrawingToolbar: Boolean = false,
-    onToggleDrawing: () -> Unit = {},
-    showGrid: Boolean = true,
-    onToggleGrid: () -> Unit = {}
+    totalPages: Int = 1
 ) {
     var showOverflow by remember { mutableStateOf(false) }
 
@@ -598,30 +601,28 @@ private fun CanvasTopBar(
                 )
             }
 
-            // ── Page indicator (PAGES mode only) ──
-            if (canvasMode == CanvasMode.PAGES) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier = Modifier
-                        .background(
-                            MaterialTheme.colorScheme.surfaceContainerHigh,
-                            RoundedCornerShape(8.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Icon(
-                        MaterialSymbolIcon("description"),
-                        "Pages",
-                        size = 12.dp,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+            // ── Page indicator ──
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerHigh,
+                        RoundedCornerShape(8.dp)
                     )
-                    Text(
-                        "${currentPage + 1} / $totalPages",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Icon(
+                    MaterialSymbolIcon("description"),
+                    "Pages",
+                    size = 12.dp,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "${currentPage + 1} / $totalPages",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // ── Undo / Redo ──
@@ -631,7 +632,9 @@ private fun CanvasTopBar(
                     enabled = canUndo,
                     shape = RoundedCornerShape(8.dp),
                     color = Color.Transparent,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(32.dp)
+                        .pressScale(scaleDown = 0.9f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -650,7 +653,9 @@ private fun CanvasTopBar(
                     enabled = canRedo,
                     shape = RoundedCornerShape(8.dp),
                     color = Color.Transparent,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(32.dp)
+                        .pressScale(scaleDown = 0.9f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -663,6 +668,31 @@ private fun CanvasTopBar(
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                         )
                     }
+                }
+            }
+
+            // ── Lock toggle ──
+            Surface(
+                onClick = onToggleLock,
+                shape = RoundedCornerShape(8.dp),
+                color = if (canvasLocked)
+                    MaterialTheme.colorScheme.primaryContainer
+                else
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier
+                    .size(32.dp)
+                    .pressScale(scaleDown = 0.9f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        MaterialSymbolIcon(if (canvasLocked) "lock" else "lock_open"),
+                        if (canvasLocked) "Unlock canvas" else "Lock canvas",
+                        size = 16.dp,
+                        tint = if (canvasLocked)
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
@@ -703,7 +733,9 @@ private fun CanvasTopBar(
                     onClick = { showOverflow = true },
                     shape = RoundedCornerShape(8.dp),
                     color = Color.Transparent,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(32.dp)
+                        .pressScale(scaleDown = 0.9f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -719,24 +751,7 @@ private fun CanvasTopBar(
                     expanded = showOverflow,
                     onDismissRequest = { showOverflow = false }
                 ) {
-                    // Canvas mode toggle
-                    DropdownMenuItem(
-                        text = { Text(if (canvasMode == CanvasMode.INFINITE) "Page mode" else "Infinite canvas") },
-                        onClick = {
-                            showOverflow = false
-                            onToggleCanvasMode()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                MaterialSymbolIcon(if (canvasMode == CanvasMode.INFINITE) "view_week" else "unfold_more"),
-                                null,
-                                size = 18.dp
-                            )
-                        }
-                    )
-                    HorizontalDivider()
-
-                    // Gallery
+                    // Figure Gallery
                     if (onToggleGallery != null) {
                         DropdownMenuItem(
                             text = { Text("Figure gallery") },
@@ -750,43 +765,6 @@ private fun CanvasTopBar(
                         )
                     }
 
-                    // Drawing tool
-                    DropdownMenuItem(
-                        text = {
-                            Text(if (showDrawingToolbar) "Hide drawing tools" else "Drawing tools")
-                        },
-                        onClick = {
-                            showOverflow = false
-                            onToggleDrawing()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                MaterialSymbolIcon("draw"),
-                                null,
-                                size = 18.dp,
-                                tint = if (showDrawingToolbar) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    )
-
-                    // Grid toggle (Infinite mode only)
-                    if (canvasMode != CanvasMode.PAGES) {
-                        DropdownMenuItem(
-                            text = { Text(if (showGrid) "Hide grid" else "Show grid") },
-                            onClick = {
-                                showOverflow = false
-                                onToggleGrid()
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    MaterialSymbolIcon(if (showGrid) "grid_on" else "grid_off"),
-                                    null,
-                                    size = 18.dp
-                                )
-                            }
-                        )
-                    }
                 }
             }
         }
@@ -1125,7 +1103,10 @@ private fun AddBlockMenu(
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.clickable { onSelect(type) }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pressScale(scaleDown = 0.96f)
+                        .clickable { onSelect(type) }
                 ) {
                     Row(
                         modifier = Modifier

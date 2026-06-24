@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
+import fieldmind.research.app.features.field.presentation.components.expressivePress
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import org.json.JSONObject
@@ -193,7 +194,8 @@ private fun FigureGalleryCard(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shadowElevation = 2.dp
+        shadowElevation = 2.dp,
+        modifier = Modifier.expressivePress(scaleDown = 0.97f)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()

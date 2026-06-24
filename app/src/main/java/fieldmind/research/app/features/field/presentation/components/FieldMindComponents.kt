@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.theme.cardBg
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.presentation.components.LocalPrivacyTypingEnabled
@@ -1443,20 +1444,20 @@ fun NoteComposerCard(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(
                     Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
-                        .background(FieldMindTheme.colors.source.copy(alpha = 0.14f)),
+                        .background(FieldMindTheme.colors.note.cardBg(FieldMindTheme.colors.isDark)),
                     contentAlignment = Alignment.Center
-                ) { Icon(FieldMindIcons.Note, null, tint = FieldMindTheme.colors.source, size = 22.dp) }
+                ) { Icon(FieldMindIcons.Note, null, tint = FieldMindTheme.colors.note, size = 22.dp) }
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("New note", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Surface(
                             onClick = { haptics.light(); showTemplates = !showTemplates },
                             shape = RoundedCornerShape(10.dp),
-                            color = if (showTemplates) FieldMindTheme.colors.source.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surfaceContainerHigh
+                            color = if (showTemplates) FieldMindTheme.colors.warning.cardBg(FieldMindTheme.colors.isDark) else MaterialTheme.colorScheme.surfaceContainerHigh
                         ) {
                             Row(Modifier.padding(horizontal = 10.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(FieldMindIcons.Article, null, tint = FieldMindTheme.colors.source, size = 14.dp)
-                                Text("Templates", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.source, fontWeight = FontWeight.SemiBold)
+                                Icon(FieldMindIcons.Article, null, tint = FieldMindTheme.colors.warning, size = 14.dp)
+                                Text("Templates", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.warning, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }

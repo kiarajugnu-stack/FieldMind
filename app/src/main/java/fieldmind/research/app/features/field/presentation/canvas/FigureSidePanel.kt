@@ -1,5 +1,13 @@
 package fieldmind.research.app.features.field.presentation.canvas
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -174,13 +182,37 @@ fun FigureSidePanel(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
             )
 
-            // ── Tab content ──
-            Box(
+            // ── Tab content with iOS-style slide transition ──
+            AnimatedContent(
+                targetState = selectedTab,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 12.dp)
-            ) {
-                when (selectedTab) {
+                    .padding(horizontal = 12.dp),
+                transitionSpec = {
+                    val direction = if (targetState > initialState) 1 else -1
+                    (slideInHorizontally(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        ),
+                        initialOffsetX = { fullWidth -> direction * fullWidth / 4 }
+                    ) + fadeIn(
+                        animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
+                    )) togetherWith (
+                        slideOutHorizontally(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            ),
+                            targetOffsetX = { fullWidth -> -direction * fullWidth / 4 }
+                        ) + fadeOut(
+                            animationSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
+                        )
+                    )
+                },
+                label = "tabContent"
+            ) { tabIndex ->
+                when (tabIndex) {
                     0 -> NotesTab(
                         notesText = notesText,
                         onNotesChange = { notesText = it },

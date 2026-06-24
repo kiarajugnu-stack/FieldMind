@@ -47,7 +47,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.database.entity.FlashcardEntity
 import fieldmind.research.app.features.field.data.flashcard.SM2Engine
 import fieldmind.research.app.features.field.presentation.components.EmptyState
@@ -69,7 +68,6 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
  */
 @Composable
 fun FlashcardSessionScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
-    BackHandler(enabled = true) { onBack() }
     val flashcards by viewModel.flashcards.collectAsState()
     // ═══ FIX: Don't key remember() on flashcards StateFlow ═══
     // The flashcards StateFlow re-emits after every updateFlashcardEntity() call.

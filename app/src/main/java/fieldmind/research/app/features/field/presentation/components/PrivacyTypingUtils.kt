@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.InterceptPlatformTextInput
 import androidx.compose.ui.platform.PlatformTextInputMethodRequest
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 /**
@@ -371,16 +372,16 @@ fun PrivacyStatusCard(
                                 .clip(CircleShape)
                                 .background(
                                     if (row.enabled)
-                                        Color(0xFF4CAF50) // green
+                                        FieldMindTheme.colors.positive
                                     else
-                                        Color(0xFFFF9800) // amber
+                                        FieldMindTheme.colors.warning
                                 )
                         )
                         Text(
                             if (row.enabled) "On" else "Off",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (row.enabled) Color(0xFF4CAF50) else Color(0xFFFF9800)
+                            color = if (row.enabled) FieldMindTheme.colors.positive else FieldMindTheme.colors.warning
                         )
                     }
                 }

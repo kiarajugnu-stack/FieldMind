@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 
 /**
@@ -73,10 +74,10 @@ fun QualityScoreCard(
         else -> "Needs work"
     }
     val qualityColor = when {
-        score >= 80 -> Color(0xFF4CAF50)
-        score >= 60 -> Color(0xFF2196F3)
-        score >= 40 -> Color(0xFFFFC107)
-        else -> Color(0xFFF44336)
+        score >= 80 -> FieldMindTheme.colors.positive
+        score >= 60 -> FieldMindTheme.colors.question
+        score >= 40 -> FieldMindTheme.colors.warning
+        else -> MaterialTheme.colorScheme.error
     }
 
     Card(

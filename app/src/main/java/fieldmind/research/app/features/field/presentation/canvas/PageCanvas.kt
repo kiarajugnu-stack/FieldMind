@@ -4,8 +4,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,16 +24,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import org.json.JSONObject
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -39,6 +48,7 @@ import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbo
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.math.abs
+import kotlinx.coroutines.delay
 
 // A4 aspect ratio: width/height ≈ 1/1.414 = 0.707
 private const val A4_ASPECT = 1.414f
@@ -67,7 +77,8 @@ private val PAGE_HEIGHT_DP = PAGE_WIDTH_DP * A4_ASPECT
  * @param blockContent composable factory for each block's content
  * @param onBlockMoved called when a block is dragged (intermediate positions, no undo)
  * @param onBlockMovedFinal called when a block drag ends (final position, records undo)
- * @param onBlockResized called when a block is resized
+ * @param onBlockResized called when a block is resized (intermediate positions, in-memory only, no Room write)
+ * @param onBlockResizedFinal called when a resize drag ends (final position, records undo)
  * @param onBlockTapped called when a block is tapped
  * @param onBlockDelete delete callback
  * @param onBlockDuplicate duplicate callback
@@ -82,6 +93,7 @@ private val PAGE_HEIGHT_DP = PAGE_WIDTH_DP * A4_ASPECT
  * @param drawingState shared drawing tool state (null = no drawing enabled)
  * @param drawings saved drawing entities for rendering
  * @param onStrokeComplete called when user finishes a stroke
+ * @param onDeselectAll called when user taps empty space to deselect (for haptics, etc.)
  * @param onEraseDrawing called when user taps a stroke with eraser
  */
 @Composable
@@ -93,6 +105,8 @@ fun PageCanvas(
     onBlockMoved: ((Long, Float, Float) -> Unit)? = null,
     onBlockMovedFinal: ((Long, Float, Float, Float, Float) -> Unit)? = null,
     onBlockResized: ((Long, Float, Float) -> Unit)? = null,
+    onBlockResizedFinal: ((Long, Float, Float, Float, Float) -> Unit)? = null,
+    onDeselectAll: (() -> Unit)? = null,
     onBlockTapped: ((Long) -> Unit)? = null,
     onBlockDelete: ((Long) -> Unit)? = null,
     onBlockDuplicate: ((Long) -> Unit)? = null,
@@ -167,11 +181,40 @@ fun PageCanvas(
         totalPages(pages.size)
     }
 
-    // ── Outer container ──
+    // ── Outer container with tap-to-deselect on page margins ──
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFE8E8E8))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            // Permanent tap-to-deselect on any empty area (including page margins)
+            // Always active unless drawing mode is on (to avoid conflicts with drawing gestures)
+            .then(
+                if (drawingState?.showToolbar != true) {
+                    // Include blocks + computedPanX/Y as keys so the handler re-evaluates
+                    // when block positions change or viewport/scroll changes
+                    Modifier.pointerInput(blocks, computedPanX, computedPanY) {
+                        detectTapGestures { tapOffset ->
+                            // Check if tap is on any block across ALL pages
+                            val hitBlock = blocks.lastOrNull { block ->
+                                val bx = canvasState.liveBlockPositions[block.id]?.x ?: block.positionX
+                                val by = canvasState.liveBlockPositions[block.id]?.y ?: block.positionY
+                                // Convert tap from screen coords to document space
+                                val docX = (tapOffset.x - computedPanX) / zoom
+                                val docY = (tapOffset.y - computedPanY) / zoom
+                                docX in bx..(bx + block.width) &&
+                                docY in by..(by + block.height)
+                            }
+                            if (hitBlock == null) {
+                                val hadSelection = canvasState.selectedBlockIds.isNotEmpty()
+                                canvasState.clearSelection()
+                                if (hadSelection) onDeselectAll?.invoke()
+                            }
+                        }
+                    }
+                } else {
+                    Modifier
+                }
+            )
     ) {
         // ── Layer 1: Scrollable pages with pinch-to-zoom ──
         Column(
@@ -193,39 +236,35 @@ fun PageCanvas(
                     tonalElevation = 0.dp,
                     shadowElevation = 0.dp
                 ) {
-                    Box(Modifier.fillMaxSize()) {
-                        // ── Tap empty area on page → deselect ──
-                        // Only active when NOT drawing
+                    // PDF-like zoom: graphicsLayer uniformly scales all content within the fixed-size page.
+                    // Zoom does NOT change block positions or sizes — it only magnifies the rendering.
+                    // Pointer input coordinates are divided by zoom to convert from pre-transform
+                    // screen space to document space.
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                scaleX = zoom,
+                                scaleY = zoom,
+                                transformOrigin = TransformOrigin(0f, 0f)
+                            )
+                    ) {
+                        // ── Pinch-to-zoom + double-tap reset (on the page surface) ──
+                        // Single-finger drag handled by verticalScroll.
+                        // Two-finger pinch adjusts zoom via canvasState.
+                        // Double-tap resets zoom to 100%.
                         if (drawingState?.showToolbar != true) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .pointerInput(Unit) {
-                                        detectTapGestures { tapOffset ->
-                                            val docX = tapOffset.x / zoom
-                                            val docY = (tapOffset.y / zoom) + page.startY
-                                            // Check if tap is on a block — if not, clear selection
-                                            val hitBlock = page.blocks.lastOrNull { block ->
-                                                val bx = canvasState.liveBlockPositions[block.id]?.x ?: block.positionX
-                                                val by = canvasState.liveBlockPositions[block.id]?.y ?: block.positionY
-                                                docX in bx..(bx + block.width) &&
-                                                docY in by..(by + block.height)
+                                        detectTapGestures(
+                                            onDoubleTap = {
+                                                val focus = Offset(viewportSize.width / 2f, viewportSize.height / 2f)
+                                                canvasState.zoomTo(1f, focus)
                                             }
-                                            if (hitBlock == null) {
-                                                canvasState.clearSelection()
-                                            }
-                                        }
+                                        )
                                     }
-                            )
-                        }
-
-                        // ── Pinch-to-zoom gesture layer (on the page surface) ──
-                        // Single-finger drag handled by verticalScroll.
-                        // Two-finger pinch adjusts zoom via canvasState.
-                        if (drawingState?.showToolbar != true) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
                                     .pointerInput(Unit) {
                                         detectTransformGestures { centroid, pan, zoomDelta, _ ->
                                             // Apply pinch zoom centered on the touch point
@@ -250,16 +289,23 @@ fun PageCanvas(
                             val posY = livePos?.y ?: block.positionY
                             val pageRelativeY = posY - page.startY
                             val isSelected = block.id in canvasState.selectedBlockIds
+                            val isCollapsed = block.id in canvasState.collapsedBlockIds
+                            val rotation = remember(block.id, block.contentJson) {
+                                parseBlockRotation(block.contentJson)
+                            }
                             PageBlock(
                                 block = block,
                                 pageX = posX,
                                 pageY = pageRelativeY,
                                 isSelected = isSelected,
+                                isCollapsed = isCollapsed,
+                                rotation = rotation,
                                 canvasState = canvasState,
                                 onTapped = { id ->
                                     canvasState.selectBlock(id)
                                     onBlockTapped?.invoke(id)
                                 },
+                                onToggleCollapse = { canvasState.toggleBlockCollapse(it) },
                                 onMoved = { newX, newY ->
                                     val docY = newY + page.startY
                                     onBlockMoved?.invoke(block.id, newX, docY)
@@ -272,6 +318,9 @@ fun PageCanvas(
                                 onResized = { w, h ->
                                     canvasState.setLiveBlockSize(block.id, w, h)
                                     onBlockResized?.invoke(block.id, w, h)
+                                },
+                                onResizeFinal = { origW, origH, newW, newH ->
+                                    onBlockResizedFinal?.invoke(block.id, origW, origH, newW, newH)
                                 }
                             ) {
                                 blockContent(block, isSelected)
@@ -317,12 +366,12 @@ fun PageCanvas(
                                         MaterialSymbolIcon("description", defaultWeight = 300),
                                         "Empty page",
                                         size = 40.dp,
-                                        tint = Color(0x22000000)
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
                                     )
                                     Text(
                                         "Tap + to add blocks",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0x44000000)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                                     )
                                 }
                             }
@@ -398,6 +447,8 @@ private fun PageDrawingRender(
     drawings: List<DrawingEntity>,
     modifier: Modifier = Modifier
 ) {
+    // graphicsLayer on the parent handles zoom scaling, so drawing
+    // coordinates are in document-space (no zoom multiplication needed).
     Canvas(modifier = modifier) {
         val pageDrawings = drawings.filter { drawing ->
             val strokes = parseStrokeData(drawing.strokeDataJson) ?: return@filter false
@@ -408,7 +459,7 @@ private fun PageDrawingRender(
             }
         }
         pageDrawings.forEach { drawing ->
-            drawDrawingOnPage(drawing, pageStartY, zoom)
+            drawDrawingOnPage(drawing, pageStartY)
         }
     }
 }
@@ -433,6 +484,8 @@ private fun PageDrawingInput(
     var currentStroke by remember { mutableStateOf<InProgressStroke?>(null) }
 
     // ── Gesture handlers ──
+    // Pointer input is in pre-transform space (graphicsLayer does not affect hit-testing).
+    // Divide by zoom to convert to document-space coordinates.
     val gestureModifier = if (!drawingState.isEraser) {
         Modifier.pointerInput(drawingState.activeTool, drawingState.strokeWidth, drawingState.color, drawingState.shapeType) {
             detectDragGestures(
@@ -483,9 +536,10 @@ private fun PageDrawingInput(
     }
 
     // ── Render in-progress stroke ──
+    // graphicsLayer on the parent handles zoom scaling, so draw in document-space
     Canvas(modifier = modifier.then(gestureModifier)) {
         currentStroke?.let { stroke ->
-            drawPageStroke(stroke, pageStartY, zoom)
+            drawPageStroke(stroke, pageStartY)
         }
     }
 }
@@ -513,13 +567,12 @@ private fun findPageHitStroke(
 }
 
 /**
- * Render a [DrawingEntity] onto a page Canvas, offsetting Y by pageStartY
- * and scaling by zoom.
+ * Render a [DrawingEntity] onto a page Canvas.
+ * Coordinates are in document-space — graphicsLayer on the parent handles zoom scaling.
  */
 private fun DrawScope.drawDrawingOnPage(
     drawing: DrawingEntity,
-    pageStartY: Float,
-    zoom: Float
+    pageStartY: Float
 ) {
     val strokes = parseStrokeData(drawing.strokeDataJson) ?: return
     val color = Color(drawing.color)
@@ -533,8 +586,9 @@ private fun DrawScope.drawDrawingOnPage(
     strokes.forEach { parsedStroke ->
         if (parsedStroke.points.size < 2) return@forEach
 
+        // Points are in document space — offset Y by pageStartY for page-local rendering
         val pagePoints = parsedStroke.points.map { pt ->
-            Offset(pt.x * zoom, (pt.y - pageStartY) * zoom)
+            Offset(pt.x, pt.y - pageStartY)
         }
 
         if (tool == DrawingTool.SHAPE && parsedStroke.points.size >= 2) {
@@ -558,16 +612,16 @@ private fun DrawScope.drawDrawingOnPage(
 
 /**
  * Render the current in-progress stroke on the page.
+ * Coordinates are in document-space — graphicsLayer handles zoom.
  */
 private fun DrawScope.drawPageStroke(
     stroke: InProgressStroke,
-    pageStartY: Float,
-    zoom: Float
+    pageStartY: Float
 ) {
     if (stroke.points.size < 2) return
 
     val pagePoints = stroke.points.map { pt ->
-        Offset(pt.x * zoom, (pt.y - pageStartY) * zoom)
+        Offset(pt.x, pt.y - pageStartY)
     }
 
     val color = Color(stroke.color)
@@ -733,6 +787,16 @@ private fun DrawScope.drawPageShape(
 //  PageBlock
 // ══════════════════════════════════════════════════════════════════════
 
+/** Parse rotation in degrees from a block's contentJson. Returns 0f if absent. */
+private fun parseBlockRotation(contentJson: String): Float {
+    if (contentJson.isBlank()) return 0f
+    return try {
+        JSONObject(contentJson).optDouble("rotation", 0.0).toFloat()
+    } catch (_: Exception) {
+        0f
+    }
+}
+
 /**
  * A single block rendered within a page in PAGES mode, with zoom support.
  *
@@ -743,10 +807,14 @@ private fun DrawScope.drawPageShape(
  * @param pageX X position within the page (document X coordinate)
  * @param pageY Y position relative to the page top (0 = top of this page)
  * @param isSelected whether this block is currently selected
+ * @param isCollapsed whether the block is minimized to a small preview card
+ * @param rotation rotation angle in degrees (applied via graphicsLayer)
  * @param onTapped called when the block is tapped
+ * @param onToggleCollapse called to toggle collapse state
  * @param onMoved called with new (pageX, pageY) during drag (intermediate, no undo)
  * @param onMovedFinal called with (startX, startY, finalX, finalY) when drag ends
- * @param onResized called with new (width, height)
+ * @param onResized called with new (width, height) during drag (in-memory only, no Room write)
+ * @param onResizeFinal called with (origW, origH, newW, newH) on drag-end or auto-expand (persists to Room + undo)
  * @param content the block's inner content
  */
 @Composable
@@ -755,86 +823,135 @@ private fun PageBlock(
     pageX: Float,
     pageY: Float,
     isSelected: Boolean,
+    isCollapsed: Boolean = false,
+    rotation: Float = 0f,
     canvasState: CanvasState,
     onTapped: (Long) -> Unit,
+    onToggleCollapse: (Long) -> Unit = { _ -> },
     onMoved: (Float, Float) -> Unit,
     onMovedFinal: ((Float, Float, Float, Float) -> Unit)? = null,
     onResized: (Float, Float) -> Unit,
+    onResizeFinal: ((Float, Float, Float, Float) -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     val density = LocalDensity.current
     val zoom = canvasState.zoom
+
+    // ── Animated elevation (bouncy spring on selection, mirroring CanvasBlock) ──
+    val elevation by animateFloatAsState(
+        targetValue = if (isSelected) 8f else 2f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "pageBlockElevation"
+    )
 
     // Auto-expand: track content height, grow block if content is taller
     var contentSize by remember { mutableStateOf(IntSize.Zero) }
     val contentHeightLogical = if (contentSize.height > 0) contentSize.height / density.density else 0f
     val liveSz = canvasState.liveBlockSizes[block.id]
     val defaultHeight = liveSz?.height ?: block.height
-    val autoHeight = if (contentHeightLogical > defaultHeight + 15f) {
+    val displayWidth = if (isCollapsed) 120f else block.width
+    val displayHeight = if (isCollapsed) 100f else defaultHeight
+    val autoHeight = if (!isCollapsed && contentHeightLogical > displayHeight + 15f) {
         contentHeightLogical + 10f
     } else {
-        defaultHeight
+        displayHeight
     }
 
-    // Sync auto-expanded height to entity
+    // Sync auto-expanded height to entity (only when not collapsed)
+    // Updates live size and persists to Room (auto-expand is a final position, not intermediate)
     LaunchedEffect(autoHeight) {
-        if (autoHeight > defaultHeight && autoHeight - defaultHeight > 15f) {
+        if (!isCollapsed && autoHeight > displayHeight && autoHeight - displayHeight > 15f) {
             onResized(block.width, autoHeight)
+            onResizeFinal?.invoke(block.width, displayHeight, block.width, autoHeight)
         }
     }
 
     Box(
         modifier = Modifier
-            .offset { IntOffset((pageX * zoom).roundToInt(), (pageY * zoom).roundToInt()) }
-            .width(with(density) { (block.width * zoom).toDp() })
-            .heightIn(min = with(density) { (defaultHeight * zoom).toDp() })
+            // Block positioned at document-space coordinates — graphicsLayer handles visual zoom
+            .offset { IntOffset(pageX.roundToInt(), pageY.roundToInt()) }
+            .width(with(density) { displayWidth.toDp() })
+            .heightIn(min = with(density) { displayHeight.toDp() })
             .wrapContentHeight()
+            // Selection border (zoom-aware width matching CanvasBlock)
             .then(
                 if (isSelected) {
                     Modifier.border(
-                        width = 2.dp,
+                        width = (2f / zoom).coerceAtLeast(1f).dp,
                         color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(8.dp)
                     )
                 } else Modifier
             )
+            // Animated shadow/elevation with consistent ambient/spot colors
+            .shadow(
+                elevation = elevation.dp,
+                shape = RoundedCornerShape(8.dp),
+                ambientColor = Color(0x40000000),
+                spotColor = Color(0x28000000),
+                clip = false
+            )
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .pointerInput(block.id) {
-                var cumulativeDx = 0f
-                var cumulativeDy = 0f
-                var startX = 0f
-                var startY = 0f
-
-                detectDragGestures(
-                    onDragStart = {
-                        startX = pageX
-                        startY = pageY
-                        cumulativeDx = 0f
-                        cumulativeDy = 0f
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        cumulativeDx += dragAmount.x / zoom
-                        cumulativeDy += dragAmount.y / zoom
-                        val newX = (startX + cumulativeDx).coerceAtLeast(0f)
-                        val newY = startY + cumulativeDy
-                        canvasState.setLiveBlockPosition(block.id, newX, newY)
-                        onMoved(newX, newY)
-                    },
-                    onDragEnd = {
-                        val finalX = (startX + cumulativeDx).coerceAtLeast(0f)
-                        val finalY = startY + cumulativeDy
-                        canvasState.setLiveBlockPosition(block.id, finalX, finalY)
-                        onMovedFinal?.invoke(startX, startY, finalX, finalY)
-                    },
-                    onDragCancel = {
-                        canvasState.removeLiveBlockPosition(block.id)
-                    }
-                )
+            // Rotation (e.g. sticky notes have slight random rotation)
+            .graphicsLayer {
+                rotationZ = rotation
+                // Camera distance avoids clipping at extreme rotations
+                cameraDistance = 12f * density.density
             }
-            .pointerInput(block.id) {
-                detectTapGestures { onTapped(block.id) }
+            .let { modifier ->
+                // When canvas is locked, only allow tap (selection) — no drag or resize
+                if (canvasState.canvasLocked) {
+                    modifier
+                        .pointerInput(block.id) {
+                            detectTapGestures { onTapped(block.id) }
+                        }
+                } else {
+                    modifier
+                        .pointerInput(block.id) {
+                            var cumulativeDx = 0f
+                            var cumulativeDy = 0f
+                            var startX = 0f
+                            var startY = 0f
+
+                            // 300ms long-press delay before drag starts — prevents accidental
+                            // drags when tapping to select
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = {
+                                    startX = pageX
+                                    startY = pageY
+                                    cumulativeDx = 0f
+                                    cumulativeDy = 0f
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    // Drag deltas are in pre-transform (screen) space — divide by zoom
+                                    // to convert to document-space movement
+                                    cumulativeDx += dragAmount.x / zoom
+                                    cumulativeDy += dragAmount.y / zoom
+                                    val newX = (startX + cumulativeDx).coerceAtLeast(0f)
+                                    val newY = startY + cumulativeDy
+                                    canvasState.setLiveBlockPosition(block.id, newX, newY)
+                                    onMoved(newX, newY)
+                                },
+                                onDragEnd = {
+                                    val finalX = (startX + cumulativeDx).coerceAtLeast(0f)
+                                    val finalY = startY + cumulativeDy
+                                    canvasState.setLiveBlockPosition(block.id, finalX, finalY)
+                                    onMovedFinal?.invoke(startX, startY, finalX, finalY)
+                                },
+                                onDragCancel = {
+                                    canvasState.removeLiveBlockPosition(block.id)
+                                }
+                            )
+                        }
+                        .pointerInput(block.id) {
+                            detectTapGestures { onTapped(block.id) }
+                        }
+                }
             }
     ) {
         // ── Clean up stale live overrides when entity catches up ──
@@ -849,80 +966,151 @@ private fun PageBlock(
             }
         }
 
-        // Block content — measure natural height for auto-expand
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .onGloballyPositioned { coords ->
-                    contentSize = coords.size
-                }
-        ) {
-            content()
-        }
-
-        // Resize handle (bottom-right, when selected)
-        if (isSelected) {
-            val liveSize = canvasState.liveBlockSizes[block.id]
-            val displayWidth = liveSize?.width ?: block.width
-            val displayHeight = liveSize?.height ?: block.height
+        if (isCollapsed) {
+            // Collapsed state: show preview with expand button.
             Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(16.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                        RoundedCornerShape(topStart = 4.dp)
-                    )
-                    .pointerInput(block.id) {
-                        var cumulativeDx = 0f
-                        var cumulativeDy = 0f
-                        detectDragGestures(
-                            onDragStart = {
-                                cumulativeDx = 0f
-                                cumulativeDy = 0f
-                            },
-                            onDrag = { change, dragAmount ->
-                                change.consume()
-                                cumulativeDx += dragAmount.x / zoom
-                                cumulativeDy += dragAmount.y / zoom
-                                val newW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
-                                val newH = (displayHeight + cumulativeDy).coerceAtLeast(60f)
-                                canvasState.setLiveBlockSize(block.id, newW, newH)
-                                onResized(newW, newH)
-                            },
-                            onDragEnd = {
-                                val finalW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
-                                val finalH = (displayHeight + cumulativeDy).coerceAtLeast(60f)
-                                canvasState.setLiveBlockSize(block.id, finalW, finalH)
-                                onResized(finalW, finalH)
-                            },
-                            onDragCancel = {
-                                canvasState.removeLiveBlockSize(block.id)
-                            }
-                        )
-                    }
-            )
-        }
-
-        // Link badge (top-right)
-        if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(4.dp)
-                    .size(16.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary,
-                        RoundedCornerShape(50)
-                    ),
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    MaterialSymbolIcon("link"),
-                    "Linked to ${block.linkedEntityType}",
-                    size = 10.dp,
-                    tint = MaterialTheme.colorScheme.onPrimary
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        MaterialSymbolIcon("unfold_more"),
+                        "Expand",
+                        size = 20.dp,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        block.type,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        } else {
+            // Full content display — measure natural content height for auto-expand
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .onGloballyPositioned { coords ->
+                        contentSize = coords.size
+                    }
+            ) {
+                content()
+            }
+        }
+
+        // ── Tool overlay ──
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Minimize button (top-left corner)
+            if (isSelected && !isCollapsed) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 4.dp, top = 4.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .pointerInput(Unit) {
+                                detectTapGestures { onToggleCollapse(block.id) }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            MaterialSymbolIcon("unfold_less"),
+                            "Minimize",
+                            size = 10.dp,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Link badge (top-right)
+            if (block.linkedEntityType.isNotBlank() && block.linkedEntityId != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(end = 4.dp, top = 4.dp),
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            MaterialSymbolIcon("link"),
+                            "Linked to ${block.linkedEntityType}",
+                            size = 10.dp,
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+            }
+
+            // Resize handle (bottom-right, when selected, only when unlocked and not collapsed)
+            if (isSelected && !canvasState.canvasLocked && !isCollapsed) {
+                val liveSize = canvasState.liveBlockSizes[block.id]
+                val handleDisplayWidth = liveSize?.width ?: block.width
+                val handleDisplayHeight = liveSize?.height ?: block.height
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(16.dp)
+                        // Resize handle compensates for graphicsLayer scaling
+                        .graphicsLayer(
+                            scaleX = 1f / zoom,
+                            scaleY = 1f / zoom,
+                            transformOrigin = TransformOrigin(0f, 0f)
+                        )
+                        .background(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                            RoundedCornerShape(topStart = 4.dp)
+                        )
+                        .pointerInput(block.id) {
+                            var cumulativeDx = 0f
+                            var cumulativeDy = 0f
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = {
+                                    cumulativeDx = 0f
+                                    cumulativeDy = 0f
+                                },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    cumulativeDx += dragAmount.x / zoom
+                                    cumulativeDy += dragAmount.y / zoom
+                                    val newW = (handleDisplayWidth + cumulativeDx).coerceAtLeast(60f)
+                                    val newH = (handleDisplayHeight + cumulativeDy).coerceAtLeast(60f)
+                                    canvasState.setLiveBlockSize(block.id, newW, newH)
+                                    onResized(newW, newH)  // in-memory only — no Room write
+                                },
+                                onDragEnd = {
+                                    val finalW = (handleDisplayWidth + cumulativeDx).coerceAtLeast(60f)
+                                    val finalH = (handleDisplayHeight + cumulativeDy).coerceAtLeast(60f)
+                                    canvasState.setLiveBlockSize(block.id, finalW, finalH)
+                                    onResized(finalW, finalH)  // update live state one last time
+                                    onResizeFinal?.invoke(handleDisplayWidth, handleDisplayHeight, finalW, finalH)  // persist + undo
+                                },
+                                onDragCancel = {
+                                    canvasState.removeLiveBlockSize(block.id)
+                                }
+                            )
+                        }
                 )
             }
         }

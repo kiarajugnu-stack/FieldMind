@@ -32,7 +32,6 @@ import fieldmind.research.app.features.field.presentation.components.StandardScr
 import fieldmind.research.app.features.field.presentation.components.InfoChip
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
-import androidx.activity.compose.BackHandler
 
 internal data class FieldMindChangelogEntry(
     val version: String,
@@ -43,7 +42,181 @@ internal data class FieldMindChangelogEntry(
     val sections: List<Pair<String, List<String>>>
 )
 
-private val fieldMindChangelog = listOf(
+private val fieldMindChangelog = listOf(        FieldMindChangelogEntry(
+        version = "2.2.26.28",
+        date = "2026-06-24",
+        title = "Security & Auto-Lock Overhaul",
+        importance = "Patch",
+        tags = listOf("Security", "PIN", "Auto-Lock", "Decoy", "Clipboard", "Fixes"),
+        sections = listOf(
+            "🔐 PIN & Lock Screen Fixes" to listOf(
+                "Fixed PIN lockout bug: entering a 5 or 6-digit PIN no longer accepts only the first 4 digits — PIN validation now respects the configured length (4, 5, or 6 digits).",
+                "All PIN fields now use the number-pad keyboard (KeyboardType.NumberPassword) instead of the full keyboard for faster, more reliable entry.",
+                "PIN setup, disable, and decoy PIN dialogs all validate against the user's selected PIN length setting instead of a hardcoded minimum of 4.",
+                "Customizable failed-unlock cooldown (30 sec or 5 min) with lockout timer display."
+            ),
+            "🎭 Decoy PIN — Fully Functional" to listOf(
+                "Decoy PIN now properly opens a clean, empty version of FieldMind with no real data visible — no more confusing partial state.",
+                "Once in decoy mode, the app stays in decoy mode until restarted, preventing any accidental data exposure.",
+                "Decoy PIN setup/management is integrated into the Security settings page with label customization."
+            ),
+            "🔋 Auto-Lock & Keep Screen On" to listOf(
+                "Auto-lock on background now works correctly — AppLifecycleManager is wired into MainActivity's onPause/onResume lifecycle callbacks.",
+                "Auto-lock respects the \"Lock on background\" toggle setting.",
+                "Keep screen on (alwaysOnScreenEnabled) now works reactively via LaunchedEffect and responds immediately to setting changes.",
+                "Lock timeout setting (Immediate / 1 min / 5 min / 15 min) properly schedules lock after backgrounding."
+            ),
+            "🧹 Clipboard & Category Picker Improvements" to listOf(
+                "Auto clear clipboard now works — clipboard is cleared when the app goes to background if clipboardAutoCleanupEnabled is on.",
+                "All category/option pickers unified to dialog-based (ChoiceChips replaced by dialog) for a consistent selection experience across the entire app.",
+                "Added top-level cardBg import to fix compilation errors from the refactored extension function."
+            )
+        )
+    ),FieldMindChangelogEntry(
+        version = "2.2.26.27",
+        date = "2026-06-24",
+        title = "Per-Category Color Customizer",
+        importance = "Patch",
+        tags = listOf("Colors", "Theme", "Settings", "UI"),
+        sections = listOf(
+            "🎨 Per-Category Entity Color Customization" to listOf(
+                "Added Entity Accent Colors settings page under Appearance with a full inline color picker for all 18 entity/state/confidence color tokens.",
+                "Each entity type shows its current color swatch, label, and customization status (Default / Customized).",
+                "Tap any row to open an inline editor with a 28-color preset grid, custom hex input, and Apply/Reset/Cancel controls.",
+                "Custom colors are persisted in SharedPreferences and survive app restarts and exports.",
+                "Reset All to Defaults button instantly clears all overrides and reverts to the unified palette.",
+                "Colors apply immediately across the entire app via the FieldMindTheme composable's new entityColorOverrides parameter."
+            ),
+            "🔧 Data Layer & Theme Integration" to listOf(
+                "Added entityColors StateFlow + setEntityColors() to FieldMindSettings with JSON serialization via Gson.",
+                "Added applyOverrides() method to FieldMindColors data class that merges per-key overrides into a copy.",
+                "FieldMindTheme() now accepts entityColorOverrides param and chains .applyOverrides() before providing the CompositionLocal.",
+                "MainActivity collects entityColors from Settings and passes them to FieldMindTheme for app-wide application.",
+                "Added DEFAULT_ENTITY_COLORS, ENTITY_COLOR_LABELS, and ENTITY_COLOR_ICONS constants for the color picker UI.",
+                "entityColors included in toExportJson / applyFromJson for backup/restore compatibility."
+            )
+        )
+    ),FieldMindChangelogEntry(
+        version = "2.2.26.25",
+        date = "2026-06-24",
+        title = "Project Detail Redesign with Activity Feed & Create Sheet",
+        importance = "Patch",
+        tags = listOf("Project Detail", "Redesign", "UI", "Create Sheet", "Navigation"),
+        sections = listOf(
+            "📋 Redesigned Project Detail Screen" to listOf(
+                "Complete redesign with modern header: back button, project icon/name/status/topic, search and + Add buttons, and overflow menu.",
+                "Stats row shows entity counts (Obs, Notes, Qs, Sources, Tasks) plus folders/data/reports with themed accent colors.",
+                "Filter tabs (All, Obs, Notes, Questions, Sources, Tasks) let you drill into specific entity types with proper filtering.",
+                "Activity feed renders all project entities in chronological order with rich cards showing kind icon, title, body, tags, and linked counts.",
+                "Search bar with animated toggle lets you search across all entity types within the project.",
+                "Empty state with helpful guidance when no records exist yet.",
+                "[+ Add Record] button at the bottom opens the new Create sheet."
+            ),
+            "🎯 New Create Sheet (COLLECT/ANALYZE/EVIDENCE/PLAN)" to listOf(
+                "Full-screen bottom sheet organized into 4 sections: COLLECT (Observation, Photo, Voice Note, Location Record), ANALYZE (Note, Question, Hypothesis, Experiment), EVIDENCE (Source, Document, Citation), and PLAN (Task, Survey Session, Field Visit, Folder).",
+                "Each option shows a colored icon, label, description, and + add icon with press feedback.",
+                "Overflow menu in the header opens Project Options: View Relations and Project Settings.",
+                "Hypothesis option now wired to the existing NewHypothesisDialog.",
+                "Survey Session navigates to the Research Session screen."
+            ),
+            "🔧 Data & Navigation Fixes" to listOf(
+                "Properly wired onOpenRelations and onOpenSettings callbacks from navigation into the project options menu.",
+                "Updated statusBarsPadding and consistent design language throughout the screen.",
+                "All entity cards are clickable and navigate to their respective detail screens via onOpenDetail."
+            )
+        )
+    ),    FieldMindChangelogEntry(
+        version = "2.2.26.24",
+        date = "2026-06-24",
+        title = "Real Folder Entity & Task Screen Polish",
+        importance = "Patch",
+        tags = listOf("Folders", "Entity", "UI", "Data Layer"),
+        sections = listOf(
+            "📁 Real Folder Entity (Database-Backed)" to listOf(
+                "Created a proper FolderEntity in Room database with fields: name, color, icon, parent folder, project link.",
+                "Added full data layer: DAO queries (observe, insert, update, soft delete), Repository methods, and ViewModel integration.",
+                "Registered FolderEntity in FieldMindDatabase with version bump to 16 (destructive migration fallback).",
+                "Updated NewFolderScreen and NewFolderDialog to call viewModel.addFolder() instead of faking folders as Notes with category='Folder'.",
+                "Folders now persist as a dedicated database table with proper lifecycle tracking (createdAt, updatedAt, archivedAt, deletedAt)."
+            ),
+            "🎨 Task Screen Design Consistency" to listOf(
+                "NewTaskScreen already has statusBarPadding, StandardScreenHeader with heroColor (FieldMindTheme.colors.flashcard), and consistent design patterns matching other entity screens.",
+                "NewTaskDialog in ProjectDetailScreen uses DialogWrapper with proper accent color and full-screen mode."
+            )
+        )
+    ),    FieldMindChangelogEntry(
+        version = "2.2.26.22",
+        date = "2026-06-24",
+        title = "Quick Capture FAB with Voice Notes",
+        importance = "Patch",
+        tags = listOf("FAB", "Quick Capture", "Voice Notes", "UI"),
+        sections = listOf(
+            "📷 Floating Quick Capture FAB" to listOf(
+                "Added floating + button (FAB) on the Home Screen that opens a Quick Capture bottom sheet with 5 options: Observation, Note, Voice Note, Photo, and Question.",
+                "Each option shows an icon, label, and description with themed accent colors and press animations.",
+                "Observation and Photo open the built-in camera for immediate field capture.",
+                "Note opens the existing note creation dialog for quick thoughts and ideas.",
+                "Voice Note opens a dedicated recording dialog with MediaRecorder AAC recording.",
+                "Question navigates to the Questions screen for recording research questions.",
+                "FAB sits at the bottom-right corner with proper elevation and accessible touch target."
+            ),
+            "🎤 Voice Note Recording Dialog" to listOf(
+                "Full-featured voice note recorder with microphone permission handling via ActivityResultContracts.",
+                "Record button starts AAC audio capture to app-internal storage using the existing createFieldMindFile pattern.",
+                "Live recording timer displayed during capture with red recording indicator.",
+                "Stop button releases the MediaRecorder and shows the Save option.",
+                "Title input field for naming voice notes before saving.",
+                "Save creates a Note entity with the audio file attached as DraftEvidenceAttachment for permanent storage.",
+                "Existing voice notes section lists previously recorded audio notes filtered from the notes database."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
+        version = "2.2.26.21",
+        date = "2026-06-24",
+        title = "Entity Linking Pickers & Settings Improvements",
+        importance = "Patch",
+        tags = listOf("Linking", "Pickers", "Settings", "Fixes"),
+        sections = listOf(
+            "🔗 Entity Linking Infrastructure" to listOf(
+                "Added DAO DELETE queries, Repository unlink methods, and 8 ViewModel link/unlink methods for task→observation, project→observation, and project→source cross-references.",
+                "TaskDetailScreen now includes a searchable observation picker with unlink (link_off) and link (add_link) buttons for managing linked observations.",
+                "ProjectDetailScreen now includes a 'Linked Entities' card with observation and source sub-sections, each with unlink buttons and searchable picker dialogs.",
+                "Link/unlink operations use the existing cross-ref table pattern (TaskObservationCrossRef, ProjectObservationCrossRef, ProjectSourceCrossRef) for consistency."
+            ),
+            "⚙️ Advanced Settings & Developer Options" to listOf(
+                "Added 'Developer options' nav card to the 'About & advanced' section in Settings, wired to the existing onOpenDeveloper callback.",
+                "Developer options card uses the MaterialSymbolIcon \"tune\" icon and hypothesis accent color for visual distinction."
+            ),
+            "🐛 Compilation Error Fixes" to listOf(
+                "Fixed Color.luminance() unresolved reference — replaced with manual NTSC luminance calculation (color.red * 0.299f + color.green * 0.587f + color.blue * 0.114f) for Compose compatibility.",
+                "Fixed missing closing brace in ProjectDetailScreen that caused cascading 'local function' errors across StatusBadge, ProjectActionButton, ProjectActionTile, and StatItem composables.",
+                "Fixed missing import (androidx.compose.foundation.lazy.items) in ProjectDetailScreen for the EntityPickerDialog's items(items) LazyListScope extension.",
+                "Fixed FieldMindIcons.Code unresolved reference — replaced with MaterialSymbolIcon(\"tune\") which uses standard Material Symbols."
+            )
+        )
+    ),
+    FieldMindChangelogEntry(
+        version = "1.5.3-infinite-canvas-removed",
+        date = "2026-06-24",
+        title = "Removed Infinite Canvas — Simplified to Page-Only Mode",
+        importance = "Patch",
+        tags = listOf("Canvas", "Simplification", "Cleanup"),
+        sections = listOf(
+            "🗑️ Infinite Canvas Removed" to listOf(
+                "Removed InfiniteCanvas, CanvasBackground (dot grid), and CanvasMinimap composables — the app now uses PageCanvas exclusively.",
+                "Removed CanvasMode enum and canvasMode toggle from CanvasState — the canvas is always in page (document) mode.",
+                "Removed showGrid/toggleGrid from CanvasState — the dot-grid background was only used by the infinite canvas.",
+                "Simplified CanvasTopBar overflow menu: removed canvas mode toggle and grid toggle; Figure Gallery and Drawing tools remain.",
+                "Page indicator in the top bar now always visible since the canvas is always in page mode."
+            ),
+            "🧼 Cleanup" to listOf(
+                "Deleted ~1,500 lines of code across InfiniteCanvas.kt, CanvasBackground.kt, and CanvasMinimap.kt.",
+                "Removed ~250 lines of mode-switching logic from CanvasScreen and CanvasState.",
+                "All canvas blocks, drawing, zoom, and block operations preserved under PageCanvas."
+            )
+        )
+    ),
     FieldMindChangelogEntry(
         version = "1.5.2-predictive-back-canvas",
         date = "2026-06-23",
@@ -458,7 +631,6 @@ private val fieldMindChangelog = listOf(
 
 @Composable
 fun FieldMindChangelogScreen(onBack: () -> Unit) {
-    BackHandler(enabled = true) { onBack() }
     LazyColumn(
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(20.dp, 20.dp, 20.dp, 40.dp),

@@ -323,19 +323,22 @@ internal fun CollapsibleSection(
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewQuestionDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit, projectId: Long? = null) {
     var question by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var source by remember { mutableStateOf("Observation") }; var status by remember { mutableStateOf("New") }; var priority by remember { mutableStateOf("Medium") }
     var answer by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
 
     fun save() {
         if (question.isNotBlank()) {
-            viewModel.addQuestion(question, category, source, status, priority, answer = answer)
+            viewModel.addQuestion(question, category, source, status, priority, projectId = projectId, answer = answer)
             onDismiss()
         }
     }
 
     DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { question.isNotBlank() || answer.isNotBlank() }) {
         DialogHeader(FieldMindIcons.Question, "New Question", "Turn curiosity into something observable, measurable, comparable, or verifiable.")
+        if (projectId != null) {
+            Text("Linked to project", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.project, fontWeight = FontWeight.SemiBold)
+        }
         FieldTextField(question, { question = it }, "What do you want to find out?", minLines = 3, supportingText = "Example: Do bird visits increase after rain at this site?")
         DialogDividerSection("Classification", FieldMindIcons.Category)
         ChoiceChipsField("Category", observationCategories, category) { category = it }
@@ -569,7 +572,7 @@ private fun ProgressiveSection(
 }
 
 @Composable
-internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
+internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit, initialProjectId: Long? = null) {
     val context = LocalContext.current
     val projects by viewModel.projects.collectAsState()
     val haptics = rememberFieldMindHaptics()
@@ -591,7 +594,7 @@ internal fun NewSourceDialog(viewModel: FieldMindViewModel, onDismiss: () -> Uni
     var questions by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var reliability by remember { mutableStateOf(3f) }
-    var projectId by remember { mutableStateOf<Long?>(null) }
+    var projectId by remember { mutableStateOf(initialProjectId) }
     val docPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
@@ -858,8 +861,221 @@ internal fun NewFlashcardDialog(viewModel: FieldMindViewModel, onDismiss: () -> 
 }
 
 @Composable
-internal fun NewNoteDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit) {
-    var title by remember { mutableStateOf("") }; var body by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }; var tags by remember { mutableStateOf("") }; var showAdvanced by remember { mutableStateOf(false) }
+internal fun NewObservationDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit, projectId: Long? = null) {
+    val context = LocalContext.current
+    val haptics = rememberFieldMindHaptics()
+    var subject by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }
+    var facts by remember { mutableStateOf("") }; var confidence by remember { mutableStateOf("Likely") }
+    var location by remember { mutableStateOf("") }; var latitude by remember { mutableStateOf("") }; var longitude by remember { mutableStateOf("") }
+    var tags by remember { mutableStateOf("") }; var evidence by remember { mutableStateOf("") }; var fieldContext by remember { mutableStateOf("") }
+    var attachments by remember { mutableStateOf<List<DraftEvidenceAttachment>>(emptyList()) }
+    var showCamera by remember { mutableStateOf(false) }
+    var locating by remember { mutableStateOf(false) }
+    var showAdvanced by remember { mutableStateOf(false) }
+    val locationProvider = remember { FieldLocationProvider(context) }
+
+    // ── Audio recording state ──
+    var recorder by remember { mutableStateOf<MediaRecorder?>(null) }
+    var audioFile by remember { mutableStateOf<File?>(null) }
+    var recording by remember { mutableStateOf(false) }
+    var recordSeconds by remember { mutableIntStateOf(0) }
+
+    fun startLocating() {
+        locating = true
+        locationProvider.requestCurrentLocation { captured ->
+            locating = false
+            if (captured != null) {
+                latitude = captured.latitude.toString()
+                longitude = captured.longitude.toString()
+                location = captured.asDisplayText()
+                locationProvider.resolvePlaceName(captured.latitude, captured.longitude) { place ->
+                    if (!place.isNullOrBlank()) location = captured.copy(placeName = place).asDisplayText()
+                }
+            }
+        }
+    }
+
+    val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        if (result.values.any { it }) startLocating() else {}
+    }
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        attachments = attachments + uris.map { DraftEvidenceAttachment("Gallery", it.toString(), "Media") }
+        haptics.light()
+    }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            attachments = attachments + DraftEvidenceAttachment("File", it.toString(), "File / PDF")
+            haptics.light()
+        }
+    }
+    val audioImportPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            attachments = attachments + durableEvidenceAttachment(context, "Audio", uri, "Imported field audio")
+            haptics.light()
+        }
+    }
+    val audioPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            val file = createFieldMindFile(context, "audio", ".m4a")
+            val newRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(context) else MediaRecorder()
+            runCatching {
+                newRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+                newRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                newRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                newRecorder.setOutputFile(file.absolutePath)
+                newRecorder.prepare()
+                newRecorder.start()
+                audioFile = file; recorder = newRecorder; recording = true
+            }.onFailure { newRecorder.release() }
+        }
+    }
+
+    LaunchedEffect(recording) { if (recording) { recordSeconds = 0; while (recording) { delay(1000); recordSeconds++ } } }
+
+    fun save() {
+        if (subject.isNotBlank() || facts.isNotBlank()) {
+            val effectiveSubject = subject.ifBlank { facts.take(48).ifBlank { "$category observation" } }
+            viewModel.addObservation(
+                subject = effectiveSubject,
+                category = category,
+                facts = facts.ifBlank { "Quick $category observation." },
+                confidence = confidence,
+                manualLocation = location.ifBlank { "" },
+                latitude = latitude.toDoubleOrNull(),
+                longitude = longitude.toDoubleOrNull(),
+                tags = if (tags.isNotBlank()) "$tags, $category" else category,
+                evidence = evidence,
+                context = fieldContext,
+                projectId = projectId
+            )
+            onDismiss()
+        }
+    }
+
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { subject.isNotBlank() || facts.isNotBlank() || location.isNotBlank() || tags.isNotBlank() || attachments.isNotEmpty() }) {
+        DialogHeader(FieldMindIcons.Observation, "New Observation", "Record what you observed — species, conditions, evidence.", accent = FieldMindTheme.colors.observation)
+        if (projectId != null) {
+            Text("Linked to project", style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.project, fontWeight = FontWeight.SemiBold)
+        }
+
+        // ── Species / Subject ──
+        DialogDividerSection("Species / Subject", FieldMindIcons.Observation, FieldMindTheme.colors.observation)
+        FieldTextField(subject, { subject = it }, "Species / Subject", supportingText = "Monarch Butterfly, Red-tailed Hawk…")
+
+        // ── Description ──
+        DialogDividerSection("Description", FieldMindIcons.Edit, FieldMindTheme.colors.observation)
+        FieldTextField(facts, { facts = it }, "Description", minLines = 3, supportingText = "What exactly did you see, hear, or measure?")
+        ChoiceChipsField("Category", observationCategories, category) { category = it }
+        ChoiceChipsField("Confidence", confidenceOptions, confidence) { confidence = it }
+
+        // ── Location ──
+        DialogDividerSection("Location", FieldMindIcons.Location, FieldMindTheme.colors.observation)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FilledTonalButton(
+                onClick = { if (locationProvider.hasAnyLocationPermission()) startLocating() else locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)) },
+                modifier = Modifier.weight(1f),
+                enabled = !locating
+            ) {
+                if (locating) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Icon(FieldMindIcons.Location, null, size = 18.dp)
+                Spacer(Modifier.size(6.dp)); Text(if (locating) "Locating…" else "Current Location")
+            }
+            OutlinedButton(onClick = { latitude = ""; longitude = ""; location = "" }, modifier = Modifier.weight(1f)) { Text("Clear") }
+        }
+        FieldTextField(location, { location = it }, "Location", supportingText = "e.g. Trailhead, Zone A, GPS coordinate")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FieldTextField(latitude, { latitude = it }, "Latitude", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
+            FieldTextField(longitude, { longitude = it }, "Longitude", modifier = Modifier.weight(1f), keyboardType = KeyboardType.Decimal)
+        }
+
+        // ── Photos ──
+        DialogDividerSection("Photos", FieldMindIcons.Camera, FieldMindTheme.colors.observation)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { showCamera = true }, Modifier.weight(1f)) { Icon(FieldMindIcons.Camera, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Photo") }
+            OutlinedButton(onClick = { haptics.light(); mediaPicker.launch("image/*") }, Modifier.weight(1f)) { Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Gallery") }
+            OutlinedButton(onClick = { haptics.light(); filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("File") }
+        }
+
+        // ── Audio recording section ──
+        Spacer(Modifier.height(6.dp))
+        Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Icon(FieldMindIcons.Mic, null, tint = FieldMindTheme.colors.observation, size = 20.dp)
+                    Text("Voice note", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    if (recording) {
+                        Spacer(Modifier.weight(1f))
+                        Text("${recordSeconds}s", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                Button(
+                    onClick = {
+                        if (recording) {
+                            val file = audioFile
+                            runCatching { recorder?.stop() }; recorder?.release(); recorder = null; recording = false
+                            file?.let { attachments = attachments + DraftEvidenceAttachment("Audio", Uri.fromFile(it).toString(), "Voice note", localPath = it.absolutePath, mimeType = "audio/mp4") }
+                        } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) audioPermission.launch(Manifest.permission.RECORD_AUDIO) else audioPermission.launch(Manifest.permission.RECORD_AUDIO)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = if (recording) ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer) else ButtonDefaults.buttonColors()
+                ) {
+                    Icon(icon = if (recording) FieldMindIcons.Stop else FieldMindIcons.Mic, contentDescription = null, size = 18.dp)
+                    Spacer(Modifier.size(6.dp))
+                    Text(if (recording) "Stop recording" else "Record voice note")
+                }
+                OutlinedButton(onClick = { haptics.light(); audioImportPicker.launch(arrayOf("audio/*")) }, Modifier.fillMaxWidth()) { Icon(FieldMindIcons.Mic, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Or import audio file") }
+            }
+        }
+        AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
+
+        // ── Tags ──
+        DialogDividerSection("Tags", FieldMindIcons.Tag, FieldMindTheme.colors.observation)
+        FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords — e.g. Butterfly, Pollinator")
+
+        // ── Advanced ──
+        CollapsibleSection("Advanced", "Evidence summary & field context", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+            FieldTextField(evidence, { evidence = it }, "Evidence summary", minLines = 2, supportingText = "What evidence supports this observation?")
+            FieldTextField(fieldContext, { fieldContext = it }, "Field context", minLines = 2, supportingText = "Weather, habitat, behavior, or conditions")
+        }
+
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = subject.isNotBlank() || facts.isNotBlank(), saveLabel = "Save observation")
+    }
+    // In-app camera overlay
+    if (showCamera) {
+        Dialog(onDismissRequest = { showCamera = false }) {
+            FieldMindCameraCapture(
+                onPhotoCaptured = { uri, mimeType ->
+                    attachments = attachments + DraftEvidenceAttachment("Photo", uri, "Observation photo", mimeType = mimeType)
+                    showCamera = false
+                },
+                onDismiss = { showCamera = false }
+            )
+        }
+    }
+}
+
+@Composable
+internal fun NewNoteDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit, projectId: Long? = null) {
+    val context = LocalContext.current
+    val haptics = rememberFieldMindHaptics()
+    var title by remember { mutableStateOf("") }; var body by remember { mutableStateOf("") }; var category by remember { mutableStateOf("Other") }
+    var tags by remember { mutableStateOf("") }; var location by remember { mutableStateOf("") }
+    var showAdvanced by remember { mutableStateOf(false) }
+    var showCamera by remember { mutableStateOf(false) }
+    var attachments by remember { mutableStateOf<List<DraftEvidenceAttachment>>(emptyList()) }
+
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        attachments = attachments + uris.map { DraftEvidenceAttachment("Gallery", it.toString(), "Media") }
+        haptics.light()
+    }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            attachments = attachments + DraftEvidenceAttachment("File", it.toString(), "File / PDF")
+            haptics.light()
+        }
+    }
 
     fun save() {
         if (title.isNotBlank() || body.isNotBlank()) {
@@ -869,19 +1085,71 @@ internal fun NewNoteDialog(viewModel: FieldMindViewModel, onDismiss: () -> Unit)
                 body = body,
                 category = category,
                 tags = tags,
+                projectId = projectId,
                 onSaved = { onDismiss() }
             )
             onDismiss()
         }
     }
 
-    DialogWrapper(onDismiss = onDismiss) {
+    DialogWrapper(onDismiss = onDismiss, fullScreen = true, isDirty = { title.isNotBlank() || body.isNotBlank() || tags.isNotBlank() || attachments.isNotEmpty() }) {
         DialogHeader(FieldMindIcons.Note, "New Note", "Capture a quick idea, observation, or thought.", accent = FieldMindTheme.colors.source)
-        ChoiceChipsField("Category", observationCategories, category) { category = it }
+
+        if (projectId != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.project.copy(alpha = 0.1f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 18.dp)
+                    Text("Linked to project", style = MaterialTheme.typography.labelMedium, color = FieldMindTheme.colors.project, fontWeight = FontWeight.SemiBold)
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+        }
+
+        // ── Title & Content ──
+        DialogDividerSection("Title & Content", FieldMindIcons.Note, FieldMindTheme.colors.source)
         FieldTextField(title, { title = it }, "Title", supportingText = "Auto-filled from body if left blank")
-        FieldTextField(body, { body = it }, "Note body", minLines = 6)
+        FieldTextField(body, { body = it }, "Content", minLines = 6, supportingText = "Start writing…")
+
+        // ── Category ──
+        DialogDividerSection("Classification", FieldMindIcons.Category, FieldMindTheme.colors.source)
+        ChoiceChipsField("Category", observationCategories, category) { category = it }
+
+        // ── Attachments ──
+        DialogDividerSection("Attachments", FieldMindIcons.File, FieldMindTheme.colors.source)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { showCamera = true }, Modifier.weight(1f)) { Icon(FieldMindIcons.Camera, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Photo") }
+            OutlinedButton(onClick = { haptics.light(); mediaPicker.launch("image/*") }, Modifier.weight(1f)) { Icon(FieldMindIcons.Gallery, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("Gallery") }
+            OutlinedButton(onClick = { haptics.light(); filePicker.launch(arrayOf("application/pdf", "text/*", "image/*", "video/*", "audio/*")) }, Modifier.weight(1f)) { Icon(FieldMindIcons.File, null, size = 18.dp); Spacer(Modifier.size(6.dp)); Text("File") }
+        }
+        AttachmentPreviewList(attachments, onCaptionChange = { index, caption -> attachments = attachments.mapIndexed { i, item -> if (i == index) item.copy(caption = caption) else item } }, onRemove = { remove -> attachments = attachments.filterIndexed { index, _ -> index != remove } })
+
+        // ── Tags ──
+        DialogDividerSection("Tags", FieldMindIcons.Tag, FieldMindTheme.colors.source)
         FieldTextField(tags, { tags = it }, "Tags", supportingText = "Comma-separated keywords")
-        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank() || body.isNotBlank())
+
+        // ── Advanced ──
+        CollapsibleSection("Advanced options", "Project linking & metadata", expanded = showAdvanced, onToggle = { showAdvanced = !showAdvanced }) {
+            FieldTextField(location, { location = it }, "Location", supportingText = "Where was this note taken?")
+        }
+
+        DialogActions(onCancel = onDismiss, onSave = { save() }, saveEnabled = title.isNotBlank() || body.isNotBlank(), saveLabel = "Save note")
+    }
+    // In-app camera overlay
+    if (showCamera) {
+        Dialog(onDismissRequest = { showCamera = false }) {
+            FieldMindCameraCapture(
+                onPhotoCaptured = { uri, mimeType ->
+                    attachments = attachments + DraftEvidenceAttachment("Photo", uri, "Note photo", mimeType = mimeType)
+                    showCamera = false
+                },
+                onDismiss = { showCamera = false }
+            )
+        }
     }
 }
 @Composable

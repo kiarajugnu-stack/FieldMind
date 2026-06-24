@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fieldmind.research.app.features.field.presentation.components.pressScale
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import kotlin.math.*
@@ -89,6 +90,7 @@ fun ZoomSlider(
         Box(
             modifier = Modifier
                 .size(36.dp)
+                .pressScale(scaleDown = 0.88f)
                 .clip(RoundedCornerShape(10.dp))
                 .background(
                     MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)
@@ -183,6 +185,7 @@ fun ZoomSlider(
         Box(
             modifier = Modifier
                 .size(36.dp)
+                .pressScale(scaleDown = 0.88f)
                 .clip(RoundedCornerShape(10.dp))
                 .background(
                     MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)

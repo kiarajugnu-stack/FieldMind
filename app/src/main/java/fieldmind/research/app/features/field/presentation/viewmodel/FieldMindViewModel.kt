@@ -186,11 +186,12 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun archiveObservation(id: Long) = viewModelScope.launch { repository.archiveObservation(id) }
 
     fun updateQuestionEntity(entity: QuestionEntity) = viewModelScope.launch { repository.updateQuestion(entity) }
-    fun setQuestionAnswer(entity: QuestionEntity, answer: String) = viewModelScope.launch {
+    fun setQuestionAnswer(entity: QuestionEntity, answer: String, confidence: Int = entity.confidence) = viewModelScope.launch {
         val trimmed = answer.trim()
         repository.updateQuestion(
             entity.copy(
                 answer = trimmed,
+                confidence = confidence.coerceIn(0, 100),
                 answeredAt = if (trimmed.isBlank()) null else System.currentTimeMillis(),
                 status = if (trimmed.isBlank()) entity.status else "Answered"
             )
@@ -208,6 +209,46 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun deleteQuestion(id: Long) = viewModelScope.launch { repository.deleteQuestion(id) }
     fun linkHypothesisEvidence(hypothesisId: Long, observationId: Long) = viewModelScope.launch {
         repository.linkHypothesisEvidence(hypothesisId, observationId)
+    }
+
+    fun unlinkHypothesisEvidence(hypothesisId: Long, observationId: Long) = viewModelScope.launch {
+        repository.unlinkHypothesisEvidence(hypothesisId, observationId)
+    }
+
+    fun linkQuestionObservation(questionId: Long, observationId: Long) = viewModelScope.launch {
+        repository.linkQuestionObservation(questionId, observationId)
+        // Also update the relatedObservationIds string on the question entity
+        val q = questions.value.firstOrNull { it.id == questionId } ?: return@launch
+        val ids = q.relatedObservationIds.split(",").mapNotNull { it.trim().toLongOrNull() }.toMutableSet()
+        if (ids.add(observationId)) {
+            repository.updateQuestion(q.copy(relatedObservationIds = ids.joinToString(",")))
+        }
+    }
+
+    fun unlinkQuestionObservation(questionId: Long, observationId: Long) = viewModelScope.launch {
+        val q = questions.value.firstOrNull { it.id == questionId } ?: return@launch
+        val ids = q.relatedObservationIds.split(",").mapNotNull { it.trim().toLongOrNull() }.toMutableSet()
+        if (ids.remove(observationId)) {
+            repository.updateQuestion(q.copy(relatedObservationIds = ids.joinToString(",")))
+        }
+    }
+
+    fun linkQuestionSource(questionId: Long, sourceId: Long) = viewModelScope.launch {
+        repository.linkQuestionSource(questionId, sourceId)
+        // Also update the relatedSourceIds string on the question entity
+        val q = questions.value.firstOrNull { it.id == questionId } ?: return@launch
+        val ids = q.relatedSourceIds.split(",").mapNotNull { it.trim().toLongOrNull() }.toMutableSet()
+        if (ids.add(sourceId)) {
+            repository.updateQuestion(q.copy(relatedSourceIds = ids.joinToString(",")))
+        }
+    }
+
+    fun unlinkQuestionSource(questionId: Long, sourceId: Long) = viewModelScope.launch {
+        val q = questions.value.firstOrNull { it.id == questionId } ?: return@launch
+        val ids = q.relatedSourceIds.split(",").mapNotNull { it.trim().toLongOrNull() }.toMutableSet()
+        if (ids.remove(sourceId)) {
+            repository.updateQuestion(q.copy(relatedSourceIds = ids.joinToString(",")))
+        }
     }
     fun deleteHypothesis(id: Long) = viewModelScope.launch { repository.deleteHypothesis(id) }
     fun deleteProject(id: Long) = viewModelScope.launch { repository.deleteProject(id) }
@@ -860,6 +901,24 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     fun unlinkObservationFromSession(sessionId: Long, observationId: Long) = viewModelScope.launch {
         repository.unlinkSessionObservation(sessionId, observationId)
     }
+    fun linkTaskObservation(taskId: Long, observationId: Long) = viewModelScope.launch {
+        repository.linkTaskObservation(taskId, observationId)
+    }
+    fun unlinkTaskObservation(taskId: Long, observationId: Long) = viewModelScope.launch {
+        repository.unlinkTaskObservation(taskId, observationId)
+    }
+    fun linkProjectObservation(projectId: Long, observationId: Long) = viewModelScope.launch {
+        repository.linkProjectObservation(projectId, observationId)
+    }
+    fun unlinkProjectObservation(projectId: Long, observationId: Long) = viewModelScope.launch {
+        repository.unlinkProjectObservation(projectId, observationId)
+    }
+    fun linkProjectSource(projectId: Long, sourceId: Long) = viewModelScope.launch {
+        repository.linkProjectSource(projectId, sourceId)
+    }
+    fun unlinkProjectSource(projectId: Long, sourceId: Long) = viewModelScope.launch {
+        repository.unlinkProjectSource(projectId, sourceId)
+    }
     val researchSessions: StateFlow<List<ResearchSessionEntity>> = repository.researchSessions.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val sessionObservationCrossRefs: StateFlow<List<SessionObservationCrossRef>> = repository.sessionObservationCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val hypothesisEvidenceCrossRefs: StateFlow<List<HypothesisEvidenceCrossRef>> = repository.hypothesisEvidenceCrossRefs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -1013,8 +1072,16 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
         taskType: String = "Field Survey",
         priority: String = "Medium",
         dueDate: String = "",
+        dueTime: String = "",
         assignedTo: String = "",
         status: String = "Pending",
+        progress: Int = 0,
+        checklistJson: String = "",
+        attachmentUris: String = "",
+        reminder: Int = 0,
+        reminderUnit: String = "minute",
+        repeatInterval: Int = 0,
+        repeatUnit: String = "",
         linkedQuestionId: Long? = null,
         linkedObservationId: Long? = null,
         linkedSpeciesId: Long? = null,
@@ -1028,8 +1095,16 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
                 taskType = taskType,
                 priority = priority,
                 dueDate = dueDate.trim(),
+                dueTime = dueTime.trim(),
                 assignedTo = assignedTo.trim(),
                 status = status,
+                progress = progress.coerceIn(0, 100),
+                checklistJson = checklistJson,
+                attachmentUris = attachmentUris,
+                reminder = reminder,
+                reminderUnit = reminderUnit,
+                repeatInterval = repeatInterval,
+                repeatUnit = repeatUnit,
                 linkedQuestionId = linkedQuestionId,
                 linkedObservationId = linkedObservationId,
                 linkedSpeciesId = linkedSpeciesId,
@@ -1044,6 +1119,35 @@ class FieldMindViewModel(application: Application) : AndroidViewModel(applicatio
     val tasks: StateFlow<List<TaskEntity>> = repository.tasks.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     fun observeTasksForProject(projectId: Long) = repository.observeTasksForProject(projectId)
     val weatherCatalog: StateFlow<List<WeatherCatalogEntity>> = repository.weatherCatalog.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // ── Folders ──
+    val folders: StateFlow<List<FolderEntity>> = repository.folders.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun observeFoldersForProject(projectId: Long) = repository.observeFoldersForProject(projectId)
+
+    fun addFolder(
+        name: String,
+        color: Long = 0xFF5F7F52,
+        iconName: String = "folder",
+        projectId: Long? = null,
+        parentFolderId: Long? = null,
+        description: String = "",
+        onSaved: ((Long) -> Unit)? = null
+    ) = viewModelScope.launch {
+        val id = repository.addFolder(
+            FolderEntity(
+                name = name.trim(),
+                color = color,
+                iconName = iconName,
+                projectId = projectId,
+                parentFolderId = parentFolderId,
+                description = description.trim()
+            )
+        )
+        onSaved?.invoke(id)
+    }
+
+    fun updateFolderEntity(entity: FolderEntity) = viewModelScope.launch { repository.updateFolder(entity) }
+    fun deleteFolder(id: Long) = viewModelScope.launch { repository.deleteFolder(id) }
 
     // ── Extra backup data (PhashDatabase + GeoFenceRegions + Streaks + Achievements) ──
     /**

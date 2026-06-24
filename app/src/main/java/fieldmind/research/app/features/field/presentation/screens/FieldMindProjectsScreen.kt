@@ -1,56 +1,38 @@
 package fieldmind.research.app.features.field.presentation.screens
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.database.entity.*
-import fieldmind.research.app.features.field.data.export.FieldReportTemplates
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.math.ceil
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // ══════════════════════════════════════════════════════════════════════
-//  Research Hub — Full redesign per spec
-//  Features: Start Session, New Project, Templates (19 types + 19 templates),
-//  Emoji picker, Priority/Dates/Tags, 5 tabs (Overview, Observations,
-//  Hypotheses, Data, Reports)
+//  Project Types & Templates — preserved for NewProjectScreen
 // ══════════════════════════════════════════════════════════════════════
 
-// ── Project Types (19 — each type has a matching template below) ──
 internal val researchProjectTypes = listOf(
     "Species Survey", "Population Census", "Habitat Assessment",
     "Wildlife Monitoring", "Behavioral Study", "Migration Study",
@@ -61,7 +43,6 @@ internal val researchProjectTypes = listOf(
     "Custom Research Project"
 )
 
-// ── Project Templates (19 — one per project type) ──
 internal data class ProjectTemplateDef(
     val name: String,
     val type: String,
@@ -103,13 +84,16 @@ internal val projectTemplates = listOf(
     ProjectTemplateDef("Custom Blank Template", "Custom Research Project", FieldMindIcons.Project, "Start from a clean workspace with only core planning fields.", "Other", defaultMethods = emptySet(), objective = "", question = "", background = "", methodPlan = "", hypothesis = "", dataPlan = "", analysisPlan = "", nextAction = "", tags = "")
 )
 
-// ── Research Categories ──
 internal val researchCategories = listOf(
     "Ornithology", "Mammalogy", "Herpetology", "Entomology",
     "Botany", "Ecology", "Conservation", "Climate Science",
     "Hydrology", "Geology", "Oceanography", "Citizen Science",
     "Behavioral Ecology", "Evolution", "Taxonomy", "Other"
 )
+
+// ══════════════════════════════════════════════════════════════════════
+//  Projects Screen — Simplified per HTML spec
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
 fun ProjectsScreen(
@@ -119,443 +103,343 @@ fun ProjectsScreen(
     onStartSession: (() -> Unit)? = null,
     onNavigate: ((FieldMindScreen) -> Unit)? = null
 ) {
-    val questions by viewModel.questions.collectAsState()
-    val hypotheses by viewModel.hypotheses.collectAsState()
     val projects by viewModel.projects.collectAsState()
     val observations by viewModel.observations.collectAsState()
-    val sources by viewModel.sources.collectAsState()
-    val data by viewModel.dataRecords.collectAsState()
-    val reports by viewModel.reports.collectAsState()
     val notes by viewModel.notes.collectAsState()
-    val researchSessions by viewModel.researchSessions.collectAsState()
-    var tab by remember(startTab) { mutableIntStateOf(startTab.coerceIn(0, 4)) }
-    val haptics = rememberFieldMindHaptics()
-    val workspaceSubNavTabs = listOf(
-        SubNavTab("Overview", FieldMindIcons.Today),
-        SubNavTab("Observations", FieldMindIcons.Observation),
-        SubNavTab("Hypotheses", FieldMindIcons.Hypothesis),
-        SubNavTab("Data", FieldMindIcons.Data),
-        SubNavTab("Reports", FieldMindIcons.Report)
-    )
+    val questions by viewModel.questions.collectAsState()
+    val sources by viewModel.sources.collectAsState()
+    val colors = FieldMindTheme.colors
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    fun selectTab(next: Int) {
-        val bounded = next.coerceIn(0, workspaceSubNavTabs.lastIndex)
-        if (bounded != tab) { tab = bounded; haptics.light() }
-    }
+    var searchQuery by remember { mutableStateOf("") }
+    var showSearch by remember { mutableStateOf(false) }
+    var selectedFilter by remember { mutableStateOf("All") }
+    var sortOption by remember { mutableStateOf("Updated") }
+    var showSortMenu by remember { mutableStateOf(false) }
+    var showFilterSheet by remember { mutableStateOf(false) }
+    var showCreateSheet by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        // ── Research Hub Header (expanded) ──
-        StandardScreenHeader(
-            title = "Research Hub",
-            subtitle = "19 templates + multi-workspace collab. Queries, data tools, reports, and async teams.",
-            icon = FieldMindIcons.Projects,
-            heroColor = FieldMindTheme.colors.project,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
-        )
-        FieldMindSubNavBar(
-            tabs = workspaceSubNavTabs,
-            selectedIndex = tab,
-            onTabSelected = { selectTab(it) },
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        // Static tab content (no AnimatedContent to avoid infinite-height crash with LazyColumn)
-        Box(
-            modifier = Modifier.fillMaxSize().pointerInput(tab) {
-                    var totalDrag = 0f
-                    detectHorizontalDragGestures(
-                        onDragStart = { totalDrag = 0f },
-                        onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
-                        onDragEnd = { if (abs(totalDrag) > 96f) { if (totalDrag < 0) selectTab(tab + 1) else selectTab(tab - 1) } }
-                    )
-                }
-            ) {
-                when (tab) {
-                    0 -> ResearchHubOverviewTab(viewModel, projects, observations, questions, hypotheses, sources, data, reports, researchSessions, onOpenDetail, onStartSession, onNavigate)
-                    1 -> ObservationsTab(viewModel, observations, projects, onOpenDetail)
-                    2 -> HypothesesTab(viewModel, hypotheses, questions, observations, onOpenDetail, onNavigate)
-                    3 -> DataTab(viewModel, data, reports, observations, projects, onOpenDetail, onNavigate)
-                    4 -> ReportsTab(viewModel, reports, projects, onOpenDetail, onNavigate)
-                }
+    val filterOptions = listOf("All", "Active", "Archived", "Not Synced")
+
+    // Compute stats
+    val totalCount = projects.size
+    val activeCount = projects.count { it.status == "Active" }
+    val archivedCount = projects.count { it.status == "Archived" }
+    val notSyncedCount = projects.count { it.status == "Not Synced" }
+
+    // Filter and sort projects
+    val filteredProjects = remember(projects, selectedFilter, searchQuery, sortOption) {
+        var result = projects
+
+        // Apply filter
+        when (selectedFilter) {
+            "Active" -> result = result.filter { it.status == "Active" }
+            "Archived" -> result = result.filter { it.status == "Archived" }
+            "Not Synced" -> result = result.filter { it.status == "Not Synced" }
+        }
+
+        // Apply search
+        if (searchQuery.isNotBlank()) {
+            val q = searchQuery.lowercase()
+            result = result.filter {
+                it.title.lowercase().contains(q) ||
+                it.topicType.lowercase().contains(q) ||
+                it.objective.lowercase().contains(q)
             }
+        }
+
+        // Apply sort
+        when (sortOption) {
+            "Name" -> result.sortedBy { it.title.lowercase() }
+            "Created" -> result.sortedByDescending { it.createdAt }
+            "Records" -> result.sortedByDescending { p ->
+                observations.count { it.projectId == p.id } +
+                notes.count { it.projectId == p.id }
+            }
+            else -> result.sortedByDescending { it.updatedAt } // Updated
         }
     }
 
-// ══════════════════════════════════════════════════════════════════════
-//  Research Hub Overview Tab — Full redesign with templates, emoji, dates
-// ══════════════════════════════════════════════════════════════════════
+    // ── Helper to format relative time ──
+    fun relativeTime(timestamp: Long): String {
+        val diff = System.currentTimeMillis() - timestamp
+        val minutes = diff / 60_000
+        val hours = diff / 3600_000
+        val days = diff / 86_400_000
+        return when {
+            minutes < 1 -> "Just now"
+            minutes < 60 -> "${minutes}m ago"
+            hours < 24 -> "${hours}h ago"
+            days < 7 -> "${days}d ago"
+            days < 30 -> "${days / 7}w ago"
+            days < 365 -> "${days / 30}mo ago"
+            else -> SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(timestamp))
+        }
+    }
 
-@Composable
-private fun ResearchHubOverviewTab(
-    viewModel: FieldMindViewModel,
-    projects: List<ProjectEntity>,
-    observations: List<ObservationEntity>,
-    questions: List<QuestionEntity>,
-    hypotheses: List<HypothesisEntity>,
-    sources: List<SourceEntity>,
-    data: List<DataRecordEntity>,
-    reports: List<ReportEntity>,
-    researchSessions: List<ResearchSessionEntity>,
-    onOpenDetail: (String, Long) -> Unit,
-    onStartSession: (() -> Unit)? = null,
-    onNavigate: ((FieldMindScreen) -> Unit)? = null
-) {
-    var showNewProject by remember { mutableStateOf(false) }
-    var showTemplates by remember { mutableStateOf(false) }
-    var showTypes by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
-
-    // Project creation state (full spec)
-    var projTitle by remember { mutableStateOf("") }
-    var projType by remember { mutableStateOf(researchProjectTypes[0]) }
-    var projTemplate by remember { mutableStateOf(projectTemplates.last().name) }
-    var projDesc by remember { mutableStateOf("") }
-    var projCategory by remember { mutableStateOf(researchCategories[0]) }
-    var projPriority by remember { mutableStateOf("Medium") }
-    var projStatus by remember { mutableStateOf("Planning") }
-    var projStartDate by remember { mutableStateOf("") }
-    var projEndDate by remember { mutableStateOf("") }
-    var projTeam by remember { mutableStateOf("") }
-    var projTags by remember { mutableStateOf("") }
-    var projQuestion by remember { mutableStateOf("") }
-    var projMethods by remember { mutableStateOf(setOf("Photo documentation", "Daily observations")) }
-    var projHypothesis by remember { mutableStateOf("") }
-
-    val haptics = rememberFieldMindHaptics()
-
-    // Computed metrics
-    val totalProjects = projects.size
-    val totalObs = observations.size
-    val uniqueSites = observations.mapNotNull { it.manualLocation.ifBlank { if (it.latitude != null && it.longitude != null) "${it.latitude},${it.longitude}" else null } }.distinct().size
-    val openQuestions = questions.count { it.answer.isBlank() }
-    val supportedHypotheses = hypotheses.count { it.resultStatus.equals("Supported", true) }
-    val refutedHypotheses = hypotheses.count { it.resultStatus.equals("Refuted", true) }
-    val untestedHypotheses = hypotheses.size - supportedHypotheses - refutedHypotheses
-    val totalFieldHours = researchSessions.sumOf { it.totalDurationMs } / 3600_000.0
-    val totalSessions = researchSessions.size
-
+    Box(Modifier.fillMaxSize()) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp, 14.dp, 20.dp, 96.dp),
+        contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 96.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        if (searchQuery.isNotEmpty()) {
+        // ── Header: Projects with StandardScreenHeader ──
+        item {
+            StandardScreenHeader(
+                title = "Projects",
+                subtitle = "${projects.size} total · Manage your research projects",
+                icon = FieldMindIcons.Projects,
+                heroColor = colors.project,
+                trailing = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FilledTonalIconButton(
+                            onClick = { showSearch = !showSearch },
+                            modifier = Modifier.size(40.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(if (showSearch) MaterialSymbolIcon("close") else FieldMindIcons.Search, null, size = 20.dp)
+                        }
+                        FilledTonalIconButton(
+                            onClick = { showCreateSheet = true },
+                            modifier = Modifier.size(40.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = colors.project.copy(alpha = 0.16f),
+                                contentColor = colors.project
+                            )
+                        ) {
+                            Icon(FieldMindIcons.Add, null, size = 22.dp)
+                        }
+                    }
+                }
+            )
+        }
+
+        // ── Search ──
+        if (showSearch) {
             item {
-                TextField(
+                OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search projects, observations...") },
+                    placeholder = { Text("Search projects...") },
                     leadingIcon = { Icon(FieldMindIcons.Search, null, size = 20.dp) },
-                    trailingIcon = { if (searchQuery.isNotBlank()) IconButton(onClick = { searchQuery = "" }) { Icon(MaterialSymbolIcon("close"), contentDescription = "Clear", size = 18.dp) } },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                    ),
-                    singleLine = true
+                    trailingIcon = {
+                        if (searchQuery.isNotBlank()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(MaterialSymbolIcon("close"), "Clear", size = 18.dp)
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colors.project.copy(alpha = 0.5f),
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    )
                 )
             }
         }
 
-        // ── 1. Start Research Session ──
+        // ── Filter chips ──
+        item {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                filterOptions.forEach { filter ->
+                    val isSelected = selectedFilter == filter
+                    Surface(
+                        onClick = { selectedFilter = filter; searchQuery = "" },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) colors.project.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                        tonalElevation = 0.dp
+                    ) {
+                        Text(
+                            filter,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) colors.project else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // ── Stats row: Total | Active | Archive | Not Synced ──
         item {
             Card(
-                modifier = Modifier.fillMaxWidth().expressivePress(scaleDown = 0.97f).clickable { haptics.light(); onStartSession?.invoke() },
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.project.copy(alpha = 0.12f)),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
-                Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Box(Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(FieldMindTheme.colors.project.copy(alpha = 0.2f)), contentAlignment = Alignment.Center) {
-                        Icon(FieldMindIcons.Bolt, null, tint = FieldMindTheme.colors.project, size = 28.dp)
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text("Start Research Session", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Timer-based multi-observation capture with GPS tracking", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 22.dp)
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StatChip("${totalCount}", "Total", colors.project)
+                    StatChip("${activeCount}", "Active", colors.positive)
+                    StatChip("${archivedCount}", "Archived", MaterialTheme.colorScheme.onSurfaceVariant)
+                    StatChip("${notSyncedCount}", "Not Synced", colors.warning)
                 }
             }
         }
 
-        // ── 2. Dashboard Metrics ──
-        item { ResearchHubDashboard(totalObs, uniqueSites, openQuestions, supportedHypotheses, refutedHypotheses, untestedHypotheses, totalFieldHours, totalSessions) }
-
-        // ── 3. New Project Button + Templates + Types ──
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(
-                    onClick = { onNavigate?.invoke(FieldMindScreen.NewProject) ?: run { showNewProject = !showNewProject; if (!showNewProject) { projTitle = ""; projDesc = ""; projQuestion = "" } } },
-                    modifier = Modifier.weight(1f).height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp)
-                ) {
-                    Icon(FieldMindIcons.Add, null, size = 18.dp)
-                    Spacer(Modifier.size(6.dp))
-                    Text(if (showNewProject) "Cancel" else "Project", maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                OutlinedButton(
-                    onClick = { showTemplates = !showTemplates; if (showTemplates) showTypes = false },
-                    modifier = Modifier.weight(1f).height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp)
-                ) {
-                    Icon(FieldMindIcons.Project, null, size = 18.dp)
-                    Spacer(Modifier.size(6.dp))
-                    Text(if (showTemplates) "Hide" else "Templates", maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                OutlinedButton(
-                    onClick = { showTypes = !showTypes; if (showTypes) showTemplates = false },
-                    modifier = Modifier.weight(1f).height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp)
-                ) {
-                    Icon(FieldMindIcons.Category, null, size = 18.dp)
-                    Spacer(Modifier.size(6.dp))
-                    Text(if (showTypes) "Hide" else "Types", maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-            }
-        }
-
-        // ── 7. Projects List ──
-        val filteredProjects = if (searchQuery.isBlank()) projects else projects.filter { project ->
-            project.title.contains(searchQuery, ignoreCase = true)
-        }
-        
-        if (totalProjects == 0) {
+        // ── Section header: My Projects + Sort ──
+        if (filteredProjects.isNotEmpty()) {
             item {
-                EmptyState("No projects yet", "Start with a name and a question. Use templates or pick a project type to get started.", icon = FieldMindIcons.Project, actionLabel = "Create project") { onNavigate?.invoke(FieldMindScreen.NewProject) ?: run { showNewProject = true } }
-            }
-        } else if (searchQuery.isNotBlank() && filteredProjects.isEmpty()) {
-            item {
-                EmptyState("No projects match", "Try searching with different keywords", icon = FieldMindIcons.Search) { searchQuery = "" }
-            }
-        } else {
-            item { SectionHeader("Projects (${filteredProjects.size})", if (searchQuery.isNotBlank()) "Search results" else "Tap any project to open the workspace") }
-            items(filteredProjects) { project -> ProjectDashboardCardCompact(project, observations, questions, hypotheses, sources, data, reports, researchSessions) { onOpenDetail("project", project.id) } }
-        }
-    }
-    // Dialogs outside LazyColumn
-    if (showTypes) {
-        OptionPickerDialog(
-            title = "Project Types",
-            subtitle = "Select a type to set the project category and field suggestions.",
-            options = researchProjectTypes,
-            selected = projType,
-            onSelect = { type ->
-                val preset = projectTemplates.firstOrNull { it.type == type }
-                projType = type
-                projTemplate = preset?.name ?: "Custom Blank Template"
-                projTitle = ""
-                // Only pre-fill category — keep all fields blank for user to fill
-                projCategory = preset?.category ?: researchCategories.first()
-                projDesc = ""
-                projQuestion = ""
-                projHypothesis = ""
-                projTags = ""
-                projPriority = "Medium"
-                projMethods = setOf()
-                showTypes = false
-                showNewProject = true
-            },
-            onDismiss = { showTypes = false },
-            accentColor = FieldMindTheme.colors.project,
-            iconProvider = { FieldMindIcons.Project }
-        )
-    }
-    if (showTemplates) {
-        OptionPickerDialog(
-            title = "Project Templates",
-            subtitle = "Choose a template to use as a research guide for your project.",
-            options = projectTemplates.map { it.name },
-            selected = projTemplate,
-            onSelect = { templateName ->
-                val template = projectTemplates.firstOrNull { it.name == templateName }!!
-                projTemplate = template.name
-                projType = template.type
-                projTitle = ""
-                projCategory = template.category
-                projDesc = ""
-                projQuestion = ""
-                projHypothesis = ""
-                projTags = ""
-                projMethods = setOf()
-                showTemplates = false
-                showNewProject = true
-            },
-            onDismiss = { showTemplates = false },
-            accentColor = FieldMindTheme.colors.project,
-            iconProvider = { name -> projectTemplates.firstOrNull { it.name == name }?.icon }
-        )
-    }
-    if (showNewProject) {
-        NewProjectScreen(viewModel = viewModel, onBack = { showNewProject = false })
-    }
-}
-
-// ════════════════════════════════════════════════════════════════��═════
-//  Research Hub Dashboard
-// ══════════════════════════════════════════════════════════════════════
-
-@Composable
-private fun ResearchHubDashboard(
-    totalObs: Int, uniqueSites: Int,
-    openQuestions: Int, supportedHyp: Int, refutedHyp: Int, untestedHyp: Int,
-    totalFieldHours: Double, totalSessions: Int
-) {
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(FieldMindIcons.Insights, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                Text("Research Dashboard", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                DashboardMetric(totalObs.toString(), "Total obs", FieldMindTheme.colors.observation)
-                DashboardMetric(uniqueSites.toString(), "Sites", FieldMindTheme.colors.info)
-                DashboardMetric(openQuestions.toString(), "Open Qs", FieldMindTheme.colors.question)
-                DashboardMetric("%.1f".format(totalFieldHours), "Field hours", FieldMindTheme.colors.warning)
-                DashboardMetric(totalSessions.toString(), "Sessions", FieldMindTheme.colors.data)
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "Hypotheses: $supportedHyp supported · $refutedHyp refuted · $untestedHyp untested",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
-private fun DashboardMetric(value: String, label: String, color: androidx.compose.ui.graphics.Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-// ══════════════════════════════════════════════════════════════════════
-//  Templates Grid
-// ══════════════════════════════════════════════════════════════════════
-
-@Composable
-private fun TemplatesGrid(templates: List<ProjectTemplateDef>, onSelect: (ProjectTemplateDef) -> Unit) {
-    Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Templates (${templates.size})", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Text("Choose a template to pre-fill your project", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(templates) { template ->
-                    Card(
-                        modifier = Modifier.width(200.dp).expressivePress(scaleDown = 0.95f).clickable { onSelect(template) },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(template.icon, null, tint = FieldMindTheme.colors.project, size = 28.dp)
-                            Text(template.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                            Text(template.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                template.defaultMethods.take(3).forEach { method ->
-                                    Text(method.take(12), style = MaterialTheme.typography.labelSmall, color = FieldMindTheme.colors.project, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        "My Projects",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    // Sort button
+                    Box {
+                        Surface(
+                            onClick = { showSortMenu = true },
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            tonalElevation = 0.dp
+                        ) {
+                            Row(
+                                Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(FieldMindIcons.Sort, null, size = 16.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Sort: $sortOption", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Icon(FieldMindIcons.Down, null, size = 14.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
+                            listOf("Updated", "Name", "Created", "Records").forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option, style = MaterialTheme.typography.bodySmall) },
+                                    onClick = { sortOption = option; showSortMenu = false },
+                                    leadingIcon = if (sortOption == option) ({ Icon(FieldMindIcons.Check, null, size = 18.dp) }) else null
+                                )
                             }
                         }
                     }
                 }
             }
         }
-    }
-}
 
-// ══════════════════════════════════════════════════════════════��═══════
-//  Project Creation Form — Full spec with all fields
-// ══════════════════════════════════════════════════════════════════════
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ResearchMethodBuilder(selected: Set<String>, onSelected: (Set<String>) -> Unit) {
-    val options = listOf("Daily observations", "Weekly observations", "Photo documentation", "Audio recording",
-        "Video documentation", "Measurement logging", "Species counting", "Weather logging",
-        "Behavior logging", "Comparison table", "GPS tracking", "Water testing", "Camera trap")
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        options.forEach { option ->
-            FilterChip(
-                selected = option in selected,
-                onClick = { onSelected(if (option in selected) selected - option else selected + option) },
-                label = { Text(option, style = MaterialTheme.typography.labelSmall) },
-                leadingIcon = if (option in selected) ({ Icon(FieldMindIcons.Check, null, size = 16.dp) }) else null
-            )
+        // ── Projects list ──
+        if (filteredProjects.isEmpty()) {
+            // Empty state per HTML spec
+            item {
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(
+                        Modifier.fillMaxWidth().padding(40.dp, 48.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Box(
+                            Modifier.size(72.dp).clip(RoundedCornerShape(20.dp))
+                                .background(colors.project.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(FieldMindIcons.Project, null, tint = colors.project, size = 36.dp)
+                        }
+                        Text(
+                            if (searchQuery.isNotBlank() || selectedFilter != "All") "No projects match" else "No Projects Yet",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            if (searchQuery.isNotBlank() || selectedFilter != "All")
+                                "Try adjusting your search or filter"
+                            else
+                                "Create your first project to start collecting observations, notes, questions and sources.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 20.dp)
+                        )
+                        if (searchQuery.isBlank() && selectedFilter == "All") {
+                            FilledTonalButton(
+                                onClick = { onNavigate?.invoke(FieldMindScreen.NewProject) },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = colors.project.copy(alpha = 0.16f))
+                            ) {
+                                Icon(FieldMindIcons.Add, null, size = 18.dp)
+                                Spacer(Modifier.size(6.dp))
+                                Text("Create Project")
+                            }
+                        } else {
+                            TextButton(onClick = { selectedFilter = "All"; searchQuery = "" }) {
+                                Text("Clear filters")
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            items(filteredProjects, key = { it.id }) { project ->
+                ProjectCard(
+                    project = project,
+                    recordCount = observations.count { it.projectId == project.id } +
+                        notes.count { it.projectId == project.id } +
+                        questions.count { it.relatedProjectId == project.id } +
+                        sources.count { it.relatedProjectId == project.id },
+                    relativeTime = relativeTime(project.updatedAt),
+                    viewModel = viewModel,
+                    showSnackbar = { msg -> scope.launch { snackbarHostState.showSnackbar(msg) } },
+                    onClick = { onOpenDetail("project", project.id) }
+                )
+            }
         }
     }
-}
 
-@Composable
-private fun ResearchPreviewCard(projectType: String, methods: Set<String>) {
-    Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Auto workspace preview", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            Text("Type: $projectType", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
-            Text("Recommended data: ${recommendedDatasetFor(methods)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
-            Text("Recommended evidence: ${recommendedEvidenceFor(methods)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
-        }
+    // ── Snackbar overlay (inside outer Box, outside LazyColumn) ──
+    Box(Modifier.align(Alignment.BottomCenter).padding(16.dp).padding(bottom = 80.dp)) {
+        SnackbarHost(hostState = snackbarHostState)
+    }
+
+    // ── Create Entity Sheet ──
+    if (showCreateSheet) {
+        CreateEntitySheet(
+            projects = projects,
+            onNavigate = { screen -> onNavigate?.invoke(screen) },
+            onDismiss = { showCreateSheet = false }
+        )
     }
 }
-
-private fun recommendedDatasetFor(methods: Set<String>): String = when {
-    methods.any { "Species" in it } -> "Species Tracker"
-    methods.any { "Measurement" in it } -> "Measurement Log"
-    methods.any { "Weather" in it } -> "Weather Log"
-    methods.any { "Comparison" in it } -> "Comparison Table"
-    methods.any { "Camera" in it } -> "Event Log"
-    else -> "Observation Timeline"
 }
 
-private fun recommendedEvidenceFor(methods: Set<String>): String = listOfNotNull(
-    "photos".takeIf { methods.any { "Photo" in it } },
-    "audio".takeIf { methods.any { "Audio" in it } },
-    "video".takeIf { methods.any { "Video" in it } },
-    "measurements".takeIf { methods.any { "Measurement" in it } },
-    "GPS + weather".takeIf { methods.any { "Weather" in it || "Daily" in it || "GPS" in it } },
-    "water data".takeIf { methods.any { "Water" in it } },
-    "camera trap".takeIf { methods.any { "Camera" in it } }
-).ifEmpty { listOf("notes", "observations") }.joinToString(", ")
-
 // ══════════════════════════════════════════════════════════════════════
-//  Project Card (preserved from original with expanded metrics)
+//  Project Card — Per HTML spec: icon, name, description, records, updated, status, menu
 // ══════════════════════════════════════════════════════════════════════
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun ProjectDashboardCardCompact(
+private fun ProjectCard(
     project: ProjectEntity,
-    observations: List<ObservationEntity>,
-    questions: List<QuestionEntity>,
-    hypotheses: List<HypothesisEntity>,
-    sources: List<SourceEntity>,
-    data: List<DataRecordEntity>,
-    reports: List<ReportEntity>,
-    researchSessions: List<ResearchSessionEntity>,
+    recordCount: Int,
+    relativeTime: String,
+    viewModel: FieldMindViewModel,
+    showSnackbar: (String) -> Unit = {},
     onClick: () -> Unit
 ) {
-    val relatedObs = observations.count { it.projectId == project.id }
-    val relatedQs = questions.count { it.relatedProjectId == project.id }
-    val relatedSources = sources.count { it.relatedProjectId == project.id }
-    val relatedData = data.count { it.projectId == project.id }
-    val relatedReports = reports.count { it.projectId == project.id }
-    val relatedHypotheses = hypotheses.count { h -> questions.any { it.id == h.linkedQuestionId && it.relatedProjectId == project.id } }
-    val projectSessions = researchSessions.count { it.projectId == project.id }
-    val projectFieldHours = researchSessions.filter { it.projectId == project.id }.sumOf { it.totalDurationMs } / 3600_000.0
-    val relatedObsRecent = observations.count { it.projectId == project.id && it.timestamp > System.currentTimeMillis() - 7 * 24 * 3600_000L }
+    val colors = FieldMindTheme.colors
+    val context = LocalContext.current
+    var showMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var renameText by remember(project.id) { mutableStateOf(project.title) }
 
     Card(
         modifier = Modifier.fillMaxWidth().expressivePress(scaleDown = 0.98f).clickable(onClick = onClick),
@@ -563,465 +447,263 @@ internal fun ProjectDashboardCardCompact(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(FieldMindTheme.colors.project.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
-                    Icon(FieldMindIcons.Project, null, tint = FieldMindTheme.colors.project, size = 24.dp)
-                }
-                Column(Modifier.weight(1f)) {
-                    Text(project.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(project.topicType, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("•", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("$relatedObs obs", style = MaterialTheme.typography.labelMedium, color = FieldMindTheme.colors.observation)
-                        if (relatedObsRecent > 0) {
-                            Text("•", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("$relatedObsRecent new", style = MaterialTheme.typography.labelMedium, color = FieldMindTheme.colors.positive)
-                        }
-                    }
-                }
-                InfoChip(project.status)
-            }
-            Text(project.objective.ifBlank { project.researchQuestion.ifBlank { "Open project workspace" } }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                ProjectMetricChip(relatedObs, "obs", FieldMindTheme.colors.observation)
-                ProjectMetricChip(relatedQs, "Qs", FieldMindTheme.colors.question)
-                ProjectMetricChip(relatedSources, "src", FieldMindTheme.colors.source)
-                ProjectMetricChip(relatedData, "data", FieldMindTheme.colors.data)
-                ProjectMetricChip(relatedReports, "reports", FieldMindTheme.colors.report)
-                ProjectMetricChip(projectSessions, "sessions", FieldMindTheme.colors.warning)
-                if (projectFieldHours >= 0.5) ProjectMetricChip(ceil(projectFieldHours).toInt(), "hrs", FieldMindTheme.colors.project)
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProjectMetricChip(value: Int, label: String, color: androidx.compose.ui.graphics.Color) {
-    Row(
-        Modifier.clip(RoundedCornerShape(99.dp)).background(color.copy(alpha = 0.12f)).padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text("$value $label", style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-// ── Remaining tabs (Observations, Hypotheses, Data, Reports) preserved from original ──
-
-@Composable
-internal fun AddButton(label: String, onClick: () -> Unit) {
-    val haptics = rememberFieldMindHaptics()
-    Button(onClick = { haptics.light(); onClick() }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
-        Icon(icon = FieldMindIcons.Add, contentDescription = null, size = 20.dp); Spacer(Modifier.size(8.dp)); Text(label)
-    }
-}
-
-internal fun panelPadding() = PaddingValues(20.dp, 4.dp, 20.dp, 96.dp)
-
-// ── Tab 1: Observations ──
-
-@Composable
-private fun ObservationsTab(
-    viewModel: FieldMindViewModel,
-    observations: List<ObservationEntity>,
-    projects: List<ProjectEntity>,
-    onOpenDetail: (String, Long) -> Unit
-) {
-    var selectedProjectId by remember { mutableStateOf<Long?>(null) }
-    var sortOption by rememberSaveable { mutableStateOf("Date (newest)") }
-    var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
-    var selectMode by remember { mutableStateOf(false) }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
-    var showSortMenu by remember { mutableStateOf(false) }
-    val projectOptions = remember(projects) { listOf(null to "All projects") + projects.map { it.id to it.title } }
-    val filtered = remember(observations, selectedProjectId) {
-        if (selectedProjectId == null) observations else observations.filter { it.projectId == selectedProjectId }
-    }
-    val sorted = remember(filtered, sortOption) {
-        when (sortOption) {
-            "Date (oldest)" -> filtered.sortedBy { it.timestamp }
-            "Category" -> filtered.sortedBy { it.category }
-            "Confidence" -> filtered.sortedByDescending { it.confidenceLevel }
-            "Location" -> filtered.sortedBy { it.manualLocation }
-            else -> filtered.sortedByDescending { it.timestamp } // Date (newest)
-        }
-    }
-
-    // ── New observation dialog state ──
-    var showNewObservation by remember { mutableStateOf(false) }
-    val obsHaptics = rememberFieldMindHaptics()
-
-    // If selectMode exits, deselect all
-    if (!selectMode && selectedIds.isNotEmpty()) {
-        selectedIds = emptySet()
-    }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = panelPadding(),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        item { SectionHeader("Observations", "${filtered.size} of ${observations.size} total") }
-        
-        // ── Add observation button ──
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth().expressivePress(scaleDown = 0.97f).clickable { obsHaptics.light(); showNewObservation = true },
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.1f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        Row(
+            Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Project icon
+            Box(
+                Modifier.size(48.dp).clip(RoundedCornerShape(14.dp))
+                    .background(colors.project.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
             ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        Modifier.size(40.dp).clip(RoundedCornerShape(12.dp))
-                            .background(FieldMindTheme.colors.observation.copy(alpha = 0.18f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(FieldMindIcons.Add, null, tint = FieldMindTheme.colors.observation, size = 22.dp)
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text("Add observation", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                        Text("Quick-capture a new observation", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 20.dp)
+                Icon(FieldMindIcons.Project, null, tint = colors.project, size = 26.dp)
+            }
+
+            // Content
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Name + status badge
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        project.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    StatusBadge(project.status)
+                }
+
+                // Description
+                if (project.objective.isNotBlank()) {
+                    Text(
+                        project.objective,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Metadata row: record count + updated time
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "$recordCount records",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.project,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        relativeTime,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
-        }
-        
-        // ── Toolbar: Filter, Sort, Select, Delete ──
-        item {
-            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Project filter chips
-                    Text("Filter by project", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(projectOptions.take(12)) { (id, label) ->
-                            FilterChip(selected = selectedProjectId == id, onClick = { selectedProjectId = id }, label = { Text(label, maxLines = 1) })
-                        }
-                    }
-                    
-                    // Action row: Sort, Select, Delete
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        // Sort button
-                        Box {
-                            FilledTonalButton(
-                                onClick = { showSortMenu = true },
-                                shape = RoundedCornerShape(12.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                modifier = Modifier.height(36.dp)
-                            ) {
-                                Icon(FieldMindIcons.Sort, null, size = 16.dp)
-                                Spacer(Modifier.size(4.dp))
-                                Text(sortOption.take(14), style = MaterialTheme.typography.labelSmall)
-                                Spacer(Modifier.size(2.dp))
-                                Icon(FieldMindIcons.Down, null, size = 14.dp)
+
+            // Three-dot menu
+            Box {
+                IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
+                    Icon(
+                        MaterialSymbolIcon("more_vert"),
+                        "Project menu",
+                        size = 20.dp,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Rename") },
+                        onClick = { showMenu = false; showRenameDialog = true },
+                        leadingIcon = { Icon(MaterialSymbolIcon("edit"), null, size = 18.dp) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Duplicate") },
+                        onClick = {
+                            showMenu = false
+                            viewModel.addProject(
+                                title = "${project.title} (Copy)",
+                                topicType = project.topicType,
+                                objective = project.objective,
+                                researchQuestion = project.researchQuestion,
+                                methods = project.methods,
+                                futureQuestions = project.futureQuestions,
+                                backgroundNotes = project.backgroundNotes,
+                                hypothesisSummary = project.hypothesisSummary,
+                                dataSummary = project.dataSummary,
+                                analysis = project.analysis,
+                                conclusion = project.conclusion,
+                                projectType = project.projectType ?: "Observation",
+                                selectedMethods = project.selectedMethods ?: "",
+                                connectionMap = project.connectionMap ?: ""
+                            )
+                            showSnackbar("${project.title} duplicated")
+                        },
+                        leadingIcon = { Icon(MaterialSymbolIcon("content_copy"), null, size = 18.dp) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Share") },
+                        onClick = {
+                            showMenu = false
+                            val shareText = buildString {
+                                appendLine("📁 ${project.title}")
+                                if (project.objective.isNotBlank()) appendLine(project.objective)
+                                appendLine()
+                                appendLine("Type: ${project.topicType}")
+                                appendLine("Status: ${project.status}")
+                                appendLine("Records: $recordCount")
+                                appendLine("Updated: $relativeTime")
                             }
-                            DropdownMenu(expanded = showSortMenu, onDismissRequest = { showSortMenu = false }) {
-                                listOf("Date (newest)", "Date (oldest)", "Category", "Confidence", "Location").forEach { s ->
-                                    DropdownMenuItem(
-                                        text = { Text(s, style = MaterialTheme.typography.bodySmall) },
-                                        onClick = { sortOption = s; showSortMenu = false },
-                                        leadingIcon = if (sortOption == s) ({ Icon(FieldMindIcons.Check, null, size = 18.dp) }) else null
-                                    )
-                                }
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "Project: ${project.title}")
+                                putExtra(Intent.EXTRA_TEXT, shareText)
                             }
-                        }
-                        
-                        Spacer(Modifier.weight(1f))
-                        
-                        // Select mode toggle
-                        FilledTonalButton(
-                            onClick = { selectMode = !selectMode; if (!selectMode) selectedIds = emptySet() },
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                            colors = if (selectMode) ButtonDefaults.filledTonalButtonColors(containerColor = FieldMindTheme.colors.observation.copy(alpha = 0.18f)) else ButtonDefaults.filledTonalButtonColors(),
-                            modifier = Modifier.height(36.dp)
-                        ) {
-                            Icon(FieldMindIcons.Select, null, size = 16.dp)
-                            Spacer(Modifier.size(4.dp))
-                            Text(if (selectMode) "Cancel (${selectedIds.size})" else "Select", style = MaterialTheme.typography.labelSmall)
-                        }
-                        
-                        // Delete selected (only visible in select mode with items)
-                        if (selectMode && selectedIds.isNotEmpty()) {
-                            FilledTonalButton(
-                                onClick = { showDeleteConfirm = true },
-                                shape = RoundedCornerShape(12.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                                modifier = Modifier.height(36.dp)
-                            ) {
-                                Icon(FieldMindIcons.Delete, null, size = 16.dp, tint = MaterialTheme.colorScheme.onErrorContainer)
-                                Spacer(Modifier.size(4.dp))
-                                Text("Delete (${selectedIds.size})", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onErrorContainer)
+                            context.startActivity(Intent.createChooser(shareIntent, "Share Project"))
+                        },
+                        leadingIcon = { Icon(MaterialSymbolIcon("share"), null, size = 18.dp) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Export") },
+                        onClick = {
+                            showMenu = false
+                            val exportText = buildString {
+                                appendLine("# ${project.title}")
+                                appendLine()
+                                appendLine("**Topic:** ${project.topicType}")
+                                appendLine("**Status:** ${project.status}")
+                                appendLine("**Created:** ${SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(project.createdAt))}")
+                                appendLine("**Records:** $recordCount")
+                                if (project.objective.isNotBlank()) appendLine("\n## Objective\n${project.objective}")
+                                if (project.researchQuestion.isNotBlank()) appendLine("\n## Research Question\n${project.researchQuestion}")
+                                if (project.methods.isNotBlank()) appendLine("\n## Methods\n${project.methods}")
+                                if (project.conclusion.isNotBlank()) appendLine("\n## Conclusion\n${project.conclusion}")
                             }
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/markdown"
+                                putExtra(Intent.EXTRA_SUBJECT, "${project.title} — FieldMind Export")
+                                putExtra(Intent.EXTRA_TEXT, exportText)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Export Project As"))
+                        },
+                        leadingIcon = { Icon(MaterialSymbolIcon("file_download"), null, size = 18.dp) }
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                if (project.status == "Archived") "Unarchive" else "Archive",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        onClick = {
+                            showMenu = false
+                            viewModel.updateProjectEntity(
+                                project.copy(
+                                    status = if (project.status == "Archived") "Active" else "Archived",
+                                    archivedAt = if (project.status == "Archived") null else System.currentTimeMillis()
+                                )
+                            )
+                            showSnackbar(
+                                if (project.status == "Archived") "${project.title} restored"
+                                else "${project.title} archived"
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                MaterialSymbolIcon("archive"),
+                                null,
+                                size = 18.dp,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                    }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                        onClick = { showMenu = false; showDeleteConfirm = true },
+                        leadingIcon = { Icon(MaterialSymbolIcon("delete"), null, size = 18.dp, tint = MaterialTheme.colorScheme.error) }
+                    )
                 }
             }
-        }
-        
-        itemsIndexed(sorted) { i, obs ->
-            EntityCard(
-                title = obs.subject.ifBlank { "Observation" },
-                kind = "observation",
-                body = "${obs.category} • ${obs.date}",
-                meta = listOfNotNull(obs.weatherCondition.takeIf { it.isNotBlank() }, obs.confidenceLevel),
-                selected = selectMode && obs.id in selectedIds,
-                onSelect = if (selectMode) {{ 
-                    selectedIds = if (obs.id in selectedIds) selectedIds - obs.id else selectedIds + obs.id 
-                }} else null,
-                onClick = { 
-                    if (selectMode) {
-                        selectedIds = if (obs.id in selectedIds) selectedIds - obs.id else selectedIds + obs.id 
-                    } else {
-                        onOpenDetail("observation", obs.id)
-                    }
-                },
-                index = i,
-                animate = true
-            )
-        }
-        if (sorted.isEmpty()) {
-            item { EmptyState("No observations", "Observations will appear here, filtered by project.", icon = FieldMindIcons.Observation, actionLabel = "Start observing") { onOpenDetail("observe", 0) } }
         }
     }
-    
-    // Delete confirmation dialog
+
+    // ── Rename Dialog ──
+    if (showRenameDialog) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            icon = { Icon(FieldMindIcons.Edit, null, size = 28.dp) },
+            title = { Text("Rename Project") },
+            text = {
+                OutlinedTextField(
+                    value = renameText,
+                    onValueChange = { renameText = it },
+                    label = { Text("Project name") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (renameText.isNotBlank()) {
+                            viewModel.updateProjectEntity(project.copy(title = renameText.trim()))
+                        }
+                        showRenameDialog = false
+                    },
+                    enabled = renameText.isNotBlank(),
+                    shape = RoundedCornerShape(14.dp)
+                ) { Text("Rename") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    // ── Delete Confirmation Dialog ──
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            icon = { Icon(icon = FieldMindIcons.Delete, contentDescription = null, size = 28.dp) },
-            title = { Text("Delete observations?") },
+            icon = { Icon(MaterialSymbolIcon("delete_forever"), null, size = 28.dp, tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Delete Project?") },
             text = {
                 Text(
-                    "This will permanently delete ${selectedIds.size} selected observation${if (selectedIds.size != 1) "s" else ""}. This action cannot be undone.",
+                    "Are you sure you want to delete \"${project.title}\"? This action cannot be undone. All observations, notes, questions, and sources linked to this project will also be removed.",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        selectedIds.forEach { viewModel.deleteObservation(it) }
-                        selectedIds = emptySet()
-                        selectMode = false
+                        viewModel.deleteProject(project.id)
                         showDeleteConfirm = false
+                        showSnackbar("${project.title} deleted")
                     },
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Delete ${selectedIds.size}") }
+                ) { Text("Delete") }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
             }
         )
     }
-
-    // ── New observation dialog ──
-    if (showNewObservation) {
-        NewQuickObservationDialog(
-            viewModel = viewModel,
-            projectId = selectedProjectId,
-            onDismiss = { showNewObservation = false }
-        )
-    }
 }
+
+// ══════════════════════════════════════════════════════════════════════
+//  Shared composables
+// ══════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun NewQuickObservationDialog(
-    viewModel: FieldMindViewModel,
-    projectId: Long?,
-    onDismiss: () -> Unit
-) {
-    var subject by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
-    var facts by remember { mutableStateOf("") }
-    var confidence by remember { mutableStateOf("Sure") }
-    val haptics = rememberFieldMindHaptics()
-
-    fun save() {
-        if (subject.isBlank()) return
-        haptics.confirm()
-        viewModel.addObservation(
-            subject = subject,
-            category = category.ifBlank { "Other" },
-            facts = facts,
-            confidence = confidence,
-            manualLocation = "",
-            tags = "",
-            evidence = "",
-            context = "",
-            projectId = projectId
-        ) {
-            onDismiss()
-        }
-    }
-
-    DialogWrapper(onDismiss = onDismiss) {
-        DialogHeader(FieldMindIcons.Observation, "Quick Observation", "Capture a fact from the field.", accent = FieldMindTheme.colors.observation)
-        FieldTextField(subject, { subject = it }, "Subject", required = true, supportingText = "e.g. Red-tailed hawk, Maple leaf color change, Creek water level")
-        FieldTextField(category, { category = it }, "Category", supportingText = "e.g. Bird, Plant, Weather, Water, Insect, Mammal, Other")
-        FieldTextField(facts, { facts = it }, "Facts / notes", minLines = 3, supportingText = "What did you observe? Describe factually.")
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Confidence", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            ChoiceChips(listOf("Unsure", "Likely", "Sure"), confidence) { confidence = it }
-        }
-        if (projectId != null) {
-            InfoChip("Linked to project", icon = FieldMindIcons.Project)
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-            Spacer(Modifier.weight(1f))
-            Button(onClick = ::save, shape = RoundedCornerShape(16.dp), enabled = subject.isNotBlank()) { Text("Save") }
-        }
+private fun StatChip(value: String, label: String, color: androidx.compose.ui.graphics.Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
-// ── Hypothesis Form ──
 
-@Composable
-private fun HypothesesTab(
-    viewModel: FieldMindViewModel,
-    hypotheses: List<HypothesisEntity>,
-    questions: List<QuestionEntity>,
-    observations: List<ObservationEntity>,
-    onOpenDetail: (String, Long) -> Unit,
-    onNavigate: ((FieldMindScreen) -> Unit)? = null
-) {
-    var showNewHypDialog by remember { mutableStateOf(false) }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = panelPadding(),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        item { SectionHeader("Hypotheses", "${hypotheses.size} predictions • ${hypotheses.count { it.resultStatus == "Supported" }} supported, ${hypotheses.count { it.resultStatus == "Refuted" }} refuted") }
-        item {
-            AddButton("New hypothesis") {
-                if (onNavigate != null) {
-                    onNavigate?.invoke(FieldMindScreen.NewHypothesis)
-                } else {
-                    showNewHypDialog = true
-                }
-            }
-        }
-        if (hypotheses.isEmpty()) item { EmptyState("No hypotheses yet", "Predict what evidence would show, then test it.", icon = FieldMindIcons.Hypothesis) }
-        itemsIndexed(hypotheses.sortedByDescending { it.createdAt }) { i, h ->
-            val supportColor = when (h.resultStatus.lowercase()) {
-                "supported" -> FieldMindTheme.colors.positive
-                "refuted" -> MaterialTheme.colorScheme.error
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
-            }
-            EntityCard(h.prediction, "hypothesis", body = h.reasoning.take(120), meta = listOf("${h.confidencePercent}%", h.resultStatus), onClick = { onOpenDetail("hypothesis", h.id) }, index = i, animate = true)
-        }
-    }
-    // Inline dialog outside LazyColumn
-    if (showNewHypDialog) {
-        NewHypothesisScreen(viewModel = viewModel, onBack = { showNewHypDialog = false })
-    }
-}
-
-// ── Tab 3: Data ──
-
-@Composable
-private fun DataTab(
-    viewModel: FieldMindViewModel,
-    data: List<DataRecordEntity>,
-    reports: List<ReportEntity>,
-    observations: List<ObservationEntity>,
-    projects: List<ProjectEntity>,
-    onOpenDetail: (String, Long) -> Unit,
-    onNavigate: ((FieldMindScreen) -> Unit)? = null
-) {
-    var showNewDataDialog by remember { mutableStateOf(false) }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = panelPadding(),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        item { SectionHeader("Data Records", "${data.size} records across ${data.map { it.datasetKind }.distinct().size} datasets") }
-        item { TrackingFlowCards() }
-        item {
-            AddButton("Add data record") {
-                if (onNavigate != null) {
-                    onNavigate?.invoke(FieldMindScreen.NewDataRecord)
-                } else {
-                    showNewDataDialog = true
-                }
-            }
-        }
-        if (data.isEmpty()) item { EmptyState("No data records yet", "Measure, count, compare, or log with offline tools.", icon = FieldMindIcons.Data) }
-        itemsIndexed(data.sortedByDescending { it.timestamp }) { i, d -> EntityCard(d.label, "data", body = "${d.value} ${d.unit}", meta = listOf(d.toolType, d.datasetKind), onClick = { onOpenDetail("data", d.id) }, index = i, animate = true) }
-    }
-    // Inline dialog outside LazyColumn
-    if (showNewDataDialog) {
-        NewDataRecordScreen(viewModel = viewModel, onBack = { showNewDataDialog = false })
-    }
-}
-
-// ── Tab 4: Reports ──
-
-@Composable
-private fun ReportsTab(
-    viewModel: FieldMindViewModel,
-    reports: List<ReportEntity>,
-    projects: List<ProjectEntity>,
-    onOpenDetail: (String, Long) -> Unit,
-    onNavigate: ((FieldMindScreen) -> Unit)? = null
-) {
-    var showNewReportDialog by remember { mutableStateOf(false) }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = panelPadding(),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        item { SectionHeader("Reports", "${reports.size} reports • ${reports.count { it.status == "Published" }} published") }
-        item {
-            AddButton("Build report") {
-                if (onNavigate != null) {
-                    onNavigate?.invoke(FieldMindScreen.NewReport)
-                } else {
-                    showNewReportDialog = true
-                }
-            }
-        }
-        if (reports.isEmpty()) item { EmptyState("No reports yet", "Write up your findings with background, methods, results, and conclusions.", icon = FieldMindIcons.Report) }
-        itemsIndexed(reports.sortedByDescending { it.createdAt }) { i, r -> EntityCard(r.title, "report", body = r.conclusion.ifBlank { r.question }, meta = listOf(r.type, r.status), onClick = { onOpenDetail("report", r.id) }, index = i, animate = true) }
-    }
-    // Inline dialog outside LazyColumn
-    if (showNewReportDialog) {
-        NewReportScreen(viewModel = viewModel, onBack = { showNewReportDialog = false })
-    }
-}
-
-// ── Tracking Flow Cards ──
-
-@Composable
-private fun TrackingFlowCards() {
-    val modes = listOf(
-        "Count things" to "Creates a Counter dataset with bar charts.",
-        "Measure something" to "Creates a Measurement Log with trend charts.",
-        "Compare locations" to "Creates a Comparison Table with grouped charts.",
-        "Track changes over time" to "Creates a Measurement Log with trend charts.",
-        "Record weather" to "Creates a Weather Log linked to observations.",
-        "Track species" to "Creates a Species Tracker with evidence requirements."
-    )
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(modes) { (title, body) ->
-            Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
-                Column(Modifier.width(180.dp).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(FieldMindIcons.Data, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                    Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                    Text(body, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-    }
-}

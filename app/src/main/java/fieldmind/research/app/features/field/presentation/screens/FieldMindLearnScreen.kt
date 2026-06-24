@@ -29,8 +29,6 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
-import androidx.activity.compose.BackHandler
-
 private val beginnerResearchMilestones = listOf(
     ResearchMilestone("Observe carefully", "Separate facts from interpretation, then document time, place, context, and evidence.", FieldMindIcons.Observation, LearnResource("Understanding Science", "Guide", "https://undsci.berkeley.edu/", "Science starts with careful observation and honest uncertainty.")),
     ResearchMilestone("Ask researchable questions", "Turn curiosity into a question you can observe, compare, measure, or verify.", FieldMindIcons.Question, LearnResource("Research as inquiry", "Framework", "https://www.ala.org/acrl/standards/ilframework", "Research grows from increasingly focused questions.")),
@@ -52,8 +50,6 @@ fun FieldMindLearnScreen(
     onOpenReader: (String, String) -> Unit = { _, _ -> },
     onNavigateToLibrary: () -> Unit = {}
 ) {
-    // Handle device back button
-    BackHandler(enabled = true) { onBack() }
 
     val observations by viewModel.observations.collectAsState()
     val questions by viewModel.questions.collectAsState()

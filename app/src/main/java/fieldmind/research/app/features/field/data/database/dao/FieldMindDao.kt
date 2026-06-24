@@ -45,10 +45,16 @@ interface FieldMindDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkQuestionObservation(ref: QuestionObservationCrossRef)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkQuestionSource(ref: QuestionSourceCrossRef)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkProjectObservation(ref: ProjectObservationCrossRef)
+    @Query("DELETE FROM field_project_observations WHERE projectId = :projectId AND observationId = :observationId")
+    suspend fun deleteProjectObservationCrossRef(projectId: Long, observationId: Long)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkProjectSource(ref: ProjectSourceCrossRef)
+    @Query("DELETE FROM field_project_sources WHERE projectId = :projectId AND sourceId = :sourceId")
+    suspend fun deleteProjectSourceCrossRef(projectId: Long, sourceId: Long)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkReportSource(ref: ReportSourceCrossRef)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkProjectDataRecord(ref: ProjectDataRecordCrossRef)
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkHypothesisEvidence(ref: HypothesisEvidenceCrossRef)
+    @Query("DELETE FROM field_hypothesis_evidence WHERE hypothesisId = :hypothesisId AND observationId = :observationId")
+    suspend fun deleteHypothesisEvidenceCrossRef(hypothesisId: Long, observationId: Long)
     @Query("SELECT * FROM field_hypothesis_evidence")
     fun observeAllHypothesisEvidence(): Flow<List<HypothesisEvidenceCrossRef>>
 
@@ -180,9 +186,9 @@ interface FieldMindDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(entity: TaskEntity): Long
     @Update
-    suspend fun updateTask(entity: TaskEntity)
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun linkTaskObservation(ref: TaskObservationCrossRef)
+    suspend fun updateTask(entity: TaskEntity)    @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun linkTaskObservation(ref: TaskObservationCrossRef)
+    @Query("DELETE FROM field_task_observations WHERE taskId = :taskId AND observationId = :observationId")
+    suspend fun deleteTaskObservationCrossRef(taskId: Long, observationId: Long)
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun linkTaskEvidence(ref: TaskEvidenceCrossRef)
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -194,4 +200,18 @@ interface FieldMindDao {
 
     @Query("UPDATE field_tasks SET deletedAt = :time, updatedAt = :time WHERE id = :id")
     suspend fun softDeleteTask(id: Long, time: Long)
+
+    // ── Folders ──
+    @Query("SELECT * FROM field_folders WHERE deletedAt IS NULL ORDER BY name ASC")
+    fun observeFolders(): Flow<List<FolderEntity>>
+    @Query("SELECT * FROM field_folders WHERE projectId = :projectId AND deletedAt IS NULL ORDER BY name ASC")
+    fun observeFoldersForProject(projectId: Long): Flow<List<FolderEntity>>
+    @Query("SELECT * FROM field_folders WHERE id = :id LIMIT 1")
+    fun observeFolder(id: Long): Flow<FolderEntity?>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFolder(entity: FolderEntity): Long
+    @Update
+    suspend fun updateFolder(entity: FolderEntity)
+    @Query("UPDATE field_folders SET deletedAt = :time, updatedAt = :time WHERE id = :id")
+    suspend fun softDeleteFolder(id: Long, time: Long)
 }

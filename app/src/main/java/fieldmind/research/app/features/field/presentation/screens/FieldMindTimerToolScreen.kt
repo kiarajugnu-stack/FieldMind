@@ -32,7 +32,6 @@ import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import kotlinx.coroutines.delay
-import androidx.activity.compose.BackHandler
 
 // ══════════════════════════════════════════════════════════════════════
 //  Timer Tool — Simple timer & stopwatch with background notification
@@ -44,8 +43,6 @@ enum class TimerMode { TIMER, STOPWATCH }
 fun TimerToolScreen(
     onBack: () -> Unit
 ) {
-    // Handle device back button
-    BackHandler(enabled = true) { onBack() }
 
     val context = LocalContext.current
     val colors = FieldMindTheme.colors

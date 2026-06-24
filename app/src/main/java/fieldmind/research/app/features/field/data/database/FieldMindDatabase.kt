@@ -48,12 +48,14 @@ import fieldmind.research.app.features.field.data.database.entity.*
         SpeciesObservationCrossRef::class,
         SpeciesQuestionCrossRef::class,
         EvidenceReportCrossRef::class,
+        // ── Folders ──
+        FolderEntity::class,
         // ── Canvas / Notes App entities (Phase 0+) ──
         CanvasBlockEntity::class,
         DrawingEntity::class,
         FigureMetaEntity::class
     ],
-    version = 13,
+    version = 16,
     exportSchema = false
 )
 abstract class FieldMindDatabase : RoomDatabase() {

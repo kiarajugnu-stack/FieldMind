@@ -50,6 +50,7 @@ import fieldmind.research.app.features.field.data.weather.WeatherUnitConverter
 import fieldmind.research.app.features.field.presentation.components.*
 import fieldmind.research.app.features.field.presentation.navigation.FieldMindScreen
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
+import fieldmind.research.app.features.field.presentation.theme.cardBg
 import fieldmind.research.app.features.field.presentation.viewmodel.DraftEvidenceAttachment
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
@@ -58,7 +59,6 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.activity.compose.BackHandler
 
 // ══════════════════════════════════════════════════════════════════════
 //  Detail Screen — Entity-specific rich layouts
@@ -74,8 +74,6 @@ fun SharedTransitionScope.DetailScreen(
     onOpenReader: (String, String) -> Unit = { _, _ -> },
     onOpenCanvas: ((Long) -> Unit)? = null
 ) {
-    // Handle device back button
-    BackHandler(enabled = true) { onBack() }
     val observations by viewModel.observations.collectAsState()
     val notes by viewModel.notes.collectAsState()
     val questions by viewModel.questions.collectAsState()
@@ -1441,7 +1439,7 @@ private fun NoteDetailContent(
                     Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
                         .background(colors.source.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center
-                ) { Icon(FieldMindIcons.Note, null, tint = colors.source, size = 26.dp) }
+                ) { Icon(FieldMindIcons.Note, null, tint = colors.note, size = 26.dp) }
                 Column(Modifier.weight(1f)) {
                     Text(n.title.ifBlank { "Untitled note" }, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1475,8 +1473,8 @@ private fun NoteDetailContent(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.source.copy(alpha = 0.12f),
-                        contentColor = colors.source
+                        containerColor = colors.note.cardBg(colors.isDark),
+                        contentColor = colors.note
                     )
                 ) {
                     Icon(MaterialSymbolIcon("dashboard_customize"), null, size = 18.dp)

@@ -41,8 +41,8 @@ import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
 import fieldmind.research.app.features.field.presentation.components.pressScale
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.BorderStroke
@@ -93,7 +93,6 @@ fun FieldMindSettingsScreen(
     onOpenAutoGen: (() -> Unit)? = null,
     onOpenScreenVisibility: (() -> Unit)? = null
 ) {
-    BackHandler(enabled = true) { onBack() }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
     val settingsScrollState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
@@ -189,6 +188,7 @@ fun FieldMindSettingsScreen(
         item { SectionHeader("About & advanced", "Developer tools, changelog, and app info") }
         item { SettingsNavCard("What’s new", "FieldMind redesign notes and migration changes", FieldMindIcons.Info, FieldMindTheme.colors.info) { onOpenChangelog?.invoke() } }
         item { SettingsNavCard("About", "Credits, acknowledgements, and version", FieldMindIcons.Info, FieldMindTheme.colors.source) { onOpenAbout?.invoke() } }
+        item { SettingsNavCard("Developer options", "Debug tools, logging, performance stats, and test data", MaterialSymbolIcon("tune"), FieldMindTheme.colors.hypothesis) { onOpenDeveloper?.invoke() } }
 
         item {
             OutlinedButton(onClick = onResetOnboarding, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
@@ -258,7 +258,7 @@ fun ProfileSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, onOpenEntityColors: (() -> Unit)? = null) {
     val settings = viewModel.fieldSettings
     val themeMode by settings.themeMode.collectAsState()
     val dynamicColor by settings.dynamicColorEnabled.collectAsState()
@@ -276,6 +276,17 @@ fun AppearanceSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             }
         }
         // ── Map settings ──
+        // ── Entity accent colors ──
+        item { SectionHeader("Entity Colors", "Per-category accent color customization") }
+        item {
+            SettingsNavCard(
+                "Entity accent colors",
+                "Customize colors for observations, notes, tasks, questions, and more",
+                MaterialSymbolIcon("palette"),
+                FieldMindTheme.colors.flashcard
+            ) { onOpenEntityColors?.invoke() }
+        }
+
         item { SectionHeader("Map", "Map type and location display preferences") }
         item {
             SettingsGroupCard {
@@ -515,19 +526,42 @@ fun LocalModelSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Security Settings Page (NEW — moved from Backup & Import)
+//  Security Settings Page (ALL settings inline, no sub-pages)
 // ══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+fun SecuritySettingsPage(
+    viewModel: FieldMindViewModel,
+    onBack: () -> Unit,
+    onOpenSecurityScore: (() -> Unit)? = null
+) {
     val settings = viewModel.fieldSettings
+    // ── Lock settings ──
     val privacy by settings.privacyLockEnabled.collectAsState()
     val privacyTyping by settings.privacyTypingEnabled.collectAsState()
     val lockTimeout by settings.lockTimeout.collectAsState()
     val autoLockOnBackground by settings.autoLockOnBackground.collectAsState()
     val appPinEnabled by settings.appPinEnabled.collectAsState()
     val appPinHash by settings.appPinHash.collectAsState()
-    val screenCaptureProtectionStatus by settings.screenCaptureProtectionEnabled.collectAsState()
+    val screenCapture by settings.screenCaptureProtectionEnabled.collectAsState()
+    val clipboardCleanup by settings.clipboardAutoCleanupEnabled.collectAsState()
+    val backupEncryption by settings.autoBackupEnabled.collectAsState()
+    // ── New inline settings ──
+    val appPinLen by settings.appPinLength.collectAsState()
+    val decoyEnabled by settings.decoyPinEnabled.collectAsState()
+    val decoyLabel by settings.decoyPinLabel.collectAsState()
+    val failedCooldown by settings.failedUnlockCooldown.collectAsState()
+    val failedBiometrics by settings.failedUnlockRequireBiometrics.collectAsState()
+    val failedPanic by settings.failedUnlockPanicLock.collectAsState()
+    val exportPassEnabled by settings.exportPasswordProtectionEnabled.collectAsState()
+    val exportEncLevel by settings.exportEncryptionLevel.collectAsState()
+    val previewMode by settings.appPreviewMode.collectAsState()
+    val metaGps by settings.metadataRemoveGps.collectAsState()
+    val metaCamera by settings.metadataRemoveCamera.collectAsState()
+    val metaDevice by settings.metadataRemoveDevice.collectAsState()
+    val metaExif by settings.metadataRemoveExif.collectAsState()
+
+    // ── PIN setup state ──
     var showPinSetup by remember { mutableStateOf(false) }
     var pinInput by remember { mutableStateOf("") }
     var pinConfirm by remember { mutableStateOf("") }
@@ -536,222 +570,228 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
     var currentPinInput by remember { mutableStateOf("") }
     var currentPinError by remember { mutableStateOf(false) }
 
-    // Derived convenience
+    // ── Export password state ──
+    var showExportPassDialog by remember { mutableStateOf(false) }
+    var exportPassInput by remember { mutableStateOf("") }
+    var exportPassConfirm by remember { mutableStateOf("") }
+    var exportPassError by remember { mutableStateOf(false) }
+
+    // ── Decoy PIN setup state ──
+    var showDecoyDialog by remember { mutableStateOf(false) }
+    var decoyInput by remember { mutableStateOf("") }
+    var decoyConfirm by remember { mutableStateOf("") }
+    var decoyLabelInput by remember { mutableStateOf("") }
+    var decoyError by remember { mutableStateOf(false) }
+
     val appLockActive = privacy || (appPinEnabled && appPinHash.isNotBlank())
-    // Backup encryption defaults on when biometric lock is active
-    val backupEncryptionDefaultsOn = privacy
+    val enabledCount = listOfNotNull(appLockActive, backupEncryption, clipboardCleanup, privacyTyping, screenCapture).count { it }
 
-    SettingsSubPage("Security", icon = FieldMindIcons.Lock, onBack = onBack) {
-
-        // ── Privacy Status Card ──
+    SettingsSubPage("Privacy & Security", icon = FieldMindIcons.Lock, onBack = onBack) {
+        // ── Security Status ──
         item {
-            PrivacyStatusCard(
-                screenCaptureEnabled = screenCaptureProtectionStatus,
-                privacyKeyboardEnabled = privacyTyping,
-                appLockEnabled = appLockActive,
-                backupEncryptionEnabled = backupEncryptionDefaultsOn
-            )
-        }
-
-        // ── Device biometric lock ──
-        item {
-            SettingsGroupCard {
-                ToggleItem("Device biometric lock", "Require fingerprint, face, or device PIN to open FieldMind.", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
-            }
-        }
-
-        // ── In-app PIN lock (independent, no device lock required) ──
-        item {
-            SettingsGroupCard {
-                if (!showPinSetup) {
-                    if (appPinEnabled && appPinHash.isNotBlank()) {
-                        Row(
-                            Modifier.fillMaxWidth().clickable { showPinSetup = true }.padding(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Lock, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                            }
-                            Column(Modifier.weight(1f)) {
-                                Text("App PIN lock", fontWeight = FontWeight.SemiBold)
-                                Text("Self-contained 4-6 digit PIN, no device lock needed", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Switch(checked = true, onCheckedChange = { enabled ->
-                                if (enabled) {
-                                    showPinSetup = true
-                                } else {
-                                    showCurrentPinDialog = true
-                                }
-                            })
-                        }
-                    } else {
-                        Row(
-                            Modifier.fillMaxWidth().clickable { showPinSetup = true }.padding(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
-                                Icon(FieldMindIcons.Lock, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp)
-                            }
-                            Column(Modifier.weight(1f)) {
-                                Text("App PIN lock", fontWeight = FontWeight.SemiBold)
-                                Text("Self-contained 4-6 digit PIN, no device lock needed", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Switch(checked = false, onCheckedChange = { showPinSetup = true })
-                        }
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column { Text("Security Status", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold); Text("$enabledCount of 5 protections enabled", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) { listOf(appLockActive, backupEncryption, clipboardCleanup, privacyTyping, screenCapture).forEach { active -> Box(Modifier.size(10.dp).clip(CircleShape).background(if (active) FieldMindTheme.colors.positive else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))) } }
                     }
-                }
-
-                // ── PIN setup form ──
-                if (showPinSetup) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            if (appPinHash.isNotBlank()) "Change PIN" else "Set a 4-6 digit PIN",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        OutlinedTextField(
-                            value = pinInput,
-                            onValueChange = { if (it.length <= 6) { pinInput = it; pinError = false } },
-                            label = { Text("Enter PIN") },
-                            singleLine = true,
-                            isError = pinError,
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password).withPrivacyTyping(LocalPrivacyTypingEnabled.current),
-                            trailingIcon = {
-                                if (LocalPrivacyTypingEnabled.current) {
-                                    PrivacyTypingIndicator()
-                                }
-                            },
-                            supportingText = if (pinError) {{ Text("PINs don't match. Try again.") }} else null,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(18.dp),
-                            textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center)
-                        )
-                        OutlinedTextField(
-                            value = pinConfirm,
-                            onValueChange = { if (it.length <= 6) { pinConfirm = it; pinError = false } },
-                            label = { Text("Confirm PIN") },
-                            singleLine = true,
-                            isError = pinError,
-                            visualTransformation = PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password).withPrivacyTyping(LocalPrivacyTypingEnabled.current),
-                            trailingIcon = {
-                                if (LocalPrivacyTypingEnabled.current) {
-                                    PrivacyTypingIndicator()
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(18.dp),
-                            textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center)
-                        )
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            OutlinedButton(
-                                onClick = {
-                                    showPinSetup = false
-                                    pinInput = ""; pinConfirm = ""; pinError = false
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(14.dp)
-                            ) { Text("Cancel") }
-                            Button(
-                                onClick = {
-                                    if (pinInput.length >= 4 && pinInput == pinConfirm) {
-                                        val hash = settings.hashAppPin(pinInput)
-                                        settings.setAppPinHash(hash)
-                                        settings.setAppPinEnabled(true)
-                                        showPinSetup = false
-                                        pinInput = ""; pinConfirm = ""; pinError = false
-                                    } else {
-                                        pinError = true
-                                    }
-                                },
-                                enabled = pinInput.length >= 4 && pinConfirm.length >= 4,
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(14.dp)
-                            ) { Text("Save PIN") }
+                    LinearProgressIndicator(progress = { enabledCount / 5f }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)), color = FieldMindTheme.colors.positive, trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    Surface(onClick = { onOpenSecurityScore?.invoke() }, shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f), modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(MaterialSymbolIcon("security"), null, tint = MaterialTheme.colorScheme.primary, size = 16.dp)
+                            Text("View full security score", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.weight(1f)); Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.primary, size = 14.dp)
                         }
                     }
                 }
             }
         }
 
-        // ── Privacy typing ──
+        // ── Card 1: Quick Protection (4 settings: Device lock, App PIN + length + decoy, Screenshot) ──
+        item { SectionHeader("Quick Protection", "App lock, PIN, and screen security") }
         item {
             SettingsGroupCard {
-                ToggleItem(
-                    "Privacy keyboard",
-                    "Asks the keyboard not to learn from your input in sensitive fields. " +
-                    "Gboard shows an incognito badge; most other keyboards apply the hint silently or may ignore it. " +
-                    "Not every keyboard guarantees compliance.",
-                    privacyTyping,
-                    settings::setPrivacyTypingEnabled,
-                    FieldMindIcons.Lock
-                )
-            }
-        }
+                ToggleItem("Device biometric lock", "Fingerprint, face, or device PIN", privacy, settings::setPrivacyLockEnabled, FieldMindIcons.Lock)
 
-        // ── Lock timeout ──
-        item {
-            SettingsGroupCard {
-                ChoiceItemForm("Lock timeout", listOf("Immediate", "1 minute", "5 minutes", "15 minutes", "When screen off"), lockTimeout, FieldMindIcons.Timer) { newValue ->
-                    settings.setLockTimeout(newValue)
-                }
                 HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                ToggleItem("Auto-lock on background", "Lock the app when it goes to background.", autoLockOnBackground, { newValue ->
-                    settings.setAutoLockOnBackground(newValue)
-                }, FieldMindIcons.Lock)
-            }
-        }
+                Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) { Icon(FieldMindIcons.Lock, null, tint = MaterialTheme.colorScheme.primary, size = 22.dp) }
+                    Column(Modifier.weight(1f)) { Text("App PIN lock", fontWeight = FontWeight.SemiBold); Text("Self-contained 4-6 digit PIN", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    Switch(checked = appPinEnabled && appPinHash.isNotBlank(), onCheckedChange = { enabled -> if (enabled) showPinSetup = true else showCurrentPinDialog = true })
+                }
 
-        // ── Screen capture protection ──
-        item {
-            val screenCaptureProtection by settings.screenCaptureProtectionEnabled.collectAsState()
-            SettingsGroupCard {
-                ToggleItem("Screen capture protection", "Prevent screenshots and screen recordings of sensitive research data.", screenCaptureProtection, settings::setScreenCaptureProtectionEnabled, FieldMindIcons.Lock)
-            }
-        }
-
-        // ── Always-on screen ──
-        item {
-            val alwaysOnScreenEnabled by settings.alwaysOnScreenEnabled.collectAsState()
-            val alwaysOnDuration by settings.alwaysOnScreenDuration.collectAsState()
-            SettingsGroupCard {
-                ToggleItem("Always-on screen", "Keep display on during field research sessions.", alwaysOnScreenEnabled, settings::setAlwaysOnScreenEnabled, FieldMindIcons.Timer)
-                if (alwaysOnScreenEnabled) {
+                // PIN Length (shown when PIN is active)
+                if (appPinEnabled && appPinHash.isNotBlank()) {
                     HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                    ChoiceItemForm("Duration", listOf("5 min", "10 min", "15 min", "30 min", "Unlimited"), alwaysOnDuration, FieldMindIcons.Timer, settings::setAlwaysOnScreenDuration)
+                    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("PIN Length", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf("4 digits", "5 digits", "6 digits").forEach { option ->
+                                val selected = appPinLen == option
+                                Surface(
+                                    onClick = { settings.setAppPinLength(option) },
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Text(option.take(1), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(option.split(" ")[1], style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // PIN setup form
+                if (showPinSetup) {
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(if (appPinHash.isNotBlank()) "Change PIN" else "Set a 4-6 digit PIN", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        OutlinedTextField(value = pinInput, onValueChange = { if (it.length <= 6) { pinInput = it; pinError = false } }, label = { Text("Enter PIN") }, singleLine = true, isError = pinError, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword).withPrivacyTyping(LocalPrivacyTypingEnabled.current), trailingIcon = { if (LocalPrivacyTypingEnabled.current) PrivacyTypingIndicator() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
+                        OutlinedTextField(value = pinConfirm, onValueChange = { if (it.length <= 6) { pinConfirm = it; pinError = false } }, label = { Text("Confirm PIN") }, singleLine = true, isError = pinError, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword).withPrivacyTyping(LocalPrivacyTypingEnabled.current), trailingIcon = { if (LocalPrivacyTypingEnabled.current) PrivacyTypingIndicator() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
+                        if (pinError) Text("PINs don't match. Try again.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            OutlinedButton(onClick = { showPinSetup = false; pinInput = ""; pinConfirm = ""; pinError = false }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { Text("Cancel") }
+                            val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
+                            Button(onClick = { if (pinInput.length >= minPinLen && pinInput == pinConfirm) { val hash = settings.hashAppPin(pinInput); settings.setAppPinHash(hash); settings.setAppPinEnabled(true); showPinSetup = false; pinInput = ""; pinConfirm = ""; pinError = false } else pinError = true }, enabled = pinInput.length >= minPinLen && pinConfirm.length >= minPinLen, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp)) { Text("Save PIN") }
+                        }
+                    }
+                }
+
+                // Decoy PIN (shown when PIN is active)
+                if (appPinEnabled && appPinHash.isNotBlank()) {
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) { Icon(MaterialSymbolIcon("lock_open"), null, tint = MaterialTheme.colorScheme.tertiary, size = 22.dp) }
+                        Column(Modifier.weight(1f)) { Text("Decoy PIN", fontWeight = FontWeight.SemiBold); val decoyStatus = if (decoyEnabled && settings.decoyPinHash.value.isNotBlank()) "Active — ${decoyLabel.ifBlank { "Opens clean app" }}" else "Off"; Text(decoyStatus, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        Switch(checked = decoyEnabled && settings.decoyPinHash.value.isNotBlank(), onCheckedChange = { enabled -> if (enabled) { showDecoyDialog = true; decoyLabelInput = decoyLabel } else { settings.setDecoyPinEnabled(false); settings.setDecoyPinHash(""); settings.setDecoyPinLabel("") } })
+                    }
+                }
+
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Screenshot block", "Prevent screenshots and recordings in app switcher", screenCapture, settings::setScreenCaptureProtectionEnabled, MaterialSymbolIcon("no_photography"))
+            }
+        }
+
+        // ── Card 2: Lock Behavior (4 settings: Auto Lock, Background lock, Failed unlock × 3 grouped) ──
+        item { SectionHeader("Lock Behavior", "Timeout, background lock, and failed attempt handling") }
+        item {
+            SettingsGroupCard {
+                ChoiceItemForm("Auto Lock", listOf("Immediate", "1 minute", "5 minutes", "15 minutes"), lockTimeout, FieldMindIcons.Timer, settings::setLockTimeout)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Lock on background", "Lock when app goes to background", autoLockOnBackground, settings::setAutoLockOnBackground, FieldMindIcons.Lock)
+
+                // Failed unlock section
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("After 5 failed attempts", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    listOf("Do Nothing", "30 Second Cooldown", "5 Minute Cooldown").forEach { option ->
+                        val selected = failedCooldown == option
+                        Surface(
+                            onClick = { settings.setFailedUnlockCooldown(option) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
+                        ) {
+                            Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = selected, onClick = { settings.setFailedUnlockCooldown(option) })
+                                Text(option, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    ToggleItem("Require biometrics after failure", "After failed attempts, enforce fingerprint/face unlock", failedBiometrics, settings::setFailedUnlockRequireBiometrics, MaterialSymbolIcon("fingerprint"))
+                    ToggleItem("Panic lock after failure", "Wipe sensitive data after repeated failed attempts", failedPanic, settings::setFailedUnlockPanicLock, MaterialSymbolIcon("warning"))
                 }
             }
         }
 
-        // ── Clipboard auto-cleanup ──
+        // ── Card 3: Export & Data Protection (3 settings: Encrypted backups, Export password, Encryption level) ──
+        item { SectionHeader("Export & Data Protection", "Backup encryption, password, and export security") }
         item {
-            val clipboardCleanup by settings.clipboardAutoCleanupEnabled.collectAsState()
-            val cleanupDelay by settings.clipboardCleanupDelay.collectAsState()
             SettingsGroupCard {
-                ToggleItem("Clipboard auto-clear", "Automatically clear sensitive copied data from clipboard.", clipboardCleanup, settings::setClipboardAutoCleanupEnabled, FieldMindIcons.Lock)
-                if (clipboardCleanup) {
-                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                    ChoiceItemForm("Clear after", listOf("10 sec", "30 sec", "1 min", "2 min"), cleanupDelay, FieldMindIcons.Timer, settings::setClipboardCleanupDelay)
+                ToggleItem("Encrypted backups", "Encrypt backup archives with strong AES-256", backupEncryption, settings::setAutoBackupEnabled, MaterialSymbolIcon("enhanced_encryption"))
+
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(FieldMindTheme.colors.data.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) { Icon(FieldMindIcons.Export, null, tint = FieldMindTheme.colors.data, size = 22.dp) }
+                    Column(Modifier.weight(1f)) { Text("Password protect exports", fontWeight = FontWeight.SemiBold); Text(if (exportPassEnabled && settings.exportPasswordHash.value.isNotBlank()) "Password set ✓" else "Off", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    Switch(checked = exportPassEnabled, onCheckedChange = { enabled -> if (enabled && settings.exportPasswordHash.value.isBlank()) { showExportPassDialog = true } else { settings.setExportPasswordProtectionEnabled(enabled); if (!enabled) { settings.setExportPasswordHash("") } } })
                 }
+
+                // Export password setup button (shown when enabled)
+                if (exportPassEnabled) {
+                    HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    Surface(
+                        onClick = { showExportPassDialog = true; exportPassInput = ""; exportPassConfirm = ""; exportPassError = false },
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(MaterialSymbolIcon("password"), null, tint = FieldMindTheme.colors.hypothesis, size = 20.dp)
+                            Column(Modifier.weight(1f)) {
+                                Text(if (settings.exportPasswordHash.value.isNotBlank()) "Change export password" else "Set export password", fontWeight = FontWeight.SemiBold)
+                                Text(if (settings.exportPasswordHash.value.isNotBlank()) "••••••••••" else "No password set", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, size = 18.dp)
+                        }
+                    }
+                }
+
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ChoiceItemForm("Encryption Level", listOf("Standard", "Strong", "Maximum"), exportEncLevel, FieldMindIcons.Lock, settings::setExportEncryptionLevel)
             }
         }
 
-        // ─�� Info cards ──
+        // ── Card 4: Metadata & Privacy (8 settings: GPS, Camera, Device, EXIF, App Preview, Privacy keyboard, Clipboard, GPS privacy) ──
+        item { SectionHeader("Metadata & Privacy", "Strip data from exports, screen preview, and keyboard protection") }
+        item {
+            SettingsGroupCard {
+                // Metadata removal
+                ToggleItem("Remove GPS coordinates", "Strip location data from exported files", metaGps, settings::setMetadataRemoveGps, MaterialSymbolIcon("location_off"))
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Remove camera info", "Strip camera model, make, and settings", metaCamera, settings::setMetadataRemoveCamera, MaterialSymbolIcon("camera_alt"))
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Remove device info", "Strip device name and identifiers", metaDevice, settings::setMetadataRemoveDevice, MaterialSymbolIcon("smartphone"))
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Remove EXIF data", "Strip all EXIF metadata from images", metaExif, settings::setMetadataRemoveExif, MaterialSymbolIcon("image"))
+
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                // App Preview inline
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("App Preview in recent apps", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    listOf("Normal", "Blur Content", "Privacy Screen").forEach { mode ->
+                        val selected = previewMode == mode
+                        Surface(
+                            onClick = { settings.setAppPreviewMode(mode) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            border = if (selected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
+                        ) {
+                            Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = selected, onClick = { settings.setAppPreviewMode(mode) })
+                                Text(mode, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                }
+
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Privacy keyboard", "Ask keyboards not to learn from input", privacyTyping, settings::setPrivacyTypingEnabled, FieldMindIcons.Lock)
+                HorizontalDivider(Modifier.padding(start = 16.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                ToggleItem("Auto clear clipboard", "Clear sensitive copied data automatically", clipboardCleanup, settings::setClipboardAutoCleanupEnabled, MaterialSymbolIcon("content_copy"))
+            }
+        }
+
+        // ── Info card ──
         item {
             Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Privacy features", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-                    Text("• Device biometric lock — uses Android's built-in security (fingerprint, face, PIN)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("• App PIN lock — self-contained 4-6 digit PIN, works even if device has no lock set", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("• Privacy keyboard — requests that keyboards suppress learning in sensitive fields; Gboard shows an incognito badge, other keyboards may apply the hint silently", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("• Screen capture protection — prevents screenshots and recordings", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("• Always-on screen — keep display active during field work", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("• Clipboard auto-clear — automatically clears sensitive copied data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("• Data encryption — encrypted backups with password protection", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Your data stays on this device. No data is sent to any server.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Your data stays on this device", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                    Text("FieldMind stores everything locally. No data is sent to any server unless you explicitly export or share it.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -759,72 +799,63 @@ fun SecuritySettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
     // ── Confirm current PIN before disabling ──
     if (showCurrentPinDialog) {
+        val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
         AlertDialog(
-            onDismissRequest = {
-                showCurrentPinDialog = false
-                currentPinInput = ""; currentPinError = false
-            },
+            onDismissRequest = { showCurrentPinDialog = false; currentPinInput = ""; currentPinError = false },
             icon = { Icon(FieldMindIcons.Lock, null, size = 28.dp) },
             title = { Text("Enter current PIN", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Enter your current PIN to disable the app PIN lock.")
-                    OutlinedTextField(
-                        value = currentPinInput,
-                        onValueChange = {
-                            if (it.length <= 6) {
-                                currentPinInput = it
-                                currentPinError = false
-                            }
-                        },
-                        label = { Text("Current PIN") },
-                        singleLine = true,
-                        isError = currentPinError,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password).withPrivacyTyping(LocalPrivacyTypingEnabled.current),
-                        trailingIcon = {
-                            if (LocalPrivacyTypingEnabled.current) {
-                                PrivacyTypingIndicator()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-                        textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center)
-                    )
-                    if (currentPinError) {
-                        Text("Incorrect PIN", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                    }
+                    OutlinedTextField(value = currentPinInput, onValueChange = { if (it.length <= 6) { currentPinInput = it; currentPinError = false } }, label = { Text("Current PIN") }, singleLine = true, isError = currentPinError, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword).withPrivacyTyping(LocalPrivacyTypingEnabled.current), trailingIcon = { if (LocalPrivacyTypingEnabled.current) PrivacyTypingIndicator() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
+                    if (currentPinError) Text("Incorrect PIN", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (settings.verifyAppPin(currentPinInput)) {
-                            settings.setAppPinEnabled(false)
-                            settings.setAppPinHash("")
-                            showCurrentPinDialog = false
-                            currentPinInput = ""; currentPinError = false
-                        } else {
-                            currentPinError = true
-                        }
-                    },
-                    enabled = currentPinInput.length >= 4
-                ) { Text("Disable") }
+            confirmButton = { Button(onClick = { if (settings.verifyAppPin(currentPinInput)) { settings.setAppPinEnabled(false); settings.setAppPinHash(""); showCurrentPinDialog = false; currentPinInput = ""; currentPinError = false } else currentPinError = true }, enabled = currentPinInput.length >= minPinLen) { Text("Disable") } },
+            dismissButton = { TextButton(onClick = { showCurrentPinDialog = false; currentPinInput = ""; currentPinError = false }) { Text("Cancel") } }
+        )
+    }
+
+    // ── Export password setup dialog ──
+    if (showExportPassDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportPassDialog = false; exportPassInput = ""; exportPassConfirm = ""; exportPassError = false },
+            icon = { Icon(FieldMindIcons.Lock, null, size = 28.dp) },
+            title = { Text("Set export password", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Enter a password to protect exported files.")
+                    OutlinedTextField(value = exportPassInput, onValueChange = { if (it.length <= 32) { exportPassInput = it; exportPassError = false } }, label = { Text("Password") }, singleLine = true, isError = exportPassError, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.titleMedium.copy(letterSpacing = 4.sp, textAlign = TextAlign.Center))
+                    OutlinedTextField(value = exportPassConfirm, onValueChange = { if (it.length <= 32) { exportPassConfirm = it; exportPassError = false } }, label = { Text("Confirm password") }, singleLine = true, isError = exportPassError, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.titleMedium.copy(letterSpacing = 4.sp, textAlign = TextAlign.Center))
+                    if (exportPassError) Text("Passwords don't match or too short", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
             },
-            dismissButton = {
-                TextButton(onClick = {
-                    showCurrentPinDialog = false
-                    currentPinInput = ""; currentPinError = false
-                }) { Text("Cancel") }
-            }
+            confirmButton = { Button(onClick = { if (exportPassInput.length >= 4 && exportPassInput == exportPassConfirm) { settings.setExportPasswordHash(settings.hashExportPassword(exportPassInput)); settings.setExportPasswordProtectionEnabled(true); showExportPassDialog = false; exportPassInput = ""; exportPassConfirm = ""; exportPassError = false } else exportPassError = true }, enabled = exportPassInput.length >= 4 && exportPassConfirm.length >= 4) { Text("Save") } },
+            dismissButton = { TextButton(onClick = { showExportPassDialog = false; exportPassInput = ""; exportPassConfirm = ""; exportPassError = false }) { Text("Cancel") } }
+        )
+    }
+
+    // ── Decoy PIN setup dialog ──
+    if (showDecoyDialog) {
+        val minPinLen = when (appPinLen) { "5 digits" -> 5; "6 digits" -> 6; else -> 4 }
+        AlertDialog(
+            onDismissRequest = { showDecoyDialog = false; decoyInput = ""; decoyConfirm = ""; decoyLabelInput = ""; decoyError = false },
+            icon = { Icon(MaterialSymbolIcon("lock_open"), null, size = 28.dp) },
+            title = { Text("Set decoy PIN", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Enter a 4-6 digit PIN that opens a clean, empty version of FieldMind.")
+                    OutlinedTextField(value = decoyInput, onValueChange = { if (it.length <= 6) { decoyInput = it; decoyError = false } }, label = { Text("Decoy PIN") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
+                    OutlinedTextField(value = decoyConfirm, onValueChange = { if (it.length <= 6) { decoyConfirm = it; decoyError = false } }, label = { Text("Confirm decoy PIN") }, singleLine = true, isError = decoyError, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), textStyle = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 8.sp, textAlign = TextAlign.Center))
+                    OutlinedTextField(value = decoyLabelInput, onValueChange = { if (it.length <= 40) decoyLabelInput = it }, label = { Text("Label (shown when decoy is active)") }, placeholder = { Text("e.g. \"Guest mode\"") }, singleLine = true, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp))
+                    if (decoyError) Text("PINs don't match. Try again.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = { Button(onClick = { if (decoyInput.length >= minPinLen && decoyInput == decoyConfirm) { val hash = settings.hashAppPin(decoyInput); settings.setDecoyPinHash(hash); settings.setDecoyPinLabel(decoyLabelInput.trim()); settings.setDecoyPinEnabled(true); showDecoyDialog = false; decoyInput = ""; decoyConfirm = ""; decoyLabelInput = ""; decoyError = false } else decoyError = true }, enabled = decoyInput.length >= minPinLen && decoyConfirm.length >= minPinLen) { Text("Save") } },
+            dismissButton = { TextButton(onClick = { showDecoyDialog = false; decoyInput = ""; decoyConfirm = ""; decoyLabelInput = ""; decoyError = false }) { Text("Cancel") } }
         )
     }
 }
-
-// ═══════════════════════════════════════��══════════════════════════════
-//  Backup & Import Settings Page
-// ══════════════════════════════════════════════════════════════════════
-
 @Composable
 fun BackupImportSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit, onOpenExport: () -> Unit) {
     val settings = viewModel.fieldSettings
@@ -2002,7 +2033,7 @@ fun DeveloperSettingsPage(viewModel: FieldMindViewModel, onBack: () -> Unit) {
 
 /** Wraps a sub-page with consistent StandardScreenHeader and scrollable content. */
 @Composable
-private fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () -> Unit, content: LazyListScope.() -> Unit) {
+internal fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () -> Unit, content: LazyListScope.() -> Unit) {
     BackHandler(enabled = true) { onBack() }
     LazyColumn(
         modifier = Modifier.fillMaxSize().statusBarsPadding(),
@@ -2023,7 +2054,7 @@ private fun SettingsSubPage(title: String, icon: MaterialSymbolIcon, onBack: () 
 }
 
 @Composable
-private fun SettingsGroupCard(content: @Composable ColumnScope.() -> Unit) {
+internal fun SettingsGroupCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -2032,7 +2063,7 @@ private fun SettingsGroupCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun ToggleItem(title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: MaterialSymbolIcon? = null) {
+internal fun ToggleItem(title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: MaterialSymbolIcon? = null) {
     Row(
         Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }.padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -2072,7 +2103,7 @@ private fun StepperItem(title: String, body: String, value: Int, icon: MaterialS
 }
 
 @Composable
-private fun ChoiceItemForm(title: String, options: List<String>, selected: String, icon: MaterialSymbolIcon? = null, onSelected: (String) -> Unit) {
+internal fun ChoiceItemForm(title: String, options: List<String>, selected: String, icon: MaterialSymbolIcon? = null, onSelected: (String) -> Unit) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) {
@@ -2082,7 +2113,52 @@ private fun ChoiceItemForm(title: String, options: List<String>, selected: Strin
             }
             Text(title, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
         }
-        ChoiceChips(options, selected, onSelected = onSelected)
+        var showDialog by remember { mutableStateOf(false) }
+        Surface(
+            onClick = { showDialog = true },
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(selected, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Icon(FieldMindIcons.Forward, null, tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f), size = 18.dp)
+            }
+        }
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                icon = if (icon != null) {{ Icon(icon, null, tint = MaterialTheme.colorScheme.primary, size = 28.dp) }} else null,
+                title = { Text(title, fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        options.forEach { option ->
+                            val isSelected = selected == option
+                            Surface(
+                                onClick = { onSelected(option); showDialog = false },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                border = if (isSelected) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null
+                            ) {
+                                Row(
+                                    Modifier.fillMaxWidth().padding(14.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(selected = isSelected, onClick = { onSelected(option); showDialog = false })
+                                    Text(option, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                                    if (isSelected) Icon(FieldMindIcons.Check, null, tint = MaterialTheme.colorScheme.primary, size = 20.dp)
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { showDialog = false }) { Text("Cancel") } }
+            )
+        }
     }
 }
 

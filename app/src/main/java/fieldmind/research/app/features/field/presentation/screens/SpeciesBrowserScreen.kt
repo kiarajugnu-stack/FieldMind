@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.activity.compose.BackHandler
 import fieldmind.research.app.features.field.data.vision.SpeciesDatabase
 import fieldmind.research.app.features.field.data.vision.SpeciesRecord
 import fieldmind.research.app.features.field.presentation.components.*
@@ -78,7 +77,6 @@ fun SpeciesBrowserScreen(
     onBack: () -> Unit,
     onOpenDetail: (String) -> Unit
 ) {
-    BackHandler(enabled = true) { onBack() }
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
 
@@ -559,15 +557,16 @@ fun SharedTransitionScope.SpeciesDetailScreen(
     speciesId: String,
     onBack: () -> Unit
 ) {
-    BackHandler(enabled = true) { onBack() }
     val context = LocalContext.current
     val database = remember { SpeciesDatabase(context) }
 
     var species by remember { mutableStateOf<SpeciesRecord?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var similarSpecies by remember { mutableStateOf<List<SpeciesRecord>>(emptyList()) }
+    // Internal navigation state for similar species (lets user tap through similar species)
+    var internalSpeciesId by remember { mutableStateOf(speciesId) }
 
-    LaunchedEffect(speciesId) {
+    LaunchedEffect(internalSpeciesId) {
         val record = database.getById(speciesId)
         species = record
         if (record != null && record.similarSpecies.isNotEmpty()) {
@@ -922,7 +921,7 @@ fun SharedTransitionScope.SpeciesDetailScreen(
                                             }
                                             // Tap to navigate to that species
                                             Surface(
-                                                onClick = { /* would navigate to similar species detail */ },
+                                                onClick = { internalSpeciesId = similar.id },
                                                 shape = CircleShape,
                                                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                                                 modifier = Modifier.size(36.dp)
