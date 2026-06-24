@@ -386,8 +386,36 @@ fun CanvasScreen(
             )
         }
 
-        // ── FAB: Add block ──
+        // ── Floating action buttons (bottom-right stack) ──
         if (!showAddMenu && !isKeyboardVisible) {
+            // Drawing toggle FAB (secondary, sits above add-block FAB)
+            SmallFloatingActionButton(
+                onClick = {
+                    haptics.light()
+                    canvasViewModel.drawingState.toggleToolbar()
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 160.dp),
+                shape = CircleShape,
+                containerColor = if (canvasViewModel.drawingState.showToolbar)
+                    MaterialTheme.colorScheme.primaryContainer
+                else
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = if (canvasViewModel.drawingState.showToolbar)
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 3.dp)
+            ) {
+                Icon(
+                    MaterialSymbolIcon("draw"),
+                    if (canvasViewModel.drawingState.showToolbar) "Hide drawing tools" else "Drawing tools",
+                    size = 20.dp
+                )
+            }
+
+            // Add block FAB (primary)
             FloatingActionButton(
                 onClick = {
                     haptics.light()
@@ -719,25 +747,6 @@ private fun CanvasTopBar(
                         )
                     }
 
-                    // Drawing tools
-                    DropdownMenuItem(
-                        text = {
-                            Text(if (showDrawingToolbar) "Hide drawing tools" else "Drawing tools")
-                        },
-                        onClick = {
-                            showOverflow = false
-                            onToggleDrawing()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                MaterialSymbolIcon("draw"),
-                                null,
-                                size = 18.dp,
-                                tint = if (showDrawingToolbar) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    )
                 }
             }
         }
