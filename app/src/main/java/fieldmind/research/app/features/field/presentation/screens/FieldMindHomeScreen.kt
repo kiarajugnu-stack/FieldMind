@@ -808,12 +808,12 @@ private fun CompactHomeHeader(
             ) {
                 Box(
                     Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(20.dp))
                         .background(colors.positive.copy(alpha = if (colors.isDark) 0.34f else 0.16f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(FieldMindIcons.Nature, null, tint = colors.positive, size = 28.dp)
+                    Icon(FieldMindIcons.Nature, null, tint = colors.positive, size = 42.dp)
                 }
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -911,7 +911,7 @@ private fun CompactHomeHeader(
             // ── Row 3: Action chips — Capture, Note (with choice), Projects ──
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 HeroActionChip(
                     icon = FieldMindIcons.Camera,
@@ -1128,12 +1128,12 @@ private fun HeroActionChip(
         tonalElevation = 0.dp
     ) {
         Row(
-            Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+            Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(icon, null, tint = accent, size = 22.dp)
-            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Icon(icon, null, tint = accent, size = 20.dp)
+            Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
     }
 }
