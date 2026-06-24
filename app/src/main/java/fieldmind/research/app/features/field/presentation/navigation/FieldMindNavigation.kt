@@ -127,12 +127,7 @@ sealed class FieldMindScreen(val route: String, val label: String, val icon: Mat
     data object SettingsSpeciesId : FieldMindScreen("field_settings_species_id", "Species ID", FieldMindIcons.Nature)
     data object SettingsAutoGen : FieldMindScreen("field_settings_auto_gen", "Auto generation", FieldMindIcons.Sparkle)
     data object SettingsSecurityScore : FieldMindScreen("field_settings_security_score", "Security Score", MaterialSymbolIcon("security"))
-    data object SettingsExportProtection : FieldMindScreen("field_settings_export_protection", "Export Protection", FieldMindIcons.Export)
-    data object SettingsAppPreview : FieldMindScreen("field_settings_app_preview", "App Preview", MaterialSymbolIcon("visibility"))
-    data object SettingsFailedUnlocks : FieldMindScreen("field_settings_failed_unlocks", "Failed Unlocks", MaterialSymbolIcon("lock_person"))
-    data object SettingsMetadataProtection : FieldMindScreen("field_settings_metadata_protection", "Metadata Protection", MaterialSymbolIcon("perm_media"))
-    data object SettingsAppPinLength : FieldMindScreen("field_settings_app_pin_length", "PIN Length", MaterialSymbolIcon("dialpad"))
-    data object SettingsDecoyPin : FieldMindScreen("field_settings_decoy_pin", "Decoy PIN", MaterialSymbolIcon("lock_open"))
+
 
     // ── Tasks screen ──
     data object Tasks : FieldMindScreen("field_tasks", "Tasks", MaterialSymbolIcon("checklist"))
@@ -1028,23 +1023,11 @@ private fun FieldMindNavHost(
                     SecuritySettingsPage(
                         viewModel = viewModel,
                         onBack = { navController.popBackStack() },
-                        onOpenSecurityScore = { navController.navigateToDestination(FieldMindScreen.SettingsSecurityScore.route) },
-                        onOpenExportProtection = { navController.navigateToDestination(FieldMindScreen.SettingsExportProtection.route) },
-                        onOpenAppPreview = { navController.navigateToDestination(FieldMindScreen.SettingsAppPreview.route) },
-                        onOpenFailedUnlocks = { navController.navigateToDestination(FieldMindScreen.SettingsFailedUnlocks.route) },
-                        onOpenMetadataProtection = { navController.navigateToDestination(FieldMindScreen.SettingsMetadataProtection.route) },
-                        onOpenAppPinLength = { navController.navigateToDestination(FieldMindScreen.SettingsAppPinLength.route) },
-                        onOpenDecoyPin = { navController.navigateToDestination(FieldMindScreen.SettingsDecoyPin.route) }
+                        onOpenSecurityScore = { navController.navigateToDestination(FieldMindScreen.SettingsSecurityScore.route) }
                     )
                 }
             }
             composable(FieldMindScreen.SettingsSecurityScore.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { SecurityScoreDetailPage(settings = viewModel.fieldSettings, onBack = { navController.popBackStack() }) } }
-            composable(FieldMindScreen.SettingsExportProtection.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { ExportProtectionPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
-            composable(FieldMindScreen.SettingsAppPreview.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { AppPreviewPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
-            composable(FieldMindScreen.SettingsFailedUnlocks.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { FailedUnlocksPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
-            composable(FieldMindScreen.SettingsMetadataProtection.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { MetadataProtectionPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
-            composable(FieldMindScreen.SettingsAppPinLength.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { AppPinLengthPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
-            composable(FieldMindScreen.SettingsDecoyPin.route) { SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) { DecoyPinPage(viewModel = viewModel, onBack = { navController.popBackStack() }) } }
             composable(FieldMindScreen.SettingsScreenVisibility.route) {
                 SwipeBackHost(onBack = { navController.popBackStack() }, previousScreen = previousScreenInfo) {
                     ScreenVisibilitySettingsPage(viewModel = viewModel, onBack = { navController.popBackStack() })
