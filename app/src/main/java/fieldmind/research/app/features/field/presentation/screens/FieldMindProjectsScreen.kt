@@ -22,6 +22,8 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -402,6 +404,7 @@ fun ProjectsScreen(
                         questions.count { it.relatedProjectId == project.id } +
                         sources.count { it.relatedProjectId == project.id },
                     relativeTime = relativeTime(project.updatedAt),
+                    viewModel = viewModel,
                     onClick = { onOpenDetail("project", project.id) }
                 )
             }
@@ -418,10 +421,15 @@ private fun ProjectCard(
     project: ProjectEntity,
     recordCount: Int,
     relativeTime: String,
+    viewModel: FieldMindViewModel,
     onClick: () -> Unit
 ) {
     val colors = FieldMindTheme.colors
+    val context = LocalContext.current
     var showMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var renameText by remember(project.id) { mutableStateOf(project.title) }
 
     Card(
         modifier = Modifier.fillMaxWidth().expressivePress(scaleDown = 0.98f).clickable(onClick = onClick),
@@ -498,38 +506,175 @@ private fun ProjectCard(
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(
                         text = { Text("Rename") },
-                        onClick = { showMenu = false },
+                        onClick = { showMenu = false; showRenameDialog = true },
                         leadingIcon = { Icon(MaterialSymbolIcon("edit"), null, size = 18.dp) }
                     )
                     DropdownMenuItem(
                         text = { Text("Duplicate") },
-                        onClick = { showMenu = false },
+                        onClick = {
+                            showMenu = false
+                            viewModel.addProject(
+                                title = "${project.title} (Copy)",
+                                topicType = project.topicType,
+                                objective = project.objective,
+                                researchQuestion = project.researchQuestion,
+                                methods = project.methods,
+                                futureQuestions = project.futureQuestions,
+                                backgroundNotes = project.backgroundNotes,
+                                hypothesisSummary = project.hypothesisSummary,
+                                dataSummary = project.dataSummary,
+                                analysis = project.analysis,
+                                conclusion = project.conclusion,
+                                projectType = project.projectType ?: "Observation",
+                                selectedMethods = project.selectedMethods ?: "",
+                                connectionMap = project.connectionMap ?: ""
+                            )
+                        },
                         leadingIcon = { Icon(MaterialSymbolIcon("content_copy"), null, size = 18.dp) }
                     )
                     DropdownMenuItem(
                         text = { Text("Share") },
-                        onClick = { showMenu = false },
+                        onClick = {
+                            showMenu = false
+                            val shareText = buildString {
+                                appendLine("📁 ${project.title}")
+                                if (project.objective.isNotBlank()) appendLine(project.objective)
+                                appendLine()
+                                appendLine("Type: ${project.topicType}")
+                                appendLine("Status: ${project.status}")
+                                appendLine("Records: $recordCount")
+                                appendLine("Updated: $relativeTime")
+                            }
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "Project: ${project.title}")
+                                putExtra(Intent.EXTRA_TEXT, shareText)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Share Project"))
+                        },
                         leadingIcon = { Icon(MaterialSymbolIcon("share"), null, size = 18.dp) }
                     )
                     DropdownMenuItem(
                         text = { Text("Export") },
-                        onClick = { showMenu = false },
+                        onClick = {
+                            showMenu = false
+                            val exportText = buildString {
+                                appendLine("# ${project.title}")
+                                appendLine()
+                                appendLine("**Topic:** ${project.topicType}")
+                                appendLine("**Status:** ${project.status}")
+                                appendLine("**Created:** ${SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(project.createdAt))}")
+                                appendLine("**Records:** $recordCount")
+                                if (project.objective.isNotBlank()) appendLine("\n## Objective\n${project.objective}")
+                                if (project.researchQuestion.isNotBlank()) appendLine("\n## Research Question\n${project.researchQuestion}")
+                                if (project.methods.isNotBlank()) appendLine("\n## Methods\n${project.methods}")
+                                if (project.conclusion.isNotBlank()) appendLine("\n## Conclusion\n${project.conclusion}")
+                            }
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/markdown"
+                                putExtra(Intent.EXTRA_SUBJECT, "${project.title} — FieldMind Export")
+                                putExtra(Intent.EXTRA_TEXT, exportText)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Export Project As"))
+                        },
                         leadingIcon = { Icon(MaterialSymbolIcon("file_download"), null, size = 18.dp) }
                     )
                     HorizontalDivider()
                     DropdownMenuItem(
-                        text = { Text("Archive", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        onClick = { showMenu = false },
-                        leadingIcon = { Icon(MaterialSymbolIcon("archive"), null, size = 18.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        text = {
+                            Text(
+                                if (project.status == "Archived") "Unarchive" else "Archive",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        onClick = {
+                            showMenu = false
+                            viewModel.updateProjectEntity(
+                                project.copy(
+                                    status = if (project.status == "Archived") "Active" else "Archived",
+                                    archivedAt = if (project.status == "Archived") null else System.currentTimeMillis()
+                                )
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                MaterialSymbolIcon("archive"),
+                                null,
+                                size = 18.dp,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     )
                     DropdownMenuItem(
                         text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
-                        onClick = { showMenu = false },
+                        onClick = { showMenu = false; showDeleteConfirm = true },
                         leadingIcon = { Icon(MaterialSymbolIcon("delete"), null, size = 18.dp, tint = MaterialTheme.colorScheme.error) }
                     )
                 }
             }
         }
+    }
+
+    // ── Rename Dialog ──
+    if (showRenameDialog) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            icon = { Icon(FieldMindIcons.Edit, null, size = 28.dp) },
+            title = { Text("Rename Project") },
+            text = {
+                OutlinedTextField(
+                    value = renameText,
+                    onValueChange = { renameText = it },
+                    label = { Text("Project name") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (renameText.isNotBlank()) {
+                            viewModel.updateProjectEntity(project.copy(title = renameText.trim()))
+                        }
+                        showRenameDialog = false
+                    },
+                    enabled = renameText.isNotBlank(),
+                    shape = RoundedCornerShape(14.dp)
+                ) { Text("Rename") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    // ── Delete Confirmation Dialog ──
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            icon = { Icon(MaterialSymbolIcon("delete_forever"), null, size = 28.dp, tint = MaterialTheme.colorScheme.error) },
+            title = { Text("Delete Project?") },
+            text = {
+                Text(
+                    "Are you sure you want to delete \"${project.title}\"? This action cannot be undone. All observations, notes, questions, and sources linked to this project will also be removed.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteProject(project.id)
+                        showDeleteConfirm = false
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+            }
+        )
     }
 }
 
