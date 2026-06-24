@@ -22,6 +22,8 @@ import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
 import fieldmind.research.app.shared.presentation.components.icons.Icon
 import fieldmind.research.app.shared.presentation.components.icons.MaterialSymbolIcon
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -241,7 +243,7 @@ fun ProjectSettingsScreen(
                                             MaterialSymbolIcon("check"),
                                             null,
                                             size = 16.dp,
-                                            tint = if (Color.getLuminance(color) > 0.5f) Color.Black else Color.White
+                                            tint = if (color.luminance() > 0.5f) Color.Black else Color.White
                                         )
                                     }
                                 }
@@ -547,41 +549,49 @@ fun ProjectSettingsScreen(
     //  Export Format Picker Dialog
     // ════════════════════════════════════════════════════════════════
     if (showExportFormatPicker) {
-        AlertDialog(
+        Dialog(
             onDismissRequest = { showExportFormatPicker = false },
-            shape = RoundedCornerShape(24.dp),
-            containerColor = MaterialTheme.colorScheme.surface
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            Column(
-                Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
             ) {
-                Text("Export Format", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                exportFormats.forEach { format ->
-                    Surface(
-                        onClick = {
-                            exportFormat = format
-                            showExportFormatPicker = false
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (exportFormat == format) colors.project.copy(alpha = 0.12f)
-                                else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            Modifier.fillMaxWidth().padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                Column(
+                    Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("Export Format", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    exportFormats.forEach { format ->
+                        Surface(
+                            onClick = {
+                                exportFormat = format
+                                showExportFormatPicker = false
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (exportFormat == format) colors.project.copy(alpha = 0.12f)
+                                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(format, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                            if (exportFormat == format) {
-                                Icon(MaterialSymbolIcon("check_circle", filled = true), null, tint = colors.project, size = 20.dp)
+                            Row(
+                                Modifier.fillMaxWidth().padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(format, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                if (exportFormat == format) {
+                                    Icon(MaterialSymbolIcon("check_circle", filled = true), null, tint = colors.project, size = 20.dp)
+                                }
                             }
                         }
                     }
-                }
-                TextButton(onClick = { showExportFormatPicker = false }, modifier = Modifier.align(Alignment.End)) {
-                    Text("Cancel")
+                    TextButton(onClick = { showExportFormatPicker = false }, modifier = Modifier.align(Alignment.End)) {
+                        Text("Cancel")
+                    }
                 }
             }
         }
