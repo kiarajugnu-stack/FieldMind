@@ -583,6 +583,8 @@ fun ProjectDetailScreen(
                 TextButton(onClick = { showRenameDialog = false }) { Text("Cancel") }
             }
         )
+    }
+
     // ════════════════════════════════════════════════════════════════
     //  Observation Picker Dialog
     // ════════════════════════════════════════════════════════════════
