@@ -84,6 +84,7 @@ data class ScreenVisibility(
 }
 
 class FieldMindSettings private constructor(context: Context) {
+    private val gson = Gson()
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences("fieldmind_settings", Context.MODE_PRIVATE)
 

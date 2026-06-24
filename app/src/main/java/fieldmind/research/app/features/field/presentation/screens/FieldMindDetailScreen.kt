@@ -1472,7 +1472,7 @@ private fun NoteDetailContent(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.note.cardBg(),
+                        containerColor = colors.note.cardBg(colors.isDark),
                         contentColor = colors.note
                     )
                 ) {

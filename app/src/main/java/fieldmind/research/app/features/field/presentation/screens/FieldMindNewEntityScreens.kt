@@ -1216,6 +1216,7 @@ private fun AttachmentTypeItem(
 
 @Composable
 fun NewFolderScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
+    val colors = FieldMindTheme.colors
     var folderName by remember { mutableStateOf("") }
     var selectedColor by remember { mutableStateOf(0xFF5F7F52) }
     val haptics = rememberFieldMindHaptics()

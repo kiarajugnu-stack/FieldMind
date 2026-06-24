@@ -50,6 +50,12 @@ private enum class ProjectTab(val label: String) {
     Questions("Questions"), Sources("Sources"), Tasks("Tasks")
 }
 
+private data class FeedItem(
+    val kind: String, val id: Long, val title: String, val subtitle: String,
+    val body: String, val meta: String, val timestamp: Long, val tags: List<String> = emptyList(),
+    val linkedCount: Int = 0, val linkedLabel: String = "", val accentColor: Color
+)
+
 // ══════════════════════════════════════════════════════════════════════
 //  Project Detail Screen — Redesigned with header, stats, tabs, feed
 // ══════════════════════════════════════════════════════════════════════
@@ -150,12 +156,7 @@ fun ProjectDetailScreen(
         if (selectedTab == ProjectTab.All) relatedFolders else emptyList()
     }
 
-    // ── Combined feed for All tab ──
-    data class FeedItem(
-        val kind: String, val id: Long, val title: String, val subtitle: String,
-        val body: String, val meta: String, val timestamp: Long, val tags: List<String> = emptyList(),
-        val linkedCount: Int = 0, val linkedLabel: String = "", val accentColor: Color
-    )
+    // ── Combined feed for All tab (FeedItem defined at file level above) ──
     val feedItems = remember(displayObs, displayNotes, displayQs, displaySources, displayTasks, displayFolders, selectedTab) {
         when (selectedTab) {
             ProjectTab.All -> buildList {

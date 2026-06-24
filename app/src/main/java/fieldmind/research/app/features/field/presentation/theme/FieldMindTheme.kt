@@ -166,13 +166,7 @@ data class FieldMindColors(
         else -> confidenceVerify
     }
 
-    // ── Opacity helpers ──
-    /** Background tint for cards, chips – auto-adapts alpha to dark mode. */
-    fun Color.cardBg(): Color = copy(alpha = if (isDark) 0.22f else 0.14f)
-    /** Subtle border for selected state. */
-    fun Color.cardBorder(): Color = copy(alpha = 0.40f)
-    /** Muted text / secondary decoration. */
-    fun Color.muted(): Color = copy(alpha = 0.60f)
+    // ── isDark is provided by the constructor parameter above ──
 
     /**
      * Apply per-category color overrides from Settings.
@@ -406,6 +400,17 @@ fun FieldMindTheme(
         )
     }
 }
+
+// ── Top-level opacity helpers ──
+// These were originally member extension functions inside FieldMindColors.
+// Moved top-level so they can be called from any file without dispatch-receiver scope.
+
+/** Background tint for cards, chips – auto-adapts alpha to dark mode. */
+fun Color.cardBg(isDark: Boolean): Color = copy(alpha = if (isDark) 0.22f else 0.14f)
+/** Subtle border for selected state. */
+fun Color.cardBorder(): Color = copy(alpha = 0.40f)
+/** Muted text / secondary decoration. */
+fun Color.muted(): Color = copy(alpha = 0.60f)
 
 // ── Re-export for convenient single import ──
 // import fieldmind.research.app.features.field.presentation.theme.MaterialSymbolIcon
