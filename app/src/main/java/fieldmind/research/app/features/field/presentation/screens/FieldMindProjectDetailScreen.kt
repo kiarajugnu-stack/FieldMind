@@ -49,6 +49,7 @@ fun ProjectDetailScreen(
     var showNewNote by remember { mutableStateOf(false) }
     var showNewQuestion by remember { mutableStateOf(false) }
     var showNewSource by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
 
     val project = projects.firstOrNull { it.id == projectId }
     val relatedObs = observations.filter { it.projectId == projectId }
@@ -94,7 +95,7 @@ fun ProjectDetailScreen(
                         Icon(MaterialSymbolIcon("arrow_back"), "Back", size = 22.dp)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        IconButton(onClick = { /* Rename */ }, modifier = Modifier.size(40.dp)) {
+                        IconButton(onClick = { showRenameDialog = true }, modifier = Modifier.size(40.dp)) {
                             Icon(MaterialSymbolIcon("more_vert"), "Menu", size = 22.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
@@ -348,6 +349,41 @@ fun ProjectDetailScreen(
             viewModel = viewModel,
             initialProjectId = project.id,
             onDismiss = { showNewSource = false }
+        )
+    }
+
+    // ── Rename Dialog ──
+    if (showRenameDialog) {
+        var renameText by remember { mutableStateOf(project.title) }
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            icon = { Icon(FieldMindIcons.Edit, null, size = 28.dp) },
+            title = { Text("Rename Project") },
+            text = {
+                OutlinedTextField(
+                    value = renameText,
+                    onValueChange = { renameText = it },
+                    label = { Text("Project name") },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (renameText.isNotBlank()) {
+                            viewModel.updateProjectEntity(project.copy(title = renameText.trim()))
+                        }
+                        showRenameDialog = false
+                    },
+                    enabled = renameText.isNotBlank(),
+                    shape = RoundedCornerShape(14.dp)
+                ) { Text("Rename") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) { Text("Cancel") }
+            }
         )
     }
 }
