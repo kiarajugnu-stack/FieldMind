@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -69,14 +70,14 @@ fun NewProjectScreen(viewModel: FieldMindViewModel, onBack: () -> Unit) {
             val colorHex = "#%06X".format(selectedColor and 0xFFFFFF)
             viewModel.addProject(
                 title = title,
-                topic = selectedTemplate,
+                topicType = selectedTemplate,
                 objective = description,
-                question = "",
+                researchQuestion = "",
                 methods = "",
-                nextAction = "",
-                background = "",
-                hypothesis = "",
-                dataPlan = "",
+                futureQuestions = "",
+                backgroundNotes = "",
+                hypothesisSummary = "",
+                dataSummary = "",
                 analysis = "",
                 conclusion = "",
                 projectType = selectedTemplate,
