@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -26,6 +27,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +47,7 @@ import fieldmind.research.app.features.field.presentation.canvas.DrawingBlock
 import fieldmind.research.app.features.field.presentation.canvas.VoiceBlock
 import fieldmind.research.app.features.field.presentation.canvas.EquationBlock
 import fieldmind.research.app.features.field.presentation.components.FieldMindIcons
+import fieldmind.research.app.features.field.presentation.components.SwipeableAlertDialog
 import fieldmind.research.app.features.field.presentation.components.rememberFieldMindHaptics
 import fieldmind.research.app.features.field.presentation.theme.FieldMindTheme
 import fieldmind.research.app.features.field.presentation.viewmodel.FieldMindViewModel
@@ -75,9 +78,6 @@ fun CanvasScreen(
     onBack: () -> Unit,
     onOpenLinkedEntity: ((String, Long) -> Unit)? = null
 ) {
-    // Handle device back button
-    BackHandler(enabled = true) { onBack() }
-
     val canvasViewModel: CanvasViewModel = viewModel()
     val haptics = rememberFieldMindHaptics()
     val clipboard = LocalClipboardManager.current
@@ -104,6 +104,64 @@ fun CanvasScreen(
     // Track viewport size for minimap
     var viewportSize by remember { mutableStateOf(Size(0f, 0f)) }
 
+    // ── Unsaved-changes confirmation dialog ──
+    var showExitConfirm by remember { mutableStateOf(false) }
+    var hasEdits by remember { mutableStateOf(false) }
+    // Track actual user edits via undo availability — only true after user action
+    LaunchedEffect(canUndo) {
+        if (canUndo) hasEdits = true
+    }
+
+    // Shared back handler: show confirmation if edits pending
+    val handleBack = {
+        if (hasEdits && !showExitConfirm) {
+            showExitConfirm = true
+        } else {
+            onBack()
+        }
+    }
+
+    // Handle device back button
+    BackHandler(enabled = true) { handleBack() }
+
+    if (showExitConfirm) {
+        SwipeableAlertDialog(
+            onDismissRequest = { showExitConfirm = false },
+            icon = {
+                Icon(
+                    MaterialSymbolIcon("edit_note"),
+                    "Unsaved changes",
+                    size = 28.dp,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Discard edits?") },
+            text = {
+                Text(
+                    "You have unsaved changes on the canvas. What would you like to do?",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitConfirm = false
+                        onBack()
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) { Text("Discard") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirm = false }) {
+                    Text("Keep editing")
+                }
+            }
+        )
+    }
+
     // Auto-select newly added blocks
     LaunchedEffect(lastAddedBlockId) {
         lastAddedBlockId?.let { id ->
@@ -122,6 +180,17 @@ fun CanvasScreen(
 
     // ── Add-block menu state ──
     var showAddMenu by remember { mutableStateOf(false) }
+
+    // ── Keyboard visibility (hide FAB when typing) ──
+    var isKeyboardVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        while (true) {
+            val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            isKeyboardVisible = imm?.isAcceptingText ?: false
+            kotlinx.coroutines.delay(100)
+        }
+    }
 
     // ── Figure gallery state ──
     var showFigureGallery by remember { mutableStateOf(false) }
@@ -166,7 +235,7 @@ fun CanvasScreen(
                     redoLabel = redoLabel,
                     zoom = canvasViewModel.canvasState.zoom,
                     canvasMode = canvasViewModel.canvasState.canvasMode,
-                    onBack = onBack,
+                    onBack = { handleBack() },
                     onUndo = { haptics.light(); canvasViewModel.undo() },
                     onRedo = { haptics.light(); canvasViewModel.redo() },
                     onZoomIn = { canvasViewModel.canvasState.applyZoom(1.2f, androidx.compose.ui.geometry.Offset(100f, 100f)) },
@@ -248,8 +317,9 @@ fun CanvasScreen(
                         blocks = blocks,
                         modifier = Modifier.fillMaxSize(),
                         blockContent = blockContentCallback,
-                        onBlockMoved = { id, x, y -> canvasViewModel.moveBlock(id, x, y) },
-                        onBlockResized = { id, w, h -> canvasViewModel.resizeBlock(id, w, h) },
+                        onBlockMoved = { id, x, y -> canvasViewModel.moveBlockIntermediate(id, x, y) },
+                        onBlockMovedFinal = { id, sx, sy, fx, fy -> canvasViewModel.moveBlockFinal(id, sx, sy, fx, fy) },
+                        onBlockResized = { id, w, h -> canvasViewModel.resizeBlockIntermediate(id, w, h) },
                         onBlockTapped = onBlockTappedCallback,
                         onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
                         onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
@@ -272,8 +342,8 @@ fun CanvasScreen(
                         blocks = blocks,
                         modifier = Modifier.fillMaxSize(),
                         blockContent = blockContentCallback,
-                        onBlockMoved = { id, x, y -> canvasViewModel.moveBlock(id, x, y) },
-                        onBlockResized = { id, w, h -> canvasViewModel.resizeBlock(id, w, h) },
+                        onBlockMoved = { id, x, y -> canvasViewModel.moveBlockIntermediate(id, x, y) },
+                        onBlockResized = { id, w, h -> canvasViewModel.resizeBlockIntermediate(id, w, h) },
                         onBlockTapped = onBlockTappedCallback,
                         onBlockDelete = { id -> canvasViewModel.deleteBlock(id) },
                         onBlockDuplicate = { id -> canvasViewModel.duplicateBlock(id) },
@@ -345,7 +415,7 @@ fun CanvasScreen(
         }
 
         // ── FAB: Add block ──
-        if (!showAddMenu) {
+        if (!showAddMenu && !isKeyboardVisible) {
             FloatingActionButton(
                 onClick = {
                     haptics.light()
@@ -445,8 +515,18 @@ fun CanvasScreen(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  Canvas Top Bar
+//  Canvas Top Bar — redesigned with overflow menu to reduce clutter
 // ══════════════════════════════════════════════════════════════════════
+//
+// Layout:
+//   [Back]  [Title · save dot]  [Page indicator*]  [Undo/Redo]  [Zoom]  [⋮]
+//                                                                    └─ overflow menu
+//                                                                       - Canvas mode
+//                                                                       - Gallery
+//                                                                       - Drawing tool
+//                                                                       - Grid toggle
+//
+// * Page indicator only shown in PAGES mode.
 
 @Composable
 private fun CanvasTopBar(
@@ -473,6 +553,8 @@ private fun CanvasTopBar(
     showGrid: Boolean = true,
     onToggleGrid: () -> Unit = {}
 ) {
+    var showOverflow by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -482,257 +564,74 @@ private fun CanvasTopBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 4.dp, vertical = 8.dp),
+                .padding(horizontal = 4.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            // Back button
-            IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
-                Icon(FieldMindIcons.Back, null, size = 22.dp)
+            // ── Back button ──
+            IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
+                Icon(FieldMindIcons.Back, null, size = 20.dp)
             }
 
-            // Note title
-            Column(
+            // ── Note title + compact save dot ──
+            Row(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
                     text = note?.title?.ifBlank { "Untitled canvas" } ?: "Canvas",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                // Compact save dot (no label — just a pulsing/gray dot)
+                Box(
+                    modifier = Modifier
+                        .size(5.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (isSaving) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+                        )
+                )
+            }
+
+            // ── Page indicator (PAGES mode only) ──
+            if (canvasMode == CanvasMode.PAGES) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    // Save indicator
-                    if (isSaving) {
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(
-                                    Modifier
-                                        .size(5.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary)
-                                )
-                                Text(
-                                    "Saving…",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    } else {
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(
-                                    Modifier
-                                        .size(5.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                                )
-                                Text(
-                                    "Saved",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                }
-            }
-
-            // Canvas mode toggle (Infinite vs Pages)
-            Surface(
-                onClick = onToggleCanvasMode,
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        MaterialSymbolIcon(if (canvasMode == CanvasMode.INFINITE) "view_week" else "unfold_more"),
-                        "Toggle canvas mode",
-                        size = 18.dp,
-                        tint = MaterialTheme.colorScheme.onSurface
+                        MaterialSymbolIcon("description"),
+                        "Pages",
+                        size = 12.dp,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "${currentPage + 1} / $totalPages",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            // Gallery button
-            if (onToggleGallery != null) {
-                Surface(
-                    onClick = onToggleGallery,
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            MaterialSymbolIcon("collections_bookmark"),
-                            "Figure Gallery",
-                            size = 18.dp,
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-
-            // Drawing tool toggle
-            Surface(
-                onClick = onToggleDrawing,
-                shape = RoundedCornerShape(12.dp),
-                color = if (showDrawingToolbar) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    else MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        MaterialSymbolIcon("draw"),
-                        if (showDrawingToolbar) "Hide drawing tools" else "Show drawing tools",
-                        size = 18.dp,
-                        tint = if (showDrawingToolbar) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-
-            // Grid toggle (Infinite mode only) — fades in/out on mode switch
-            AnimatedVisibility(
-                visible = canvasMode != CanvasMode.PAGES,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Surface(
-                    onClick = onToggleGrid,
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (showGrid) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                        else MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            MaterialSymbolIcon(if (showGrid) "grid_on" else "grid_off"),
-                            if (showGrid) "Hide grid" else "Show grid",
-                            size = 18.dp,
-                            tint = if (showGrid) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-
-            // Page indicator (PAGES mode only)
-            if (canvasMode == CanvasMode.PAGES) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            MaterialSymbolIcon("description"),
-                            "Pages",
-                            size = 14.dp,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            "${currentPage + 1} / $totalPages",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-
-            // Zoom controls (hides in PAGES mode where zoom is fixed at 1x)
-            if (canvasMode != CanvasMode.PAGES) {
-                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                    // Zoom out
-                    Surface(
-                        onClick = onZoomOut,
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                MaterialSymbolIcon("zoom_out"),
-                                "Zoom out",
-                                size = 18.dp,
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                
-                    // Zoom level display
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier
-                            .align(Alignment.CenterVertically)
-                            .clickable { onZoomReset() }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            "${(zoom * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(4.dp)
-                        )
-                    }
-
-                    // Zoom in
-                    Surface(
-                        onClick = onZoomIn,
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                MaterialSymbolIcon("zoom_in"),
-                                "Zoom in",
-                                size = 18.dp,
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Undo / Redo buttons
-            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                // Undo
+            // ── Undo / Redo ──
+            Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
                 Surface(
                     onClick = onUndo,
                     enabled = canUndo,
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (canUndo)
-                        MaterialTheme.colorScheme.surfaceContainerHigh
-                    else
-                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
-                    modifier = Modifier.size(36.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier.size(32.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -742,21 +641,16 @@ private fun CanvasTopBar(
                             tint = if (canUndo)
                                 MaterialTheme.colorScheme.onSurface
                             else
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                         )
                     }
                 }
-
-                // Redo
                 Surface(
                     onClick = onRedo,
                     enabled = canRedo,
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (canRedo)
-                        MaterialTheme.colorScheme.surfaceContainerHigh
-                    else
-                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f),
-                    modifier = Modifier.size(36.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier.size(32.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -766,7 +660,131 @@ private fun CanvasTopBar(
                             tint = if (canRedo)
                                 MaterialTheme.colorScheme.onSurface
                             else
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                        )
+                    }
+                }
+            }
+
+            // ── Zoom controls (always visible) ──
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(1.dp),
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 2.dp)
+            ) {
+                // Zoom out
+                IconButton(
+                    onClick = onZoomOut,
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(MaterialSymbolIcon("zoom_out"), "Zoom out", size = 16.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                // Zoom level (click to reset)
+                Text(
+                    "${(zoom * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.clickable { onZoomReset() }
+                )
+                // Zoom in
+                IconButton(
+                    onClick = onZoomIn,
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(MaterialSymbolIcon("zoom_in"), "Zoom in", size = 16.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            // ── Overflow menu (⋮) ──
+            Box {
+                Surface(
+                    onClick = { showOverflow = true },
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color.Transparent,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            MaterialSymbolIcon("more_vert"),
+                            "More options",
+                            size = 20.dp,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = showOverflow,
+                    onDismissRequest = { showOverflow = false }
+                ) {
+                    // Canvas mode toggle
+                    DropdownMenuItem(
+                        text = { Text(if (canvasMode == CanvasMode.INFINITE) "Page mode" else "Infinite canvas") },
+                        onClick = {
+                            showOverflow = false
+                            onToggleCanvasMode()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                MaterialSymbolIcon(if (canvasMode == CanvasMode.INFINITE) "view_week" else "unfold_more"),
+                                null,
+                                size = 18.dp
+                            )
+                        }
+                    )
+                    HorizontalDivider()
+
+                    // Gallery
+                    if (onToggleGallery != null) {
+                        DropdownMenuItem(
+                            text = { Text("Figure gallery") },
+                            onClick = {
+                                showOverflow = false
+                                onToggleGallery()
+                            },
+                            leadingIcon = {
+                                Icon(MaterialSymbolIcon("collections_bookmark"), null, size = 18.dp)
+                            }
+                        )
+                    }
+
+                    // Drawing tool
+                    DropdownMenuItem(
+                        text = {
+                            Text(if (showDrawingToolbar) "Hide drawing tools" else "Drawing tools")
+                        },
+                        onClick = {
+                            showOverflow = false
+                            onToggleDrawing()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                MaterialSymbolIcon("draw"),
+                                null,
+                                size = 18.dp,
+                                tint = if (showDrawingToolbar) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    )
+
+                    // Grid toggle (Infinite mode only)
+                    if (canvasMode != CanvasMode.PAGES) {
+                        DropdownMenuItem(
+                            text = { Text(if (showGrid) "Hide grid" else "Show grid") },
+                            onClick = {
+                                showOverflow = false
+                                onToggleGrid()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    MaterialSymbolIcon(if (showGrid) "grid_on" else "grid_off"),
+                                    null,
+                                    size = 18.dp
+                                )
+                            }
                         )
                     }
                 }

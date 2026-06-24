@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import fieldmind.research.app.features.field.data.canvas.CanvasBlockEntity
@@ -92,20 +93,81 @@ fun InfiniteCanvas(
     // Zoom slider visibility — shown only in Infinite mode
     val showZoomSlider = canvasState.canvasMode == CanvasMode.INFINITE
 
+    // ── Track viewport size for viewport culling ──
+    var viewportWidth by remember { mutableFloatStateOf(0f) }
+    var viewportHeight by remember { mutableFloatStateOf(0f) }
+
     /**
      * Returns the topmost block at the given canvas-space coordinate, or null.
      * Blocks are evaluated in reverse z-order (highest z-index first).
+     * Uses live positions/sizes during active drag gestures.
      */
     fun blockAtCanvasPoint(x: Float, y: Float): CanvasBlockEntity? {
         return blocks.lastOrNull { block ->
-            x in block.positionX..(block.positionX + block.width) &&
-            y in block.positionY..(block.positionY + block.height)
+            val livePos = canvasState.liveBlockPositions[block.id]
+            val liveSize = canvasState.liveBlockSizes[block.id]
+            val bx = livePos?.x ?: block.positionX
+            val by = livePos?.y ?: block.positionY
+            val bw = liveSize?.width ?: block.width
+            val bh = liveSize?.height ?: block.height
+            x in bx..(bx + bw) &&
+            y in by..(by + bh)
+        }
+    }
+
+    // ── Memoized visible blocks computation ──
+    // Uses derivedStateOf for reactivity: only recalculates when zoom, pan, viewport,
+    // or blocks change. 300px padding provides a smooth recycling buffer.
+    val rawVisibleBlocks by remember(blocks) {
+        derivedStateOf {
+            val vw = viewportWidth.coerceAtLeast(1f)
+            val vh = viewportHeight.coerceAtLeast(1f)
+            val padding = 300f
+            blocks.filter { block ->
+                val livePos = canvasState.liveBlockPositions[block.id]
+                val liveSize = canvasState.liveBlockSizes[block.id]
+                val posX = livePos?.x ?: block.positionX
+                val posY = livePos?.y ?: block.positionY
+                val w = liveSize?.width ?: block.width
+                val h = liveSize?.height ?: block.height
+                val screenPos = canvasState.canvasToScreen(posX, posY)
+                val screenSize = Size(w * canvasState.zoom, h * canvasState.zoom)
+
+                screenPos.x + screenSize.width > -padding &&
+                screenPos.x < vw + padding &&
+                screenPos.y + screenSize.height > -padding &&
+                screenPos.y < vh + padding
+            }
+        }
+    }
+
+    // ── Stabilize visible blocks list ──
+    // rawVisibleBlocks produces a NEW list on every gesture frame (zoom/pan change).
+    // This causes SubcomposeLayout to re-measure ALL visible blocks on every frame.
+    // By stabilizing to only emit a NEW list when the set of visible block IDs changes,
+    // we prevent unnecessary re-measurement during gestures.
+    val visibleBlocks = remember { mutableStateListOf<CanvasBlockEntity>() }
+    var lastVisibleIds by remember { mutableStateOf(setOf<Long>()) }
+    // SideEffect runs synchronously after every composition — avoids coroutine
+    // overhead (LaunchedEffect would cancel/relaunch a coroutine every frame
+    // during gestures). Only updates visibleBlocks when the set of visible
+    // block IDs actually changes.
+    SideEffect {
+        val newIds = rawVisibleBlocks.map { it.id }.toSet()
+        if (newIds != lastVisibleIds || visibleBlocks.size != rawVisibleBlocks.size) {
+            lastVisibleIds = newIds
+            visibleBlocks.clear()
+            visibleBlocks.addAll(rawVisibleBlocks)
         }
     }
 
     Box(
         modifier = modifier
             .fillMaxSize()
+            .onSizeChanged { size ->
+                viewportWidth = size.width.toFloat()
+                viewportHeight = size.height.toFloat()
+            }
             // ── Tap detection (for block selection + deselection) ──
             .then(
                 Modifier.pointerInput(blocks) {
@@ -141,22 +203,14 @@ fun InfiniteCanvas(
             )
         }
 
-        // Layer 3: Compose block overlay (with viewport culling for performance)
+        // Layer 3: Compose block overlay (with viewport culling and block recycling)
+        // visibleBlocks is pre-computed via derivedStateOf above (300px padding buffer)
+        // to minimize composition/disposal churn during rapid pan/zoom.
         SubcomposeLayout(
             modifier = Modifier.fillMaxSize()
         ) { constraints ->
-            // Only render blocks that are visible in the current viewport
-            val visibleBlocks = blocks.filter { block ->
-                val screenPos = canvasState.canvasToScreen(block.positionX, block.positionY)
-                val screenSize = Size(block.width * canvasState.zoom, block.height * canvasState.zoom)
-                
-                // Check if block is within viewport (with 100px padding for smooth scrolling)
-                val padding = 100f
-                screenPos.x + screenSize.width > -padding &&
-                screenPos.x < constraints.maxWidth + padding &&
-                screenPos.y + screenSize.height > -padding &&
-                screenPos.y < constraints.maxHeight + padding
-            }
+            // Read the memoized visible blocks — no inline filter needed
+            // (computed outside the measurement pass via derivedStateOf)
             
             val placeables = visibleBlocks.map { block ->
                 subcompose("block_${block.id}") {
@@ -183,7 +237,11 @@ fun InfiniteCanvas(
             layout(constraints.maxWidth, constraints.maxHeight) {
                 placeables.forEachIndexed { index, placeable ->
                     val block = visibleBlocks[index]
-                    val screenPos = canvasState.canvasToScreen(block.positionX, block.positionY)
+                    // Use live in-memory position during active drag (no Room write)
+                    val livePos = canvasState.liveBlockPositions[block.id]
+                    val posX = livePos?.x ?: block.positionX
+                    val posY = livePos?.y ?: block.positionY
+                    val screenPos = canvasState.canvasToScreen(posX, posY)
 
                     placeable.place(
                         position = IntOffset(screenPos.x.toInt(), screenPos.y.toInt()),
@@ -193,7 +251,18 @@ fun InfiniteCanvas(
             }
         }
 
-        // Layer 4: BlockToolbar (floating action bar above selected block)
+        // Layer 4: Pan/Zoom gesture layer (below toolbar/slider/minimap so widgets get touches first)
+        // Only activates for touches that do NOT start on a block.
+        // MUST be placed before the overlay widgets in the Box so Compose hit-testing
+        // checks the widgets (last children) first, and only falls through to pan/zoom
+        // when no widget consumed the event.
+        PanZoomLayer(
+            canvasState = canvasState,
+            blocks = blocks,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Layer 5: BlockToolbar (floating action bar above selected block)
         val selectedBlock = remember(blocks, canvasState.selectedBlockIds) {
             blocks.firstOrNull { it.id in canvasState.selectedBlockIds }
         }
@@ -224,14 +293,6 @@ fun InfiniteCanvas(
             onOpenLinked = {
                 selectedBlock?.let { onBlockOpenLinkedEntity?.invoke(it.id) }
             }
-        )
-
-        // Layer 5: Pan/Zoom gesture layer (sits above everything)
-        // Only activates for touches that do NOT start on a block
-        PanZoomLayer(
-            canvasState = canvasState,
-            blocks = blocks,
-            modifier = Modifier.fillMaxSize()
         )
 
         // Layer 6: ZoomSlider (floating widget, right-center)
@@ -302,6 +363,7 @@ private fun PanZoomLayer(
                 // Track initial state for 2+ finger zoom
                 var previousCentroid = Offset.Zero
                 var previousSpan = 0f
+                var wasMultiTouch = false
 
                 while (true) {
                     val event = awaitPointerEvent()
@@ -323,6 +385,14 @@ private fun PanZoomLayer(
                                 kotlin.math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
                             }
 
+                        // Reset tracking when transitioning from single to multi-touch
+                        // to avoid stale previousSpan/centroid causing a zoom jump
+                        if (!wasMultiTouch) {
+                            previousCentroid = centroid
+                            previousSpan = span
+                            wasMultiTouch = true
+                        }
+
                         if (previousSpan > 0f && previousCentroid != Offset.Zero) {
                             val zoomDelta = span / previousSpan
                             val panDelta = centroid - previousCentroid
@@ -334,7 +404,14 @@ private fun PanZoomLayer(
                         previousSpan = span
                         changes.forEach { it.consume() }
                     } else if (changes.size == 1) {
-                        // Single touch: only pan (zoom handled above)
+                        // If we were just in multi-touch, skip the pan delta for this frame
+                        // to avoid a jarring jump when the second finger lifts
+                        if (wasMultiTouch) {
+                            wasMultiTouch = false
+                            changes.forEach { it.consume() }
+                            continue
+                        }
+                        // Single touch: only pan
                         val change = changes.first()
                         val delta = change.position - change.previousPosition
                         canvasState.applyPan(delta.x, delta.y)

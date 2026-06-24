@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -80,8 +80,39 @@ fun CanvasBlock(
     )
 
     // If collapsed, show minimal preview instead of full content
-    val displayWidth = if (isCollapsed) 120f else block.width
-    val displayHeight = if (isCollapsed) 100f else block.height
+    // Use live block size during active resize (in-memory override, not Room)
+    val liveSize = canvasState.liveBlockSizes[block.id]
+    val displayWidth = if (isCollapsed) 120f else (liveSize?.width ?: block.width)
+    val displayHeight = if (isCollapsed) 100f else (liveSize?.height ?: block.height)
+
+    // Track content's measured size for auto-expand
+    var contentSize by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
+
+    // Determine display height: auto-expand if natural content is taller than entity height.
+    // contentSize is in px, displayHeight is in logical px.
+    val contentHeightLogical = if (contentSize.height > 0) contentSize.height / density.density else 0f
+    val autoHeight = if (!isCollapsed && contentHeightLogical > displayHeight + 15f) {
+        contentHeightLogical + 10f // extra padding so text isn't flush with border
+    } else {
+        displayHeight
+    }
+
+    // Sync auto-expanded height to entity (via live size override + onResized)
+    LaunchedEffect(autoHeight) {
+        if (!isCollapsed && autoHeight > displayHeight && autoHeight - displayHeight > 15f) {
+            canvasState.setLiveBlockSize(block.id, displayWidth, autoHeight)
+            onResized(displayWidth, autoHeight)
+        }
+    }
+
+    // Clean up live size when entity catches up
+    LaunchedEffect(block.id, block.width, block.height) {
+        val live = canvasState.liveBlockSizes[block.id]
+        if (live != null && live.width == block.width && live.height == block.height) {
+            canvasState.removeLiveBlockSize(block.id)
+        }
+    }
 
     // Animated tool alpha: fades from 1.0 at zoom >= FADE_START to 0.0 at zoom <= FADE_END
     val rawToolAlpha = ((canvasState.zoom - TOOL_FADE_END_ZOOM) /
@@ -91,18 +122,17 @@ fun CanvasBlock(
         animationSpec = spring(stiffness = Spring.StiffnessLow),
         label = "toolAlpha"
     )
-    
+
     // Block size at current zoom
     val scaledWidth = displayWidth * canvasState.zoom
-    val scaledHeight = displayHeight * canvasState.zoom
+    val scaledMinHeight = displayHeight * canvasState.zoom
 
     Box(
         modifier = Modifier
-            // Block dimensions (screen-space, derived from canvas-space at current zoom)
-            .size(
-                width = with(LocalDensity.current) { scaledWidth.toDp() },
-                height = with(LocalDensity.current) { scaledHeight.toDp() }
-            )
+            // Block dimensions — width is fixed, height has a minimum but grows with content
+            .width(with(density) { scaledWidth.toDp() })
+            .heightIn(min = with(density) { scaledMinHeight.toDp() })
+            .wrapContentHeight()
             // Selection border
             .then(
                 if (isSelected) {
@@ -123,42 +153,112 @@ fun CanvasBlock(
             .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surface)
             // Long-press + drag to move (taps pass through to child composables)
-            .pointerInput(block.id) {
+            .pointerInput(block.id, canvasState.zoom) {
+                // Track cumulative drag offset locally so movement is smooth
+                // even when Room observation lags behind drag frames
+                var cumulativeDx = 0f
+                var cumulativeDy = 0f
+                var dragStartX = block.positionX
+                var dragStartY = block.positionY
+
                 detectDragGesturesAfterLongPress(
+                    onDragStart = {
+                        // Capture starting position from live override (if active) or entity.
+                        // Using live position prevents snap when a new drag starts before
+                        // Room finishes writing the previous drag's final position.
+                        val livePos = canvasState.liveBlockPositions[block.id]
+                        dragStartX = livePos?.x ?: block.positionX
+                        dragStartY = livePos?.y ?: block.positionY
+                        cumulativeDx = 0f
+                        cumulativeDy = 0f
+                    },
                     onDrag = { change, dragAmount ->
                         change.consume()
                         // Convert drag from screen-space to canvas-space
                         val canvasDx = dragAmount.x / canvasState.zoom
                         val canvasDy = dragAmount.y / canvasState.zoom
-                        onMoved(block.positionX + canvasDx, block.positionY + canvasDy)
+                        cumulativeDx += canvasDx
+                        cumulativeDy += canvasDy
+                        // Update in-memory live position — no Room write
+                        canvasState.setLiveBlockPosition(
+                            block.id,
+                            dragStartX + cumulativeDx,
+                            dragStartY + cumulativeDy
+                        )
+                    },
+                    onDragEnd = {
+                        // Flush final position to Room once.
+                        // Keep live position until Room emits the updated entity
+                        // to prevent visual snap (removeLiveBlockPosition is handled
+                        // by LaunchedEffect cleanup below).
+                        val finalX = dragStartX + cumulativeDx
+                        val finalY = dragStartY + cumulativeDy
+                        canvasState.setLiveBlockPosition(block.id, finalX, finalY)
+                        onMoved(finalX, finalY)
+                    },
+                    onDragCancel = {
+                        // Gesture cancelled — clear live override, don't write to Room
+                        canvasState.removeLiveBlockPosition(block.id)
                     }
                 )
             }
     ) {
-        if (isCollapsed) {
-            // Collapsed state: show preview with expand button
-            Column(
-                modifier = Modifier.fillMaxSize().padding(8.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    MaterialSymbolIcon("unfold_more"),
-                    "Expand",
-                    size = 20.dp,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    block.type,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+        // ── Clean up stale live overrides when entity catches up ──
+        // Prevents visual snap: live position/size stays until Room emits
+        // the updated entity, then this removes the override silently.
+        LaunchedEffect(block.id, block.positionX, block.positionY, block.width, block.height) {
+            val livePos = canvasState.liveBlockPositions[block.id]
+            if (livePos != null && livePos.x == block.positionX && livePos.y == block.positionY) {
+                canvasState.removeLiveBlockPosition(block.id)
             }
-        } else {
-            // Full content display
-            Box(Modifier.fillMaxSize()) {
+            val liveSz = canvasState.liveBlockSizes[block.id]
+            if (liveSz != null && liveSz.width == block.width && liveSz.height == block.height) {
+                canvasState.removeLiveBlockSize(block.id)
+            }
+        }
+
+        if (isCollapsed) {
+            // Collapsed state: show preview with expand button.
+            // Use fillMaxWidth + inner wrapContentHeight so the collapsed box
+            // naturally sizes to icon+label height via the outer wrapContentHeight.
+            // Do NOT use fillMaxSize — inside a wrapContentHeight parent it would
+            // fill the full viewport height constraint, making the "minimized" block
+            // appear full-height (the bug we're fixing).
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        MaterialSymbolIcon("unfold_more"),
+                        "Expand",
+                        size = 20.dp,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        block.type,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            } else {
+            // Full content display — measure natural content height for auto-expand
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .onGloballyPositioned { coords ->
+                        contentSize = coords.size
+                    }
+            ) {
                 content()
             }
         }
@@ -234,10 +334,21 @@ fun CanvasBlock(
             if (isSelected && !isCollapsed) {
                 ResizeHandle(
                     modifier = Modifier.align(Alignment.BottomEnd),
-                    onResize = { dx, dy ->
-                        val newW = (block.width + dx).coerceAtLeast(60f)
-                        val newH = (block.height + dy).coerceAtLeast(60f)
-                        onResized(newW, newH)
+                    onResize = { cumulativeDx, cumulativeDy ->
+                        // Update in-memory live size — no Room write
+                        val newW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
+                        val newH = (displayHeight + cumulativeDy).coerceAtLeast(60f)
+                        canvasState.setLiveBlockSize(block.id, newW, newH)
+                    },
+                    onResizeEnd = { cumulativeDx, cumulativeDy ->
+                        // Flush final size to Room once.
+                        // Keep live size until Room emits the updated entity
+                        // to prevent visual snap (removeLiveBlockSize is handled
+                        // by LaunchedEffect cleanup below).
+                        val finalW = (displayWidth + cumulativeDx).coerceAtLeast(60f)
+                        val finalH = (displayHeight + cumulativeDy).coerceAtLeast(60f)
+                        canvasState.setLiveBlockSize(block.id, finalW, finalH)
+                        onResized(finalW, finalH)
                     },
                     canvasState = canvasState
                 )
@@ -248,11 +359,14 @@ fun CanvasBlock(
 
 /**
  * Small triangular handle at the bottom-right corner for resize.
+ * Tracks cumulative drag delta so the caller gets cumulative (not per-frame) values.
+ * Calls [onResize] on every frame with cumulative delta, [onResizeEnd] when drag ends.
  */
 @Composable
 private fun ResizeHandle(
     modifier: Modifier = Modifier,
     onResize: (Float, Float) -> Unit,
+    onResizeEnd: (Float, Float) -> Unit = { _, _ -> },
     canvasState: CanvasState
 ) {
     // Scale handle size with zoom so it stays proportionally visible
@@ -265,13 +379,34 @@ private fun ResizeHandle(
                 RoundedCornerShape(topStart = 4.dp)
             )
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    // Convert drag delta from screen-space to canvas-space
-                    val canvasDx = dragAmount.x / canvasState.zoom
-                    val canvasDy = dragAmount.y / canvasState.zoom
-                    onResize(canvasDx, canvasDy)
-                }
+                var cumulativeDx = 0f
+                var cumulativeDy = 0f
+
+                detectDragGestures(
+                    onDragStart = {
+                        cumulativeDx = 0f
+                        cumulativeDy = 0f
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        // Convert drag delta from screen-space to canvas-space
+                        val canvasDx = dragAmount.x / canvasState.zoom
+                        val canvasDy = dragAmount.y / canvasState.zoom
+                        cumulativeDx += canvasDx
+                        cumulativeDy += canvasDy
+                        onResize(cumulativeDx, cumulativeDy)
+                    },
+                    onDragEnd = {
+                        onResizeEnd(cumulativeDx, cumulativeDy)
+                    },
+                    onDragCancel = {
+                        // Reset cumulative on cancel so final cleared position
+                        // matches the original (no-op)
+                        cumulativeDx = 0f
+                        cumulativeDy = 0f
+                        onResizeEnd(cumulativeDx, cumulativeDy)
+                    }
+                )
             }
     )
 }

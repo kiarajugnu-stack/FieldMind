@@ -217,10 +217,11 @@ fun TimerToolScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
+                val headerIcon = if (timerMode == TimerMode.STOPWATCH) FieldMindIcons.Timer else FieldMindIcons.Hourglass
                 StandardScreenHeader(
                     title = if (timerMode == TimerMode.STOPWATCH) "Stopwatch" else "Timer",
                     subtitle = "Track elapsed time with laps. Runs in background with notification.",
-                    icon = FieldMindIcons.Timer,
+                    icon = headerIcon,
                     trailing = { BackButton(onClick = onBack) }
                 )
             }
@@ -243,7 +244,7 @@ fun TimerToolScreen(
                         selected = timerMode == TimerMode.TIMER,
                         onClick = { if (!isRunning) { timerMode = TimerMode.TIMER; resetTimer() } },
                         label = { Text("Timer") },
-                        leadingIcon = { Icon(FieldMindIcons.Timer, null, size = 16.dp) },
+                        leadingIcon = { Icon(FieldMindIcons.Hourglass, null, size = 16.dp) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp)
                     )

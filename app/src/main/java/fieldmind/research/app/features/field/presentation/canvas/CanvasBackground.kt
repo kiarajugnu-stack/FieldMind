@@ -55,13 +55,14 @@ data class BlockRect(
 
 private const val GRID_SPACING = 40f    // logical px between dots
 private const val DOT_RADIUS = 1.5f     // dot radius in screen px
-private const val MAX_DOTS = 100_000    // safety cap
+private const val MAX_DOTS = 30_000     // safety cap — reduced from 100K for perf
 
 /**
  * Draw the dot grid within the visible viewport.
  *
  * Calculates which grid cells are visible given the current zoom/pan,
- * then draws dots only for those cells — no off-screen rendering.
+ * then renders all dots with a single [drawPoints] call (batched GPU draw).
+ * Previously used individual [drawCircle] per dot (up to 100K draw calls per frame).
  */
 private fun DrawScope.drawDotGrid(canvasState: CanvasState) {
     val invZoom = 1f / canvasState.zoom
@@ -79,21 +80,27 @@ private fun DrawScope.drawDotGrid(canvasState: CanvasState) {
     val totalDots = (endCol - startCol + 1).toLong() * (endRow - startRow + 1).toLong()
     if (totalDots > MAX_DOTS || totalDots <= 0) return
 
-    // Constant screen-space dot radius (matches original OpenGL gl_PointSize = 3px)
+    // Batched dot rendering: collect all dot screen positions, then draw
+    // them as a single [drawPoints] call. This replaces 100K individual
+    // drawCircle calls with a single GPU-batched draw call.
+    val points = mutableListOf<Offset>()
+    val capacity = endCol - startCol + 1
+    points.ensureCapacity(capacity * capacity)
 
     for (row in startRow..endRow) {
         for (col in startCol..endCol) {
             val canvasX = col * GRID_SPACING
             val canvasY = row * GRID_SPACING
-            val screenPt = canvasState.canvasToScreen(canvasX, canvasY)
-
-            drawCircle(
-                color = Color(0x1A000000),  // ~10% opacity black
-                radius = DOT_RADIUS,
-                center = screenPt
-            )
+            points.add(canvasState.canvasToScreen(canvasX, canvasY))
         }
     }
+
+    drawPoints(
+        points = points,
+        pointMode = androidx.compose.ui.graphics.drawscope.PointMode.Points,
+        color = Color(0x1A000000),  // ~10% opacity black
+        strokeWidth = DOT_RADIUS * 2f
+    )
 }
 
 // ══════════════════════════════════════════════════════════════════════
